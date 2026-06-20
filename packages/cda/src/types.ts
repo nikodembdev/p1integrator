@@ -1,7 +1,10 @@
-import type { Gender, RealizationMode, TreatmentType } from "./constants.js";
+import type { Gender } from "./oids.js";
 
-/** Obiekt sekcji body w formacie xmlbuilder2 (zawartość elementu `<section>`). */
-export type CdaSection = Record<string, unknown>;
+/** Obiekt XML w formacie xmlbuilder2 (atrybuty z prefiksem `@`, tekst pod `#`). */
+export type XmlObject = Record<string, unknown>;
+
+/** Sekcja body — obiekt zawartości elementu `<section>`, budowany w module domenowym. */
+export type CdaSection = XmlObject;
 
 /** Adres pacjenta (recordTarget). */
 export interface CdaPatientAddress {
@@ -75,17 +78,22 @@ export interface CdaLegalAuthenticator {
   readonly functionDisplay: string;
 }
 
-export interface ClinicalDocumentHeaderInput {
+/** Wejście generycznego buildera dokumentu CDA (część specyficzna: templateId/code/sekcje). */
+export interface ClinicalDocumentInput {
   /** Bazowy root lokalny podmiotu (`id_lokalne_podmiotu`); z niego pochodzą .4.1/.4.2/.17.1. */
   readonly localRoot: string;
+  /** Szablon dokumentu (specyficzny dla typu). */
+  readonly templateId: { readonly root: string; readonly extension?: string };
+  /** Element `<code>` dokumentu (obiekt xmlbuilder2) — specyficzny dla typu. */
+  readonly code: XmlObject;
   readonly title: string;
-  readonly treatmentType: TreatmentType;
-  readonly realizationMode: RealizationMode;
   readonly patient: CdaPatient;
   readonly author: CdaAuthor;
   readonly legalAuthenticator: CdaLegalAuthenticator;
   /** Kod oddziału NFZ dla participant (np. "07"). */
   readonly nfzBranchCode: string;
+  /** Sekcje kliniczne `structuredBody` (obiekty z builderów sekcji). */
+  readonly sections?: readonly CdaSection[];
 
   /** Identyfikator dokumentu (domyślnie generowany). */
   readonly documentId?: string;
@@ -95,8 +103,6 @@ export interface ClinicalDocumentHeaderInput {
   readonly now?: Date;
   /** Nadpisanie czasu wystawienia (YYYYMMDDHHmmss). */
   readonly documentDate?: string;
-  /** Sekcje kliniczne `structuredBody` (obiekty z builderów sekcji). */
-  readonly bodyComponents?: readonly CdaSection[];
 }
 
 export interface ClinicalDocumentResult {

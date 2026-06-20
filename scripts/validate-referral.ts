@@ -14,7 +14,7 @@ import SaxonJS from "saxon-js";
 import {
   buildHealthResortReferralCda,
   type HealthResortReferralInput,
-} from "../packages/cda/src/index.js";
+} from "../packages/referral/src/index.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SEF = resolve(here, "../.local/healthResort.sef.json");

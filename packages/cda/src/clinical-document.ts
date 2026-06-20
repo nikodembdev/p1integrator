@@ -1,45 +1,40 @@
 import { create } from "xmlbuilder2";
-import {
-  CDA_OID,
-  CDA_TEMPLATE,
-  LOINC_CODE,
-  REALIZATION_MODE,
-  TREATMENT_TYPE,
-} from "./constants.js";
 import { formatCdaDateTime } from "./datetime.js";
 import { generateDocumentId } from "./document-id.js";
+import { CDA_OID, CDA_TEMPLATE } from "./oids.js";
 import type {
   CdaAuthor,
   CdaAuthorOrganization,
   CdaLegalAuthenticator,
   CdaPatient,
   CdaPatientAddress,
-  ClinicalDocumentHeaderInput,
+  ClinicalDocumentInput,
   ClinicalDocumentResult,
+  XmlObject,
 } from "./types.js";
 
-const POLISH_CLASSIFIERS_NAME = "PolskieKlasyfikatoryHL7v3";
-
-type XmlObject = Record<string, unknown>;
-
 /**
- * Buduje pełny nagłówek dokumentu CDA „skierowanie do uzdrowiska" (HL7 CDA PL IG
- * 1.3.2): identity → recordTarget → author → custodian → legalAuthenticator →
- * participant + scaffold `structuredBody`. Sekcje kliniczne body (PR2) podaje się
- * jako `bodyComponentsXml`. xmlbuilder2 zapewnia escaping.
+ * Generyczny builder dokumentu CDA PL IG 1.3.2: składa nagłówek (identity →
+ * recordTarget → author → custodian → legalAuthenticator → participant) oraz
+ * `structuredBody` z dostarczonych sekcji. Część specyficzna dla typu dokumentu
+ * (`templateId`, `code`, `title`, `sections`) przychodzi z modułu domenowego.
+ * xmlbuilder2 zapewnia escaping.
  */
-export function buildClinicalDocumentHeader(
-  input: ClinicalDocumentHeaderInput,
-): ClinicalDocumentResult {
+export function buildClinicalDocument(input: ClinicalDocumentInput): ClinicalDocumentResult {
   const documentId = input.documentId ?? generateDocumentId();
   const documentSetId = input.documentSetId ?? documentId;
   const documentDate = input.documentDate ?? formatCdaDateTime(input.now ?? new Date());
 
+  const templateId: XmlObject =
+    input.templateId.extension !== undefined
+      ? { "@root": input.templateId.root, "@extension": input.templateId.extension }
+      : { "@root": input.templateId.root };
+
   const header: XmlObject = {
     typeId: { "@extension": "POCD_HD000040", "@root": CDA_OID.HL7_TYPE_ID },
-    templateId: { "@root": CDA_TEMPLATE.HEALTH_RESORT_REFERRAL, "@extension": "1.3.2" },
+    templateId,
     id: { "@extension": documentId, "@root": `${input.localRoot}.4.1`, "@displayable": "false" },
-    code: buildCode(input),
+    code: input.code,
     title: input.title,
     effectiveTime: { "@value": documentDate },
     confidentialityCode: { "@code": "N", "@codeSystem": CDA_OID.HL7_CONFIDENTIALITY },
@@ -66,44 +61,11 @@ export function buildClinicalDocumentHeader(
   const component = clinicalDocument.ele("component");
   component.ele("templateId", { root: CDA_TEMPLATE.STRUCTURED_BODY });
   const structuredBody = component.ele("structuredBody");
-  for (const section of input.bodyComponents ?? []) {
+  for (const section of input.sections ?? []) {
     structuredBody.ele({ component: { "@typeCode": "COMP", section } });
   }
 
   return { xml: root.end({ prettyPrint: true }), documentId, documentDate };
-}
-
-function buildCode(input: ClinicalDocumentHeaderInput): XmlObject {
-  const treatment = TREATMENT_TYPE[input.treatmentType];
-  const realization = REALIZATION_MODE[input.realizationMode];
-  const classifier = (code: string, display: string): XmlObject => ({
-    "@code": code,
-    "@displayName": display,
-    "@codeSystem": CDA_OID.POLISH_CLASSIFIERS,
-    "@codeSystemName": POLISH_CLASSIFIERS_NAME,
-  });
-  return {
-    "@code": LOINC_CODE.REFERRAL,
-    "@codeSystem": CDA_OID.LOINC,
-    "@codeSystemName": "LOINC",
-    "@displayName": "Prescription for diagnostic or specialist care Document",
-    translation: {
-      "@code": "02.10",
-      "@codeSystem": CDA_OID.DOC_CLASS_P1,
-      "@codeSystemName": "KLAS_DOK_P1",
-      "@displayName": "Skierowanie na badanie lub leczenie",
-      qualifier: [
-        {
-          name: classifier("RSUZDR", "Rodzaje świadczenia uzdrowiskowego"),
-          value: classifier(treatment.code, treatment.display),
-        },
-        {
-          name: classifier("TRSU", "Tryb realizacji świadczenia uzdrowiskowego"),
-          value: classifier(realization.code, realization.display),
-        },
-      ],
-    },
-  };
 }
 
 function buildRecordTarget(patient: CdaPatient, localRoot: string): XmlObject {

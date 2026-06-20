@@ -1,8 +1,7 @@
+import { CDA_OID, type CdaSection } from "@p1/cda";
 import {
   BODY_SIDE,
   type BodySide,
-  CDA_OID,
-  CDA_TEMPLATE,
   CORRESPONDENCE_MODE,
   CORRESPONDENCE_OID,
   type CorrespondenceMode,
@@ -10,9 +9,9 @@ import {
   type JustificationCode,
   JUSTIFICATION_OID,
   LOINC_CODE,
+  REFERRAL_TEMPLATE,
   SNOMED_CODE,
 } from "./constants.js";
-import type { CdaSection } from "./types.js";
 
 const loinc = (code: string, display: string): Record<string, unknown> => ({
   "@code": code,
@@ -27,7 +26,7 @@ const loinc = (code: string, display: string): Record<string, unknown> => ({
 
 export function buildSocialHistorySection(schoolInfo: string): CdaSection {
   return {
-    templateId: { "@root": CDA_TEMPLATE.SOCIAL_HISTORY_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.SOCIAL_HISTORY_SECTION },
     code: loinc(LOINC_CODE.SOCIAL_HISTORY, "Social history"),
     text: { paragraph: { caption: "Rodzaj szkoły, klasa:", "#": schoolInfo } },
   };
@@ -62,7 +61,7 @@ function historyBlock(
 
 export function buildMedicalHistorySection(history: ReferralMedicalHistory): CdaSection {
   return {
-    templateId: { "@root": CDA_TEMPLATE.MEDICAL_HISTORY_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.MEDICAL_HISTORY_SECTION },
     code: loinc(LOINC_CODE.MEDICAL_HISTORY, "History of present illness"),
     title: "Wywiad",
     text: {
@@ -115,7 +114,7 @@ export function buildDiagnosesSection(diagnoses: ReferralDiagnoses): CdaSection 
   const contentId = (index: number): string => `OBS_${index + 1}`;
 
   return {
-    templateId: { "@root": CDA_TEMPLATE.DIAGNOSES_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.DIAGNOSES_SECTION },
     code: loinc(LOINC_CODE.DIAGNOSIS, "Diagnosis"),
     title: "Rozpoznania",
     text: {
@@ -140,8 +139,8 @@ function buildDiagnosisEntry(
 ): Record<string, unknown> {
   const snomed = isMain ? SNOMED_CODE.PRINCIPAL_DIAGNOSIS : SNOMED_CODE.SECONDARY_DIAGNOSIS;
   const templateRoot = isMain
-    ? CDA_TEMPLATE.MAIN_DIAGNOSIS_ENTRY
-    : CDA_TEMPLATE.SECONDARY_DIAGNOSIS_ENTRY;
+    ? REFERRAL_TEMPLATE.MAIN_DIAGNOSIS_ENTRY
+    : REFERRAL_TEMPLATE.SECONDARY_DIAGNOSIS_ENTRY;
 
   const observation: Record<string, unknown> = {
     "@classCode": "OBS",
@@ -188,7 +187,7 @@ function buildDiagnosisEntry(
 export function buildCorrespondenceSection(mode: CorrespondenceMode): CdaSection {
   const correspondence = CORRESPONDENCE_MODE[mode];
   return {
-    templateId: { "@root": CDA_TEMPLATE.CORRESPONDENCE_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.CORRESPONDENCE_SECTION },
     code: loinc(LOINC_CODE.CORRESPONDENCE, "Mode of communication"),
     title: "Korespondencja z pacjentem",
     text: {
@@ -203,7 +202,7 @@ export function buildCorrespondenceSection(mode: CorrespondenceMode): CdaSection
       act: {
         "@classCode": "CONS",
         "@moodCode": "RQO",
-        templateId: { "@root": CDA_TEMPLATE.CORRESPONDENCE_ACT_ENTRY },
+        templateId: { "@root": REFERRAL_TEMPLATE.CORRESPONDENCE_ACT_ENTRY },
         code: {
           "@code": correspondence.code,
           "@codeSystem": CORRESPONDENCE_OID,
@@ -261,7 +260,7 @@ interface VitalConfig {
 const VITALS: readonly VitalConfig[] = [
   {
     key: "systolicBP",
-    template: CDA_TEMPLATE.SYSTOLIC_BP_ENTRY,
+    template: REFERRAL_TEMPLATE.SYSTOLIC_BP_ENTRY,
     loinc: "8480-6",
     display: "Systolic blood pressure",
     unit: "mm[Hg]",
@@ -272,7 +271,7 @@ const VITALS: readonly VitalConfig[] = [
   },
   {
     key: "diastolicBP",
-    template: CDA_TEMPLATE.DIASTOLIC_BP_ENTRY,
+    template: REFERRAL_TEMPLATE.DIASTOLIC_BP_ENTRY,
     loinc: "8462-4",
     display: "Diastolic blood pressure",
     unit: "mm[Hg]",
@@ -283,7 +282,7 @@ const VITALS: readonly VitalConfig[] = [
   },
   {
     key: "weight",
-    template: CDA_TEMPLATE.BODY_WEIGHT_ENTRY,
+    template: REFERRAL_TEMPLATE.BODY_WEIGHT_ENTRY,
     loinc: "29463-7",
     display: "Body weight",
     unit: "kg",
@@ -294,7 +293,7 @@ const VITALS: readonly VitalConfig[] = [
   },
   {
     key: "height",
-    template: CDA_TEMPLATE.BODY_HEIGHT_ENTRY,
+    template: REFERRAL_TEMPLATE.BODY_HEIGHT_ENTRY,
     loinc: "8302-2",
     display: "Body height",
     unit: "cm",
@@ -305,7 +304,7 @@ const VITALS: readonly VitalConfig[] = [
   },
   {
     key: "heartRate",
-    template: CDA_TEMPLATE.HEART_RATE_ENTRY,
+    template: REFERRAL_TEMPLATE.HEART_RATE_ENTRY,
     loinc: "8867-4",
     display: "Heart rate",
     unit: "/min",
@@ -456,7 +455,7 @@ export function buildPhysicalExamSection(exam: PhysicalExam): CdaSection {
   }));
 
   const justificationEntry = {
-    templateId: { "@root": CDA_TEMPLATE.JUSTIFICATION_ORGANIZER_ENTRY },
+    templateId: { "@root": REFERRAL_TEMPLATE.JUSTIFICATION_ORGANIZER_ENTRY },
     organizer: {
       "@classCode": "BATTERY",
       "@moodCode": "EVN",
@@ -480,7 +479,7 @@ export function buildPhysicalExamSection(exam: PhysicalExam): CdaSection {
   };
 
   return {
-    templateId: { "@root": CDA_TEMPLATE.PHYSICAL_EXAM_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.PHYSICAL_EXAM_SECTION },
     code: loinc(LOINC_CODE.PHYSICAL_FINDINGS, "Physical findings"),
     title: "Badanie przedmiotowe",
     text: {
@@ -504,7 +503,7 @@ export interface LabResult {
 export function buildLabResultsSection(results: readonly LabResult[]): CdaSection {
   const refId = (index: number): string => `OBS_WB_${index + 1}`;
   return {
-    templateId: { "@root": CDA_TEMPLATE.LAB_RESULTS_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.LAB_RESULTS_SECTION },
     code: loinc(LOINC_CODE.LAB_DATA, "Relevant diagnostic tests/laboratory data"),
     title: "Aktualne wyniki badań",
     text: {
@@ -518,7 +517,7 @@ export function buildLabResultsSection(results: readonly LabResult[]): CdaSectio
       observation: {
         "@classCode": "OBS",
         "@moodCode": "EVN",
-        templateId: { "@root": CDA_TEMPLATE.LAB_OBSERVATION_ENTRY },
+        templateId: { "@root": REFERRAL_TEMPLATE.LAB_OBSERVATION_ENTRY },
         code: {
           "@code": result.icd9Code,
           "@codeSystem": CDA_OID.ICD9_PL,
@@ -544,7 +543,7 @@ export interface AmbulatoryTreatment {
 export function buildAmbulatoryTreatmentSection(treatment: AmbulatoryTreatment): CdaSection {
   const term = treatment.term ? `, termin: ${treatment.term}` : "";
   return {
-    templateId: { "@root": CDA_TEMPLATE.AMBULATORY_TREATMENT_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.AMBULATORY_TREATMENT_SECTION },
     code: loinc(LOINC_CODE.ANNOTATION_COMMENT, "Annotation comment"),
     title: "Leczenie Ambulatoryjne",
     text: {
@@ -580,7 +579,7 @@ export interface Attachment {
 export function buildAttachmentsSection(attachments: readonly Attachment[]): CdaSection {
   const attachmentId = (index: number): string => `ZAL_${index + 1}`;
   return {
-    templateId: { "@root": CDA_TEMPLATE.ATTACHMENTS_SECTION },
+    templateId: { "@root": REFERRAL_TEMPLATE.ATTACHMENTS_SECTION },
     title: "Załączniki",
     text: {
       list: {
@@ -594,7 +593,7 @@ export function buildAttachmentsSection(attachments: readonly Attachment[]): Cda
       organizer: {
         "@classCode": "CLUSTER",
         "@moodCode": "EVN",
-        templateId: { "@root": CDA_TEMPLATE.ATTACHMENT_ORGANIZER_ENTRY },
+        templateId: { "@root": REFERRAL_TEMPLATE.ATTACHMENT_ORGANIZER_ENTRY },
         statusCode: { "@code": "completed" },
         reference: attachments.map((attachment, index) =>
           buildAttachmentReference(attachment, attachmentId(index)),
@@ -609,8 +608,8 @@ function buildAttachmentReference(
   attachmentId: string,
 ): Record<string, unknown> {
   const externalDocTemplate = attachment.isScan
-    ? CDA_TEMPLATE.EXTERNAL_DOCUMENT_SCAN
-    : CDA_TEMPLATE.EXTERNAL_DOCUMENT;
+    ? REFERRAL_TEMPLATE.EXTERNAL_DOCUMENT_SCAN
+    : REFERRAL_TEMPLATE.EXTERNAL_DOCUMENT;
 
   const externalDocument: Record<string, unknown> = {
     "@classCode": "DOC",
@@ -647,7 +646,7 @@ function buildAttachmentReference(
 
   return {
     "@typeCode": "REFR",
-    templateId: { "@root": CDA_TEMPLATE.ATTACHMENT_REFERENCE_ENTRY },
+    templateId: { "@root": REFERRAL_TEMPLATE.ATTACHMENT_REFERENCE_ENTRY },
     seperatableInd: { "@value": "false" },
     externalDocument,
   };

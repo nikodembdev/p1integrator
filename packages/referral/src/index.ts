@@ -1,5 +1,6 @@
 /**
- * @p1/referral - czyste, dziedzinowe API e-skierowania (w tym uzdrowisko)
- * nad surowym P1 (CDA + XAdES + SOAP/WS-Security). Implementacja w toku.
+ * @p1/referral - moduł e-skierowania (w tym skierowanie do uzdrowiska) nad
+ * surowym P1: budowa dokumentów CDA (na bazie @p1/cda) + orkiestracja.
  */
-export {};
+
+export * from "./health-resort/index.js";

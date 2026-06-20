@@ -1,52 +1,21 @@
 /**
- * Stałe HL7 CDA PL IG 1.3.2 dla dokumentów P1 (OID-y, szablony, systemy kodowania).
- * Wartości wprost ze specyfikacji P1 / wzorcowych dokumentów.
+ * Stałe specyficzne dla skierowania na leczenie uzdrowiskowe (CDA PL IG 1.3.2):
+ * szablon dokumentu, szablony sekcji i wpisów, kody LOINC/SNOMED oraz słowniki
+ * (typ świadczenia, tryb, uzasadnienia, korespondencja). Generyczne OID-y i
+ * szablony nagłówka pochodzą z `@p1/cda`.
  */
 
-export const CDA_OID = {
-  PESEL: "2.16.840.1.113883.3.4424.1.1.616",
-  NPWZ: "2.16.840.1.113883.3.4424.1.6.2",
-  REGON_9: "2.16.840.1.113883.3.4424.2.2.1",
-  REGON_14: "2.16.840.1.113883.3.4424.2.2.2",
-  PROVIDER: "2.16.840.1.113883.3.4424.2.3.1",
-  ORG_UNIT: "2.16.840.1.113883.3.4424.2.3.2",
-  WORKPLACE: "2.16.840.1.113883.3.4424.2.3.3",
-  NFZ_BRANCH: "2.16.840.1.113883.3.4424.3.1",
-  NFZ_CONTRACT: "2.16.840.1.113883.3.4424.8.6.1.7",
-  CSIOZ: "2.16.840.1.113883.3.4424",
-  ICD10: "2.16.840.1.113883.6.3",
-  ICD9_PL: "2.16.840.1.113883.3.4424.11.2.6",
-  SNOMED_CT: "2.16.840.1.113883.6.96",
-  LOINC: "2.16.840.1.113883.6.1",
-  HL7_CONFIDENTIALITY: "2.16.840.1.113883.5.25",
-  HL7_TYPE_ID: "2.16.840.1.113883.1.3",
-  HL7_GENDER: "2.16.840.1.113883.5.1",
-  SPECIALTY_CODES: "2.16.840.1.113883.3.4424.11.3.3.1",
-  FUNCTION_CODES: "2.16.840.1.113883.3.4424.11.3.18",
-  DOC_CLASS_P1: "2.16.840.1.113883.3.4424.11.1.32",
-  POLISH_CLASSIFIERS: "2.16.840.1.113883.3.4424.13.5.1",
-} as const;
-
-export const CDA_TEMPLATE = {
+export const REFERRAL_TEMPLATE = {
   HEALTH_RESORT_REFERRAL: "2.16.840.1.113883.3.4424.13.10.1.9",
-  PATIENT: "2.16.840.1.113883.3.4424.13.10.2.26",
-  AUTHOR: "2.16.840.1.113883.3.4424.13.10.2.86",
-  PERSON: "2.16.840.1.113883.3.4424.13.10.2.1",
-  ORGANIZATION: "2.16.840.1.113883.3.4424.13.10.2.18",
-  WHOLE_ORGANIZATION: "2.16.840.1.113883.3.4424.13.10.2.14",
-  NFZ_CONTRACT: "2.16.840.1.113883.3.4424.13.10.2.44",
-  NFZ_PARTICIPANT: "2.16.840.1.113883.3.4424.13.10.2.19",
-  CUSTODIAN: "2.16.840.1.113883.3.4424.13.10.2.20",
-  LEGAL_AUTHENTICATOR: "2.16.840.1.113883.3.4424.13.10.2.6",
-  STRUCTURED_BODY: "2.16.840.1.113883.3.4424.13.10.2.35",
-
   // Sekcje body
   SOCIAL_HISTORY_SECTION: "2.16.840.1.113883.3.4424.13.10.3.9",
   MEDICAL_HISTORY_SECTION: "2.16.840.1.113883.3.4424.13.10.3.10",
-  DIAGNOSES_SECTION: "2.16.840.1.113883.3.4424.13.10.3.1",
-  CORRESPONDENCE_SECTION: "2.16.840.1.113883.3.4424.13.10.3.166",
   PHYSICAL_EXAM_SECTION: "2.16.840.1.113883.3.4424.13.10.3.11",
+  DIAGNOSES_SECTION: "2.16.840.1.113883.3.4424.13.10.3.1",
   LAB_RESULTS_SECTION: "2.16.840.1.113883.3.4424.13.10.3.7",
+  CORRESPONDENCE_SECTION: "2.16.840.1.113883.3.4424.13.10.3.166",
+  AMBULATORY_TREATMENT_SECTION: "2.16.840.1.113883.3.4424.13.10.3.2",
+  ATTACHMENTS_SECTION: "2.16.840.1.113883.3.4424.13.10.3.39",
   // Wpisy (entry)
   MAIN_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.1",
   SECONDARY_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.2",
@@ -58,8 +27,6 @@ export const CDA_TEMPLATE = {
   HEART_RATE_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.173",
   JUSTIFICATION_ORGANIZER_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.237",
   LAB_OBSERVATION_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.20",
-  AMBULATORY_TREATMENT_SECTION: "2.16.840.1.113883.3.4424.13.10.3.2",
-  ATTACHMENTS_SECTION: "2.16.840.1.113883.3.4424.13.10.3.39",
   ATTACHMENT_ORGANIZER_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.31",
   ATTACHMENT_REFERENCE_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.32",
   EXTERNAL_DOCUMENT: "2.16.840.1.113883.3.4424.13.10.4.33",
@@ -77,27 +44,6 @@ export const LOINC_CODE = {
   REASON_FOR_REFERRAL: "42349-1",
   ANNOTATION_COMMENT: "48767-8",
 } as const;
-
-export const JUSTIFICATION_OID = "2.16.840.1.113883.3.4424.11.1.300";
-
-/** Uzasadnienia świadczenia uzdrowiskowego (kody wprost z P1). */
-export const JUSTIFICATION_CODE = {
-  ULA: "Uzupełnienie leczenia ambulatoryjnego",
-  KLS: "Kontynuacja leczenia szpitalnego/rekonwalescencja poszpitalna",
-  KRS: "Kontynuacja rehabilitacji szpitalnej",
-  PJZ: "Poprawa jakości życia",
-  PSR: "Poprawa sprawności ruchowej",
-  PWK: "Poprawa wydolności krążeniowej/zmniejszenie ryzyka sercowo-naczyniowego",
-  PWO: "Poprawa wydolności oddechowej",
-  LPB: "Leczenie przeciwbólowe",
-  LPO: "Leczenie przeciwobrzękowe",
-  PPO: "Profilaktyka powikłań odległych",
-  LDI: "Leczenie dietetyczne",
-  RWA: "Redukcja wagi",
-  EZD: "Edukacja zdrowotna",
-  INN: "Inna",
-} as const;
-export type JustificationCode = keyof typeof JUSTIFICATION_CODE;
 
 /** Kody SNOMED CT używane w sekcji rozpoznań. */
 export const SNOMED_CODE = {
@@ -136,4 +82,23 @@ export const REALIZATION_MODE = {
 } as const;
 export type RealizationMode = keyof typeof REALIZATION_MODE;
 
-export type Gender = "M" | "F" | "UN";
+export const JUSTIFICATION_OID = "2.16.840.1.113883.3.4424.11.1.300";
+
+/** Uzasadnienia świadczenia uzdrowiskowego (kody wprost z P1). */
+export const JUSTIFICATION_CODE = {
+  ULA: "Uzupełnienie leczenia ambulatoryjnego",
+  KLS: "Kontynuacja leczenia szpitalnego/rekonwalescencja poszpitalna",
+  KRS: "Kontynuacja rehabilitacji szpitalnej",
+  PJZ: "Poprawa jakości życia",
+  PSR: "Poprawa sprawności ruchowej",
+  PWK: "Poprawa wydolności krążeniowej/zmniejszenie ryzyka sercowo-naczyniowego",
+  PWO: "Poprawa wydolności oddechowej",
+  LPB: "Leczenie przeciwbólowe",
+  LPO: "Leczenie przeciwobrzękowe",
+  PPO: "Profilaktyka powikłań odległych",
+  LDI: "Leczenie dietetyczne",
+  RWA: "Redukcja wagi",
+  EZD: "Edukacja zdrowotna",
+  INN: "Inna",
+} as const;
+export type JustificationCode = keyof typeof JUSTIFICATION_CODE;

@@ -1,9 +1,6 @@
 import { create } from "xmlbuilder2";
 import { describe, expect, it } from "vitest";
-import {
-  buildHealthResortReferralCda,
-  type HealthResortReferralInput,
-} from "./health-resort-referral.js";
+import { buildHealthResortReferralCda, type HealthResortReferralInput } from "./document.js";
 
 const input: HealthResortReferralInput = {
   localRoot: "2.16.840.1.113883.3.4424.2.7.999",
