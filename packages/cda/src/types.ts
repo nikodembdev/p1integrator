@@ -64,7 +64,7 @@ export interface CdaAuthorOrganization {
   /** Numer umowy NFZ. */
   readonly nfzContractNumber: string;
   /**
-   * Jednostka organizacyjna (root .2.3.2), np. "000000927722-01" — poziom MUŚ między
+   * Jednostka organizacyjna (root .2.3.2), np. "<nr-księgi>-01" — poziom MUŚ między
    * komórką a podmiotem. Gdy podana, emitowana jest pełna hierarchia P1
    * (komórka → jednostka → podmiot); musi zgadzać się z `idMiejscaPracy` z kontekstu
    * wywołania oraz z rejestracją w CWUd.

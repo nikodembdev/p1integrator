@@ -19,6 +19,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:conformance": "vitest run -c vitest.integration.config.ts conformance",
+    "test:e2e": "vitest run -c vitest.integration.config.ts e2e-p1",
     "publint": "pnpm -r --filter \"./packages/*\" exec publint",
     "attw": "pnpm -r --filter \"./packages/*\" exec attw --pack .",
     "check:packages": "pnpm build && pnpm publint && pnpm attw",
