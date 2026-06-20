@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────
+# POUFNE / TYLKO LOKALNIE — pod żadnym pozorem nie commitować
+# ─────────────────────────────────────────────────────────────
+# Cały lokalny obszar: dokumentacja P1, specyfikacje, próbki, notatki
+/.local/
+
+# Certyfikaty i klucze (defense-in-depth — łapane też poza /.local)
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.jks
+*.keystore
+*.p8
+
+# Sekrety / konfiguracja środowiskowa
+.env
+.env.*
+!.env.example
+*.secret
+secrets/
+
+# ─────────────────────────────────────────────────────────────
+# Node / TypeScript / monorepo
+# ─────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.turbo/
+.pnpm-store/
+
+# ─────────────────────────────────────────────────────────────
+# System / edytor
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

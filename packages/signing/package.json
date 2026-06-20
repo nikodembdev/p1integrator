@@ -1,0 +1,29 @@
+{
+  "name": "@p1/signing",
+  "version": "0.0.0",
+  "description": "Port Signer + adapter Java/DSS (XAdES-BES)",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@p1/core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

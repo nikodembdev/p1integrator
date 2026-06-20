@@ -1,0 +1,6 @@
+dist
+coverage
+.turbo
+.local
+pnpm-lock.yaml
+CHANGELOG.md

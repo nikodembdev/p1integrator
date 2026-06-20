@@ -1,0 +1,33 @@
+{
+  "name": "@p1/prescription",
+  "version": "0.0.0",
+  "description": "Moduł e-recepty (wystawianie, anulowanie, realizacja, wyszukiwanie)",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@p1/core": "workspace:*",
+    "@p1/cda": "workspace:*",
+    "@p1/signing": "workspace:*",
+    "@p1/transport": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@p1/cda",
+  "version": "0.0.0",
+  "description": "Typowany builder dokumentów CDA PL IG 1.3.2 + walidacja Schematron",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@p1/core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
