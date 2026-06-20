@@ -19,6 +19,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "publint": "pnpm -r --filter \"./packages/*\" exec publint",
+    "attw": "pnpm -r --filter \"./packages/*\" exec attw --pack .",
+    "check:packages": "pnpm build && pnpm publint && pnpm attw",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build && changeset publish",
@@ -39,6 +42,7 @@
     ]
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
     "@changesets/cli": "^2.27.11",
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
@@ -50,6 +54,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "prettier": "^3.4.2",
+    "publint": "^0.3.12",
     "tsup": "^8.3.5",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2",
