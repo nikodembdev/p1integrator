@@ -43,29 +43,53 @@ export interface ReferralMedicalHistory {
   readonly previousSpaTreatment?: string;
 }
 
+/** Blok narracyjny wywiadu: opcjonalne ID paragrafu + content opis (Bold) + content wartość. */
+function historyBlock(
+  paragraphId: string | undefined,
+  opisId: string,
+  opis: string,
+  wartoscId: string,
+  wartosc: string,
+): Record<string, unknown> {
+  const paragraph: Record<string, unknown> = {};
+  if (paragraphId) paragraph["@ID"] = paragraphId;
+  paragraph.content = [
+    { "@ID": opisId, "@styleCode": "Bold", "#": opis },
+    { "@ID": wartoscId, "#": wartosc },
+  ];
+  return paragraph;
+}
+
 export function buildMedicalHistorySection(history: ReferralMedicalHistory): CdaSection {
-  const labelled = (label: string, value: string): Record<string, unknown> => ({
-    content: [{ "@styleCode": "Bold", "#": label }, { "#": value }],
-  });
-  const paragraphs: Record<string, unknown>[] = [];
-  if (history.complaints) {
-    paragraphs.push(
-      labelled("Dolegliwości, przebieg choroby, dotychczasowe leczenie", history.complaints),
-    );
-  }
-  if (history.oncologicalTreatment) {
-    paragraphs.push(labelled("Leczenie onkologiczne:", history.oncologicalTreatment));
-  }
-  if (history.previousSpaTreatment) {
-    paragraphs.push(
-      labelled("Leczenie uzdrowiskowe w ostatnich 3 latach:", history.previousSpaTreatment),
-    );
-  }
   return {
     templateId: { "@root": CDA_TEMPLATE.MEDICAL_HISTORY_SECTION },
     code: loinc(LOINC_CODE.MEDICAL_HISTORY, "History of present illness"),
     title: "Wywiad",
-    text: { paragraph: paragraphs },
+    text: {
+      paragraph: [
+        historyBlock(
+          "p1_wywiad",
+          "p1_wywiad_opis",
+          "Dolegliwości, przebieg choroby, dotychczasowe leczenie",
+          "p1_wywiad_wartosc",
+          history.complaints ?? "",
+        ),
+        historyBlock(
+          undefined,
+          "p1_wywiad_leczenie_onkologiczne_opis",
+          "Leczenie onkologiczne:",
+          "p1_wywiad_leczenie_onkologiczne",
+          history.oncologicalTreatment ?? "NIE",
+        ),
+        historyBlock(
+          undefined,
+          "p1_wywiad_leczenie_uzdrowiskowe_3_lat_opis",
+          "Leczenie uzdrowiskowe w ostatnich 3 latach:",
+          "p1_wywiad_leczenie_uzdrowiskowe_3_lat",
+          history.previousSpaTreatment ?? "NIE",
+        ),
+      ],
+    },
   };
 }
 
@@ -170,8 +194,8 @@ export function buildCorrespondenceSection(mode: CorrespondenceMode): CdaSection
     text: {
       paragraph: {
         "@ID": "ACT_1",
-        caption: "Sposób korespondencji z pacjentem:",
-        content: correspondence.display,
+        caption: { "@ID": "p1_sk_opis", "#": "Sposób korespondencji z pacjentem:" },
+        content: { "@ID": "p1_sk_wartosc", "#": correspondence.display },
       },
     },
     entry: {
@@ -229,6 +253,8 @@ interface VitalConfig {
   readonly display: string;
   readonly unit: string;
   readonly ref: string;
+  readonly opisId: string;
+  readonly wartoscId: string;
   readonly label: string;
 }
 
@@ -240,6 +266,8 @@ const VITALS: readonly VitalConfig[] = [
     display: "Systolic blood pressure",
     unit: "mm[Hg]",
     ref: "OBS_BP_CTS",
+    opisId: "p1_skieruzdro_bp_cts_opis",
+    wartoscId: "p1_skieruzdro_bp_cts_wartosc",
     label: "Ciśnienie tętnicze skurczowe",
   },
   {
@@ -249,6 +277,8 @@ const VITALS: readonly VitalConfig[] = [
     display: "Diastolic blood pressure",
     unit: "mm[Hg]",
     ref: "OBS_BP_CTR",
+    opisId: "p1_skieruzdro_bp_ctr_opis",
+    wartoscId: "p1_skieruzdro_bp_ctr_wartosc",
     label: "Ciśnienie tętnicze rozkurczowe",
   },
   {
@@ -258,6 +288,8 @@ const VITALS: readonly VitalConfig[] = [
     display: "Body weight",
     unit: "kg",
     ref: "OBS_BP_MC",
+    opisId: "p1_skieruzdro_bp_mc_opis",
+    wartoscId: "p1_skieruzdro_bp_mc_wartosc",
     label: "Masa ciała",
   },
   {
@@ -267,6 +299,8 @@ const VITALS: readonly VitalConfig[] = [
     display: "Body height",
     unit: "cm",
     ref: "OBS_BP_WZ",
+    opisId: "p1_skieruzdro_bp_wz_opis",
+    wartoscId: "p1_skieruzdro_bp_wz_wartosc",
     label: "Wzrost",
   },
   {
@@ -276,48 +310,129 @@ const VITALS: readonly VitalConfig[] = [
     display: "Heart rate",
     unit: "/min",
     ref: "OBS_BP_TE",
+    opisId: "p1_skieruzdro_bp_te_opis",
+    wartoscId: "p1_skieruzdro_bp_te_wartosc",
     label: "Tętno",
   },
 ];
 
-const SYSTEM_ROWS: readonly { readonly key: keyof SystemsExam; readonly label: string }[] = [
-  { key: "skinLymphNodes", label: "Skóra, węzły chłonne" },
-  { key: "respiratory", label: "Układ oddechowy [OCW]" },
-  { key: "cardiovascular", label: "Układ krążenia [OCW] NYHA" },
-  { key: "digestive", label: "Układ trawienny" },
-  { key: "urogenital", label: "Układ moczopłciowy [OCW] nerek" },
-  { key: "musculoskeletal", label: "Układ ruchu" },
-  { key: "mobilityStatus", label: "Sprawność ruchowa" },
-  { key: "nervousSystem", label: "Układ nerwowy narządów zmysłów" },
+interface SystemRow {
+  readonly key: keyof SystemsExam;
+  readonly opisId: string;
+  readonly wartoscId: string;
+  readonly label: string;
+}
+
+const SYSTEM_ROWS: readonly SystemRow[] = [
+  {
+    key: "skinLymphNodes",
+    opisId: "p1_skieruzdro_bp_skora_wezly_chlonne_opis",
+    wartoscId: "p1_skieruzdro_bp_skora_wezly_chlonne_wartosc",
+    label: "Skóra, węzły chłonne",
+  },
+  {
+    key: "respiratory",
+    opisId: "p1_skieruzdro_bp_uklad_oddechowy_ocw_opis",
+    wartoscId: "p1_skieruzdro_bp_uklad_oddechowy_ocw_wartosc",
+    label: "Układ oddechowy [OCW]",
+  },
+  {
+    key: "cardiovascular",
+    opisId: "p1_skieruzdro_bp_uklad_krazenia_ocw_nyha_opis",
+    wartoscId: "p1_skieruzdro_bp_uklad_krazenia_ocw_nyha_wartosc",
+    label: "Układ krążenia [OCW] NYHA",
+  },
+  {
+    key: "digestive",
+    opisId: "p1_skieruzdro_bp_uklad_trawienny_opis",
+    wartoscId: "p1_skieruzdro_bp_uklad_trawienny_wartosc",
+    label: "Układ trawienny",
+  },
+  {
+    key: "urogenital",
+    opisId: "p1_skieruzdro_bp_uklad_moczoplciowy_ocw_nerek_opis",
+    wartoscId: "p1_skieruzdro_bp_uklad_moczoplciowy_ocw_nerek_wartosc",
+    label: "Układ moczopłciowy [OCW] nerek",
+  },
+  {
+    key: "musculoskeletal",
+    opisId: "p1_skieruzdro_bp_uklad_ruchu_opis",
+    wartoscId: "p1_skieruzdro_bp_uklad_ruchu_wartosc",
+    label: "Układ ruchu",
+  },
 ];
 
 const yesNo = (value: boolean): string => (value ? "TAK" : "NIE");
 
+function examRow(
+  opisId: string,
+  label: string,
+  wartoscId: string,
+  value: string,
+  trId?: string,
+): Record<string, unknown> {
+  const tr: Record<string, unknown> = {};
+  if (trId) tr["@ID"] = trId;
+  tr.td = [
+    { "@ID": opisId, "#": label },
+    { "@ID": wartoscId, "#": value },
+  ];
+  return tr;
+}
+
 export function buildPhysicalExamSection(exam: PhysicalExam): CdaSection {
-  const rows: Record<string, unknown>[] = [];
+  const systems = exam.systems ?? {};
+  const vitalRows: Record<string, unknown>[] = [];
   for (const vital of VITALS) {
-    rows.push({
-      "@ID": vital.ref,
-      td: [{ "#": vital.label }, { "#": `${exam.vitalSigns[vital.key]} ${vital.unit}` }],
-    });
+    vitalRows.push(
+      examRow(
+        vital.opisId,
+        vital.label,
+        vital.wartoscId,
+        `${exam.vitalSigns[vital.key]} ${vital.unit}`,
+        vital.ref,
+      ),
+    );
   }
+
+  const systemRows: Record<string, unknown>[] = [];
   for (const system of SYSTEM_ROWS) {
-    const value = exam.systems?.[system.key];
-    if (value) rows.push({ td: [{ "#": system.label }, { "#": value }] });
+    systemRows.push(
+      examRow(system.opisId, system.label, system.wartoscId, systems[system.key] ?? ""),
+    );
   }
-  rows.push({ td: [{ "#": "Zdolność samoobsługi" }, { "#": yesNo(exam.selfCareAbility) }] });
-  rows.push({
+  systemRows.push(
+    examRow(
+      "p1_skieruzdro_bp_zdolnosc_samoobslugi_opis",
+      "Zdolność samoobsługi",
+      "p1_skieruzdro_bp_zdolnosc_samoobslugi_wartosc",
+      yesNo(exam.selfCareAbility),
+    ),
+    examRow(
+      "p1_skieruzdro_bp_ocena_sprawnosc_ruchowa_opis",
+      "Sprawność ruchowa",
+      "p1_skieruzdro_bp_ocena_sprawnosc_ruchowa_wartosc",
+      systems.mobilityStatus ?? "",
+    ),
+    examRow(
+      "p1_skieruzdro_bp_uklad_nerwowy_narzady_zmyslow_opis",
+      "Układ nerwowy narządów zmysłów",
+      "p1_skieruzdro_bp_uklad_nerwowy_narzady_zmyslow_wartosc",
+      systems.nervousSystem ?? "",
+    ),
+    examRow(
+      "p1_skieruzdro_bp_przeciwskazania_nat_surowce_lecznicze_opis",
+      "Przeciwskazania na surowce lecznicze",
+      "p1_skieruzdro_bp_przeciwskazania_nat_surowce_lecznicze_wartosc",
+      yesNo(exam.contraindicationsForNaturalResources),
+    ),
+  );
+  systemRows.push({
     td: [
-      { "#": "Przeciwskazania na surowce lecznicze" },
-      { "#": yesNo(exam.contraindicationsForNaturalResources) },
-    ],
-  });
-  rows.push({
-    td: [
-      { "#": "Uzasadnienie" },
+      { "@ID": "p1_skieruzdro_bp_uzasadnienie_opis", "#": "Uzasadnienie" },
       {
         content: exam.justifications.map((code, index) => ({
-          "@ID": `JUST_${index + 1}`,
+          "@ID": `p1_skieruzdro_bp_uzasadnienie_wartosc_${index + 1}`,
           "#": JUSTIFICATION_CODE[code],
         })),
       },
@@ -356,7 +471,9 @@ export function buildPhysicalExamSection(exam: PhysicalExam): CdaSection {
             "@codeSystem": JUSTIFICATION_OID,
             "@displayName": JUSTIFICATION_CODE[code],
           },
-          text: { reference: { "@value": `#JUST_${index + 1}` } },
+          text: {
+            reference: { "@value": `#p1_skieruzdro_bp_uzasadnienie_wartosc_${index + 1}` },
+          },
         },
       })),
     },
@@ -366,7 +483,9 @@ export function buildPhysicalExamSection(exam: PhysicalExam): CdaSection {
     templateId: { "@root": CDA_TEMPLATE.PHYSICAL_EXAM_SECTION },
     code: loinc(LOINC_CODE.PHYSICAL_FINDINGS, "Physical findings"),
     title: "Badanie przedmiotowe",
-    text: { table: { tbody: { tr: rows } } },
+    text: {
+      table: [{ tbody: { tr: vitalRows } }, { tbody: { tr: systemRows } }],
+    },
     entry: [...vitalEntries, justificationEntry],
   };
 }

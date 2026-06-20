@@ -36,6 +36,7 @@ const input: HealthResortReferralInput = {
       regon14: "12345678901234",
       regon9: "123456789",
       name: "Poradnia POZ",
+      phone: "22-1111123",
       nfzBranchCode: "07",
       nfzContractNumber: "12345678",
       address: { postalCode: "57-100", city: "Strzelin", street: "Mickiewicza", houseNumber: "20" },
@@ -113,7 +114,9 @@ describe("buildHealthResortReferralCda", () => {
     expect(result.xml).toContain('code="8480-6"'); // systolic BP (LOINC)
     expect(result.xml).toContain('unit="mm[Hg]" value="140" xsi:type="PQ"');
     expect(result.xml).toContain('code="PSR" codeSystem="2.16.840.1.113883.3.4424.11.1.300"');
-    expect(result.xml).toContain('<reference value="#JUST_1"/>');
+    expect(result.xml).toContain('<reference value="#p1_skieruzdro_bp_uzasadnienie_wartosc_1"/>');
+    // badanie ma dwie tabele: parametry życiowe (table[1]) i układy (table[2])
+    expect(result.xml).toContain('<td ID="p1_skieruzdro_bp_skora_wezly_chlonne_opis">');
   });
 
   it("includes the lab results section with ICD-9 observations", () => {
@@ -132,8 +135,8 @@ describe("buildHealthResortReferralCda", () => {
   it("omits optional sections when not provided", () => {
     const { socialHistory: _s, medicalHistory: _m, ...minimal } = input;
     const xml = buildHealthResortReferralCda(minimal).xml;
-    expect(xml).not.toContain("Rodzaj szkoły, klasa:");
-    expect(xml).not.toContain("<title>Wywiad</title>");
+    expect(xml).not.toContain("Rodzaj szkoły, klasa:"); // social history pominięte
+    expect(xml).toContain("<title>Wywiad</title>"); // wywiad jest sekcją wymaganą
     expect(xml).toContain("<title>Rozpoznania</title>");
   });
 

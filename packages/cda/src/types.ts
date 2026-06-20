@@ -45,7 +45,8 @@ export interface CdaAuthorOrganization {
   readonly regon9: string;
   readonly name: string;
   readonly address: CdaOrgAddress;
-  readonly phone?: string;
+  /** Telefon organizacji — wymagany przez Schematron P1 (telecom min 1x). */
+  readonly phone: string;
   /** Kod oddziału NFZ, np. "07". */
   readonly nfzBranchCode: string;
   /** Numer umowy NFZ. */

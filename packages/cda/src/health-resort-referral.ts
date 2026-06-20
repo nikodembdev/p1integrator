@@ -24,7 +24,7 @@ export interface HealthResortReferralInput extends Omit<
 > {
   readonly socialHistory?: string;
   readonly medicalHistory?: ReferralMedicalHistory;
-  readonly physicalExam?: PhysicalExam;
+  readonly physicalExam: PhysicalExam;
   readonly diagnoses: ReferralDiagnoses;
   readonly labResults?: readonly LabResult[];
   readonly correspondenceMode: CorrespondenceMode;
@@ -44,8 +44,8 @@ export function buildHealthResortReferralCda(
 ): ClinicalDocumentResult {
   const sections: CdaSection[] = [];
   if (input.socialHistory) sections.push(buildSocialHistorySection(input.socialHistory));
-  if (input.medicalHistory) sections.push(buildMedicalHistorySection(input.medicalHistory));
-  if (input.physicalExam) sections.push(buildPhysicalExamSection(input.physicalExam));
+  sections.push(buildMedicalHistorySection(input.medicalHistory ?? {}));
+  sections.push(buildPhysicalExamSection(input.physicalExam));
   sections.push(buildDiagnosesSection(input.diagnoses));
   if (input.labResults && input.labResults.length > 0) {
     sections.push(buildLabResultsSection(input.labResults));

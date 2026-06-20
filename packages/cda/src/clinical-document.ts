@@ -67,7 +67,7 @@ export function buildClinicalDocumentHeader(
   component.ele("templateId", { root: CDA_TEMPLATE.STRUCTURED_BODY });
   const structuredBody = component.ele("structuredBody");
   for (const section of input.bodyComponents ?? []) {
-    structuredBody.ele({ component: { section } });
+    structuredBody.ele({ component: { "@typeCode": "COMP", section } });
   }
 
   return { xml: root.end({ prettyPrint: true }), documentId, documentDate };
@@ -192,9 +192,7 @@ function buildRepresentedOrganization(org: CdaAuthorOrganization): XmlObject {
     },
     name: org.name,
   };
-  if (org.phone) {
-    representedOrganization.telecom = { "@use": "PUB", "@value": `tel:${org.phone}` };
-  }
+  representedOrganization.telecom = { "@use": "PUB", "@value": `tel:${org.phone}` };
   representedOrganization.addr = {
     postalCode: org.address.postalCode,
     city: org.address.city,
