@@ -16,6 +16,7 @@ import {
   buildGeneralReferralCda,
   buildHealthResortReferralCda,
   buildLongtermNursingReferralCda,
+  buildNullificationCda,
   buildOccupationalDiseaseReferralCda,
   buildPsychiatricReferralCda,
   buildRehabilitationReferralCda,
@@ -178,6 +179,36 @@ const occupationalDiseaseInput: OccupationalDiseaseReferralInput = {
   occupationalExposure: "Dymy spawalnicze, pyły metali, narażenie przewlekłe",
 };
 
+const nullificationInput = {
+  localRoot: "2.16.840.1.113883.3.4424.2.7.999",
+  patient: {
+    pesel: "62091512345",
+    internalId: "12345",
+    givenNames: ["Jan"],
+    familyName: "Kowalski",
+  },
+  author: {
+    authorExt: "1234567",
+    authorRoot: "2.16.840.1.113883.3.4424.1.6.2",
+    functionCode: "LEK",
+    functionDisplay: "Lekarz",
+    givenNames: ["Piotr"],
+    familyName: "Nowak",
+  },
+  legalAuthenticator: {
+    authorExt: "1234567",
+    authorRoot: "2.16.840.1.113883.3.4424.1.6.2",
+    functionCode: "LEK",
+    functionDisplay: "Lekarz",
+  },
+  annulledDocument: {
+    idRoot: "2.16.840.1.113883.3.4424.2.7.999.4.1",
+    idExtension: "9999999999999999999999",
+    versionNumber: 1,
+  },
+  description: "Anulowanie skierowania z powodu błędnych danych pacjenta",
+};
+
 const cases: Record<string, { readonly sef: string; readonly xml: () => string }> = {
   "health-resort": {
     sef: "healthResort.sef.json",
@@ -203,6 +234,10 @@ const cases: Record<string, { readonly sef: string; readonly xml: () => string }
   "occupational-disease": {
     sef: "occ.sef.json",
     xml: () => buildOccupationalDiseaseReferralCda(occupationalDiseaseInput).xml,
+  },
+  nullification: {
+    sef: "null.sef.json",
+    xml: () => buildNullificationCda(nullificationInput).xml,
   },
 };
 

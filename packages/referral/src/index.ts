@@ -12,3 +12,4 @@ export * from "./psychiatric/index.js";
 export * from "./care-facility/index.js";
 export * from "./longterm-nursing/index.js";
 export * from "./occupational-disease/index.js";
+export * from "./nullification/index.js";
