@@ -12,10 +12,20 @@ import { fileURLToPath } from "node:url";
 // @ts-expect-error - saxon-js nie dostarcza typów
 import SaxonJS from "saxon-js";
 import {
+  buildCareFacilityReferralCda,
   buildGeneralReferralCda,
   buildHealthResortReferralCda,
+  buildLongtermNursingReferralCda,
+  buildOccupationalDiseaseReferralCda,
+  buildPsychiatricReferralCda,
+  buildRehabilitationReferralCda,
+  type CareFacilityReferralInput,
   type GeneralReferralInput,
   type HealthResortReferralInput,
+  type LongtermNursingReferralInput,
+  type OccupationalDiseaseReferralInput,
+  type PsychiatricReferralInput,
+  type RehabilitationReferralInput,
 } from "../packages/referral/src/index.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -113,12 +123,87 @@ const generalInput: GeneralReferralInput = {
   },
 };
 
+const rehabilitationInput: RehabilitationReferralInput = {
+  ...header,
+  title: "Skierowanie na rehabilitację leczniczą",
+  diagnoses,
+  procedures: {
+    place: { code: "4100", name: "Oddział rehabilitacji" },
+    procedures: [{ icd9Code: "93.11", icd9Name: "Ćwiczenia czynne wolne" }],
+  },
+  contraindications: "Brak przeciwwskazań do rehabilitacji leczniczej",
+};
+
+const psychiatricInput: PsychiatricReferralInput = {
+  ...header,
+  patient: { ...patient, birthplace: { city: "Wrocław", postalCode: "50-001", country: "Polska" } },
+  title: "Skierowanie do szpitala psychiatrycznego",
+  socialHistory: "Mieszka sam, bez wsparcia rodziny",
+  diagnoses,
+  encounter: { cellCode: "2700", cellName: "Oddział dzienny psychiatryczny (ogólny)" },
+  reasonForReferral: "Pogorszenie stanu psychicznego, konieczność hospitalizacji",
+};
+
+const careFacilityInput: CareFacilityReferralInput = {
+  ...header,
+  patient: { ...patient, phone: "48-71-1234567" },
+  title: "Skierowanie do zakładu pielęgnacyjno-opiekuńczego",
+  currentMedication: "Leczenie przeciwbólowe i przeciwzakrzepowe",
+  barthelScore: "40 punktów — pacjent wymaga znacznej pomocy",
+  encounter: {
+    cellCode: "5160",
+    cellName: "Zakład/Oddział pielęgnacyjno-opiekuńczy",
+    priority: "R",
+  },
+  annotation: "Pacjent po udarze, wymaga całodobowej opieki pielęgniarskiej",
+};
+
+const longtermNursingInput: LongtermNursingReferralInput = {
+  ...header,
+  title: "Skierowanie na objęcie pielęgniarską opieką długoterminową",
+  history: "Pacjent unieruchomiony po udarze, wymaga stałej opieki pielęgniarskiej",
+  physicalFindings: "Niedowład połowiczy prawostronny, odleżyna okolicy krzyżowej",
+  encounter: { cellCode: "2142", cellName: "Pielęgniarska opieka długoterminowa" },
+};
+
+const occupationalDiseaseInput: OccupationalDiseaseReferralInput = {
+  ...header,
+  title: "Skierowanie na badanie w związku z podejrzeniem choroby zawodowej",
+  occupationHistory: "Spawacz, 20 lat pracy w narażeniu na dymy spawalnicze",
+  diagnosis: {
+    code: "21",
+    name: "Przewlekłe obturacyjne zapalenie oskrzeli",
+    description: "Podejrzenie pylicy / POChP zawodowej",
+  },
+  occupationalExposure: "Dymy spawalnicze, pyły metali, narażenie przewlekłe",
+};
+
 const cases: Record<string, { readonly sef: string; readonly xml: () => string }> = {
   "health-resort": {
     sef: "healthResort.sef.json",
     xml: () => buildHealthResortReferralCda(healthResortInput).xml,
   },
   general: { sef: "general.sef.json", xml: () => buildGeneralReferralCda(generalInput).xml },
+  rehabilitation: {
+    sef: "rehab.sef.json",
+    xml: () => buildRehabilitationReferralCda(rehabilitationInput).xml,
+  },
+  psychiatric: {
+    sef: "psych.sef.json",
+    xml: () => buildPsychiatricReferralCda(psychiatricInput).xml,
+  },
+  "care-facility": {
+    sef: "care.sef.json",
+    xml: () => buildCareFacilityReferralCda(careFacilityInput).xml,
+  },
+  "longterm-nursing": {
+    sef: "ltn.sef.json",
+    xml: () => buildLongtermNursingReferralCda(longtermNursingInput).xml,
+  },
+  "occupational-disease": {
+    sef: "occ.sef.json",
+    xml: () => buildOccupationalDiseaseReferralCda(occupationalDiseaseInput).xml,
+  },
 };
 
 const type = process.argv[2] ?? "health-resort";
