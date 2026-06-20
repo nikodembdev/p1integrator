@@ -45,19 +45,52 @@ export const CDA_TEMPLATE = {
   MEDICAL_HISTORY_SECTION: "2.16.840.1.113883.3.4424.13.10.3.10",
   DIAGNOSES_SECTION: "2.16.840.1.113883.3.4424.13.10.3.1",
   CORRESPONDENCE_SECTION: "2.16.840.1.113883.3.4424.13.10.3.166",
+  PHYSICAL_EXAM_SECTION: "2.16.840.1.113883.3.4424.13.10.3.11",
+  LAB_RESULTS_SECTION: "2.16.840.1.113883.3.4424.13.10.3.7",
   // Wpisy (entry)
   MAIN_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.1",
   SECONDARY_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.2",
   CORRESPONDENCE_ACT_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.174",
+  SYSTOLIC_BP_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.169",
+  DIASTOLIC_BP_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.170",
+  BODY_WEIGHT_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.171",
+  BODY_HEIGHT_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.172",
+  HEART_RATE_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.173",
+  JUSTIFICATION_ORGANIZER_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.237",
+  LAB_OBSERVATION_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.20",
 } as const;
 
 export const LOINC_CODE = {
   REFERRAL: "57832-8",
   SOCIAL_HISTORY: "29762-2",
   MEDICAL_HISTORY: "10164-2",
+  PHYSICAL_FINDINGS: "29545-1",
   DIAGNOSIS: "29548-5",
+  LAB_DATA: "30954-2",
   CORRESPONDENCE: "91878-9",
+  REASON_FOR_REFERRAL: "42349-1",
 } as const;
+
+export const JUSTIFICATION_OID = "2.16.840.1.113883.3.4424.11.1.300";
+
+/** Uzasadnienia świadczenia uzdrowiskowego (kody wprost z P1). */
+export const JUSTIFICATION_CODE = {
+  ULA: "Uzupełnienie leczenia ambulatoryjnego",
+  KLS: "Kontynuacja leczenia szpitalnego/rekonwalescencja poszpitalna",
+  KRS: "Kontynuacja rehabilitacji szpitalnej",
+  PJZ: "Poprawa jakości życia",
+  PSR: "Poprawa sprawności ruchowej",
+  PWK: "Poprawa wydolności krążeniowej/zmniejszenie ryzyka sercowo-naczyniowego",
+  PWO: "Poprawa wydolności oddechowej",
+  LPB: "Leczenie przeciwbólowe",
+  LPO: "Leczenie przeciwobrzękowe",
+  PPO: "Profilaktyka powikłań odległych",
+  LDI: "Leczenie dietetyczne",
+  RWA: "Redukcja wagi",
+  EZD: "Edukacja zdrowotna",
+  INN: "Inna",
+} as const;
+export type JustificationCode = keyof typeof JUSTIFICATION_CODE;
 
 /** Kody SNOMED CT używane w sekcji rozpoznań. */
 export const SNOMED_CODE = {

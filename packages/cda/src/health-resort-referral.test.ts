@@ -67,6 +67,17 @@ const input: HealthResortReferralInput = {
       },
     ],
   },
+  physicalExam: {
+    vitalSigns: { systolicBP: 140, diastolicBP: 85, weight: 88, height: 190, heartRate: 90 },
+    systems: { respiratory: "Wydolny", musculoskeletal: "Ograniczenie ruchomości" },
+    selfCareAbility: true,
+    contraindicationsForNaturalResources: false,
+    justifications: ["PSR", "LPB"],
+  },
+  labResults: [
+    { icd9Code: "A01", icd9Name: "Mocz badanie ogólne", date: "20220608" },
+    { icd9Code: "C55", icd9Name: "Morfologia krwi", date: "20220608" },
+  ],
   correspondenceMode: "P",
 };
 
@@ -95,6 +106,21 @@ describe("buildHealthResortReferralCda", () => {
     expect(result.xml).toContain('code="85097005"'); // secondary diagnosis (SNOMED)
     expect(result.xml).toContain('code="7771000"'); // left body side
     expect(result.xml).toContain('<reference value="#OBS_1"/>');
+  });
+
+  it("includes the physical exam section with vital signs and justifications", () => {
+    expect(result.xml).toContain("<title>Badanie przedmiotowe</title>");
+    expect(result.xml).toContain('code="8480-6"'); // systolic BP (LOINC)
+    expect(result.xml).toContain('unit="mm[Hg]" value="140" xsi:type="PQ"');
+    expect(result.xml).toContain('code="PSR" codeSystem="2.16.840.1.113883.3.4424.11.1.300"');
+    expect(result.xml).toContain('<reference value="#JUST_1"/>');
+  });
+
+  it("includes the lab results section with ICD-9 observations", () => {
+    expect(result.xml).toContain("<title>Aktualne wyniki badań</title>");
+    expect(result.xml).toContain('code="A01" codeSystem="2.16.840.1.113883.3.4424.11.2.6"');
+    expect(result.xml).toContain('<effectiveTime value="20220608"/>');
+    expect(result.xml).toContain('<reference value="#OBS_WB_1"/>');
   });
 
   it("includes the correspondence section with the selected mode", () => {
