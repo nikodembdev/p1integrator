@@ -39,11 +39,48 @@ export const CDA_TEMPLATE = {
   CUSTODIAN: "2.16.840.1.113883.3.4424.13.10.2.20",
   LEGAL_AUTHENTICATOR: "2.16.840.1.113883.3.4424.13.10.2.6",
   STRUCTURED_BODY: "2.16.840.1.113883.3.4424.13.10.2.35",
+
+  // Sekcje body
+  SOCIAL_HISTORY_SECTION: "2.16.840.1.113883.3.4424.13.10.3.9",
+  MEDICAL_HISTORY_SECTION: "2.16.840.1.113883.3.4424.13.10.3.10",
+  DIAGNOSES_SECTION: "2.16.840.1.113883.3.4424.13.10.3.1",
+  CORRESPONDENCE_SECTION: "2.16.840.1.113883.3.4424.13.10.3.166",
+  // Wpisy (entry)
+  MAIN_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.1",
+  SECONDARY_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.2",
+  CORRESPONDENCE_ACT_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.174",
 } as const;
 
 export const LOINC_CODE = {
   REFERRAL: "57832-8",
+  SOCIAL_HISTORY: "29762-2",
+  MEDICAL_HISTORY: "10164-2",
+  DIAGNOSIS: "29548-5",
+  CORRESPONDENCE: "91878-9",
 } as const;
+
+/** Kody SNOMED CT używane w sekcji rozpoznań. */
+export const SNOMED_CODE = {
+  PRINCIPAL_DIAGNOSIS: { code: "8319008", display: "Principal diagnosis" },
+  SECONDARY_DIAGNOSIS: { code: "85097005", display: "Secondary diagnosis" },
+} as const;
+
+/** Strona ciała (targetSiteCode, SNOMED CT). */
+export const BODY_SIDE = {
+  LEFT: { code: "7771000", display: "Left (qualifier value)" },
+  RIGHT: { code: "24028007", display: "Right (qualifier value)" },
+  BOTH: { code: "51440002", display: "Bilateral (qualifier value)" },
+} as const;
+export type BodySide = keyof typeof BODY_SIDE;
+
+/** Sposób korespondencji z pacjentem. */
+export const CORRESPONDENCE_MODE = {
+  P: { code: "P", display: "KORESPONDENCJA DROGĄ PAPIEROWĄ" },
+  E: { code: "E", display: "KORESPONDENCJA DROGĄ ELEKTRONICZNĄ" },
+} as const;
+export type CorrespondenceMode = keyof typeof CORRESPONDENCE_MODE;
+
+export const CORRESPONDENCE_OID = "2.16.840.1.113883.3.4424.13.5.11";
 
 /** Typ świadczenia uzdrowiskowego (qualifier RSUZDR). */
 export const TREATMENT_TYPE = {

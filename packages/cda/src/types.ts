@@ -1,5 +1,8 @@
 import type { Gender, RealizationMode, TreatmentType } from "./constants.js";
 
+/** Obiekt sekcji body w formacie xmlbuilder2 (zawartość elementu `<section>`). */
+export type CdaSection = Record<string, unknown>;
+
 /** Adres pacjenta (recordTarget). */
 export interface CdaPatientAddress {
   readonly city: string;
@@ -91,8 +94,8 @@ export interface ClinicalDocumentHeaderInput {
   readonly now?: Date;
   /** Nadpisanie czasu wystawienia (YYYYMMDDHHmmss). */
   readonly documentDate?: string;
-  /** Gotowy XML komponentów `structuredBody` (sekcje body — PR2). */
-  readonly bodyComponentsXml?: string;
+  /** Sekcje kliniczne `structuredBody` (obiekty z builderów sekcji). */
+  readonly bodyComponents?: readonly CdaSection[];
 }
 
 export interface ClinicalDocumentResult {

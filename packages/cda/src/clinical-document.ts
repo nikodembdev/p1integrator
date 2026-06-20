@@ -66,8 +66,8 @@ export function buildClinicalDocumentHeader(
   const component = clinicalDocument.ele("component");
   component.ele("templateId", { root: CDA_TEMPLATE.STRUCTURED_BODY });
   const structuredBody = component.ele("structuredBody");
-  if (input.bodyComponentsXml) {
-    structuredBody.ele(input.bodyComponentsXml);
+  for (const section of input.bodyComponents ?? []) {
+    structuredBody.ele({ component: { section } });
   }
 
   return { xml: root.end({ prettyPrint: true }), documentId, documentDate };
