@@ -42,25 +42,29 @@ const wssP12 = readFileSync(resolve(CERT_DIR, "Podmiot_leczniczy_713-wss.p12"));
 const context: CallContext = {
   subject: { root: "2.16.840.1.113883.3.4424.2.3.1", extension: "000000927722" },
   user: { root: "2.16.840.1.113883.3.4424.1.6.2", extension: "4727124" },
-  workplace: { root: "2.16.840.1.113883.3.4424.2.3.2", extension: "01" },
+  workplace: {
+    root: process.env.MUS_ROOT ?? "2.16.840.1.113883.3.4424.2.3.2",
+    extension: process.env.MUS_EXT ?? "000000927722-01",
+  },
   businessRole: "DOCTOR",
 };
 
 const input: GeneralReferralInput = {
   localRoot: "2.16.840.1.113883.3.4424.2.7.1491",
   title: "Skierowanie do poradni specjalistycznej",
-  nfzBranchCode: "07",
+  nfzBranchCode: "06",
   patient: {
-    pesel: "59123111858", // pacjent testowy z oficjalnego przykładu P1 (ur. 1959-12-31, M)
-    givenNames: ["Jan"],
-    familyName: "Testowy",
-    birthDate: "19591231",
+    // Dane z dokumentu, który przeszedł na integracji → pacjent zarejestrowany w CWUb.
+    pesel: "40010151673",
+    givenNames: ["Jon"],
+    familyName: "BGTestowy",
+    birthDate: "19400101",
     gender: "M",
     address: {
-      city: "Błotnica",
-      postalCode: "26-220",
-      street: "Błotnica",
-      houseNumber: "5",
+      city: "Warszawa",
+      postalCode: "01-381",
+      street: "Powstańców Śląskich",
+      houseNumber: "8B",
       use: "PST",
     },
   },
@@ -69,24 +73,29 @@ const input: GeneralReferralInput = {
     authorRoot: "2.16.840.1.113883.3.4424.1.6.2",
     functionCode: "LEK",
     functionDisplay: "Lekarz",
-    specialtyCode: "0718_0726",
-    specialtyDisplay: "neurologia",
-    givenNames: ["Adam713"],
+    specialtyCode: "0713",
+    specialtyDisplay: "medycyna rodzinna",
+    givenNames: ["Adam"],
     familyName: "Leczniczy",
     organization: {
+      // Dane podmiotu z dokumentu, który przeszedł (Jutro Medical, 927722).
       providerExt: "000000927722",
       providerRoot: "2.16.840.1.113883.3.4424.2.3.1",
-      regon14: "93118518300020",
-      regon9: "931185183",
-      name: "Podmiot leczniczy 713",
-      phone: "22-1111123",
-      nfzBranchCode: "07",
-      nfzContractNumber: "12345678",
+      regon14: "23706493000004",
+      regon9: "237064930",
+      name: "Poradnia (gabinet) lekarza POZ",
+      phone: "+48570690376",
+      nfzBranchCode: "06",
+      nfzContractNumber: "070606525210601",
+      orgUnitExt: "000000927722-01",
+      orgUnitName: "Warszawa",
+      cellSpecialtyCode: "0010",
+      cellSpecialtyName: "Poradnia (gabinet) lekarza POZ",
       address: {
-        postalCode: "57-100",
-        city: "Strzelin",
-        street: "Adama Mickiewicza",
-        houseNumber: "20",
+        postalCode: "01-797",
+        city: "Warszawa",
+        street: "Powązkowska",
+        houseNumber: "44",
       },
     },
   },
@@ -98,13 +107,13 @@ const input: GeneralReferralInput = {
   },
   diagnoses: {
     main: {
-      icd10Code: "J06.9",
-      icd10Name: "Ostre zakażenie górnych dróg oddechowych, nieokreślone",
-      description: "Infekcja górnych dróg oddechowych",
+      icd10Code: "J45",
+      icd10Name: "Astma oskrzelowa",
+      description: "Astma oskrzelowa",
     },
   },
   procedures: {
-    place: { code: "4100", name: "Poradnia neurologiczna" },
+    place: { code: "0010", name: "Poradnia (gabinet) lekarza POZ" },
     procedures: [{ icd9Code: "89.00", icd9Name: "Porada lekarska" }],
   },
 };
@@ -147,7 +156,10 @@ const transport: ReferralTransport = {
 };
 
 async function main(): Promise<void> {
-  console.log("CDA długość:", buildGeneralReferralCda(input).xml.length, "znaków");
+  const cda = buildGeneralReferralCda(input).xml;
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync(resolve(import.meta.dirname, "../.local/smoke-cda.xml"), cda);
+  console.log("CDA długość:", cda.length, "znaków");
   console.log("Wysyłam skierowanie ogólne na:", P1_ENDPOINT);
   const result = await issueGeneralReferral(input, transport);
   console.log("\n=== WYNIK ===");

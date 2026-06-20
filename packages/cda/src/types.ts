@@ -63,6 +63,17 @@ export interface CdaAuthorOrganization {
   readonly nfzBranchCode: string;
   /** Numer umowy NFZ. */
   readonly nfzContractNumber: string;
+  /**
+   * Jednostka organizacyjna (root .2.3.2), np. "000000927722-01" — poziom MUŚ między
+   * komórką a podmiotem. Gdy podana, emitowana jest pełna hierarchia P1
+   * (komórka → jednostka → podmiot); musi zgadzać się z `idMiejscaPracy` z kontekstu
+   * wywołania oraz z rejestracją w CWUd.
+   */
+  readonly orgUnitExt?: string;
+  readonly orgUnitName?: string;
+  /** Kod specjalności komórki (standardIndustryClassCode, cz. VIII kodu resortowego), np. "0010". */
+  readonly cellSpecialtyCode?: string;
+  readonly cellSpecialtyName?: string;
 }
 
 export interface CdaAuthor {

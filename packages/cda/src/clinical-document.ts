@@ -183,7 +183,16 @@ function buildRepresentedOrganization(org: CdaAuthorOrganization): XmlObject {
     streetName: org.address.street,
     houseNumber: org.address.houseNumber,
   };
-  representedOrganization.asOrganizationPartOf = {
+  if (org.cellSpecialtyCode) {
+    representedOrganization.standardIndustryClassCode = {
+      "@code": org.cellSpecialtyCode,
+      "@codeSystem": CDA_OID.ORG_CELL_SPECIALTY,
+      "@displayName": org.cellSpecialtyName ?? org.name,
+    };
+  }
+
+  // Poziom podmiotu (REGON 14 → podmiot + REGON 9).
+  const providerLevel: XmlObject = {
     wholeOrganization: {
       templateId: { "@root": CDA_TEMPLATE.WHOLE_ORGANIZATION },
       id: { "@extension": org.regon14, "@root": CDA_OID.REGON_14, "@displayable": "true" },
@@ -197,6 +206,25 @@ function buildRepresentedOrganization(org: CdaAuthorOrganization): XmlObject {
       },
     },
   };
+
+  // Gdy podano jednostkę organizacyjną (MUŚ, .2.3.2) — wstaw ją między komórkę a podmiot.
+  if (org.orgUnitExt) {
+    representedOrganization.asOrganizationPartOf = {
+      wholeOrganization: {
+        id: { "@extension": org.orgUnitExt, "@root": CDA_OID.ORG_UNIT, "@displayable": "true" },
+        name: org.orgUnitName ?? org.name,
+        addr: {
+          postalCode: org.address.postalCode,
+          city: org.address.city,
+          streetName: org.address.street,
+          houseNumber: org.address.houseNumber,
+        },
+        asOrganizationPartOf: providerLevel,
+      },
+    };
+  } else {
+    representedOrganization.asOrganizationPartOf = providerLevel;
+  }
   return representedOrganization;
 }
 
