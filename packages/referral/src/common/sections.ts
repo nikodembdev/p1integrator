@@ -1,4 +1,4 @@
-import { CDA_OID, type CdaSection } from "@p1/cda";
+import { CDA_OID, type CdaSection, type XmlObject } from "@p1/cda";
 import {
   BODY_SIDE,
   type BodySide,
@@ -13,6 +13,95 @@ const loinc = (code: string, display: string): Record<string, unknown> => ({
   "@codeSystemName": "LOINC",
   "@displayName": display,
 });
+
+// ─────────────────────────────────────────────────────────────
+// Generyczne cegiełki sekcji — współdzielone przez typy skierowań
+// ─────────────────────────────────────────────────────────────
+
+/** Element `<code>` dokumentu skierowania: LOINC + translation na klasyfikację dokumentów P1. */
+export function buildReferralDocumentCode(args: {
+  readonly loinc: string;
+  readonly loincDisplay: string;
+  readonly p1Class: string;
+  readonly p1ClassDisplay: string;
+}): XmlObject {
+  return {
+    "@code": args.loinc,
+    "@codeSystem": CDA_OID.LOINC,
+    "@codeSystemName": "LOINC",
+    "@displayName": args.loincDisplay,
+    translation: {
+      "@code": args.p1Class,
+      "@displayName": args.p1ClassDisplay,
+      "@codeSystem": CDA_OID.DOC_CLASS_P1,
+      "@codeSystemName": "KLAS_DOK_P1",
+    },
+  };
+}
+
+/** Sekcja czysto narracyjna (templateId + code LOINC + title + text). */
+export function buildNarrativeSection(args: {
+  readonly templateId: string;
+  readonly loincCode: string;
+  readonly loincDisplay: string;
+  readonly title: string;
+  readonly text: string;
+  readonly contentId: string;
+}): CdaSection {
+  return {
+    templateId: { "@root": args.templateId },
+    code: loinc(args.loincCode, args.loincDisplay),
+    title: args.title,
+    text: { content: { "@ID": args.contentId, "#": args.text } },
+  };
+}
+
+/** Tryb realizacji skierowania wg HL7 Act Priority: zwykły / pilny. */
+export type ReferralPriority = "R" | "UR";
+const ACT_PRIORITY_OID = "2.16.840.1.113883.5.7";
+
+/** Przedmiot skierowania: encounter ENC/RQO z kodem specjalności komórki organizacyjnej. */
+export interface RequestedEncounter {
+  /** Kod specjalności komórki organizacyjnej (cz. VIII kodu resortowego), np. "2700"/"5160". */
+  readonly cellCode: string;
+  readonly cellName: string;
+  /** Tryb realizacji ("R" zwykły / "UR" pilny) — wymagany przez część typów (np. zakład opiekuńczy). */
+  readonly priority?: ReferralPriority;
+}
+
+/**
+ * Wpis „Przedmiot skierowania" (encounter ENC/RQO) — wspólny dla typów wymagających
+ * wskazania komórki organizacyjnej (psychiatryczny .4.11, opiekuńczy/długoterminowy .4.9).
+ */
+export function buildRequestedEncounterEntry(
+  entryTemplateId: string,
+  encounter: RequestedEncounter,
+  referenceId: string,
+): XmlObject {
+  return {
+    templateId: { "@root": entryTemplateId },
+    encounter: {
+      "@classCode": "ENC",
+      "@moodCode": "RQO",
+      code: {
+        "@code": encounter.cellCode,
+        "@codeSystem": CDA_OID.ORG_CELL_SPECIALTY,
+        "@displayName": encounter.cellName,
+      },
+      text: { reference: { "@value": `#${referenceId}` } },
+      ...(encounter.priority
+        ? {
+            priorityCode: {
+              "@code": encounter.priority,
+              "@codeSystem": ACT_PRIORITY_OID,
+              "@codeSystemName": "Act Priority",
+              "@displayName": encounter.priority === "UR" ? "urgent" : "routine",
+            },
+          }
+        : {}),
+    },
+  };
+}
 
 // ─────────────────────────────────────────────────────────────
 // Rozpoznania (Diagnoses) — wspólne dla typów skierowań

@@ -7,3 +7,8 @@ export * from "./submit.js";
 export * from "./common/index.js";
 export * from "./health-resort/index.js";
 export * from "./general/index.js";
+export * from "./rehabilitation/index.js";
+export * from "./psychiatric/index.js";
+export * from "./care-facility/index.js";
+export * from "./longterm-nursing/index.js";
+export * from "./occupational-disease/index.js";

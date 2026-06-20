@@ -1,16 +1,15 @@
 import {
   buildClinicalDocument,
-  CDA_OID,
   type CdaSection,
   type ClinicalDocumentInput,
   type ClinicalDocumentResult,
-  type XmlObject,
 } from "@p1/cda";
 import type { P1Error, Result } from "@p1/core";
 import {
   type Attachment,
   buildAttachmentsSection,
   buildDiagnosesSection,
+  buildReferralDocumentCode,
   type ReferralDiagnoses,
 } from "../common/index.js";
 import {
@@ -28,22 +27,6 @@ export interface GeneralReferralInput extends Omit<
   readonly diagnoses: ReferralDiagnoses;
   readonly procedures: ReferralProcedures;
   readonly attachments?: readonly Attachment[];
-}
-
-/** Element `<code>` skierowania ogólnego (bez kwalifikatorów uzdrowiskowych). */
-function buildGeneralCode(): XmlObject {
-  return {
-    "@code": GENERAL_LOINC.DOCUMENT,
-    "@codeSystem": CDA_OID.LOINC,
-    "@codeSystemName": "LOINC",
-    "@displayName": "Prescription for diagnostic or specialist care Document",
-    translation: {
-      "@code": "02.10",
-      "@displayName": "Skierowanie na badanie lub leczenie",
-      "@codeSystem": CDA_OID.DOC_CLASS_P1,
-      "@codeSystemName": "KLAS_DOK_P1",
-    },
-  };
 }
 
 /**
@@ -64,7 +47,12 @@ export function buildGeneralReferralCda(input: GeneralReferralInput): ClinicalDo
     ...header,
     templateId: { root: GENERAL_TEMPLATE.GENERAL_REFERRAL, extension: "1.3.2" },
     structuredBodyTemplateId: GENERAL_TEMPLATE.STRUCTURED_BODY,
-    code: buildGeneralCode(),
+    code: buildReferralDocumentCode({
+      loinc: GENERAL_LOINC.DOCUMENT,
+      loincDisplay: "Prescription for diagnostic or specialist care Document",
+      p1Class: "02.10",
+      p1ClassDisplay: "Skierowanie na badanie lub leczenie",
+    }),
     sections,
   });
 }
