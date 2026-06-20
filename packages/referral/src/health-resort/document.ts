@@ -16,19 +16,21 @@ import {
   type TreatmentType,
 } from "./constants.js";
 import {
-  type AmbulatoryTreatment,
   type Attachment,
-  buildAmbulatoryTreatmentSection,
   buildAttachmentsSection,
-  buildCorrespondenceSection,
   buildDiagnosesSection,
+  type ReferralDiagnoses,
+} from "../common/index.js";
+import {
+  type AmbulatoryTreatment,
+  buildAmbulatoryTreatmentSection,
+  buildCorrespondenceSection,
   buildLabResultsSection,
   buildMedicalHistorySection,
   buildPhysicalExamSection,
   buildSocialHistorySection,
   type LabResult,
   type PhysicalExam,
-  type ReferralDiagnoses,
   type ReferralMedicalHistory,
 } from "./sections.js";
 import type { P1Error, Result } from "@p1/core";

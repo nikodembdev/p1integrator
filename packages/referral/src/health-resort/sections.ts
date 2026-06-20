@@ -1,7 +1,5 @@
 import { CDA_OID, type CdaSection } from "@p1/cda";
 import {
-  BODY_SIDE,
-  type BodySide,
   CORRESPONDENCE_MODE,
   CORRESPONDENCE_OID,
   type CorrespondenceMode,
@@ -10,7 +8,6 @@ import {
   JUSTIFICATION_OID,
   LOINC_CODE,
   REFERRAL_TEMPLATE,
-  SNOMED_CODE,
 } from "./constants.js";
 
 const loinc = (code: string, display: string): Record<string, unknown> => ({
@@ -88,94 +85,6 @@ export function buildMedicalHistorySection(history: ReferralMedicalHistory): Cda
           history.previousSpaTreatment ?? "NIE",
         ),
       ],
-    },
-  };
-}
-
-// ─────────────────────────────────────────────────────────────
-// Rozpoznania (Diagnoses)
-// ─────────────────────────────────────────────────────────────
-
-export interface DiagnosisInput {
-  readonly icd10Code: string;
-  readonly icd10Name: string;
-  /** Opis narracyjny rozpoznania (treść referencji z entry). */
-  readonly description: string;
-  readonly bodySide?: BodySide;
-}
-
-export interface ReferralDiagnoses {
-  readonly main: DiagnosisInput;
-  readonly secondary?: readonly DiagnosisInput[];
-}
-
-export function buildDiagnosesSection(diagnoses: ReferralDiagnoses): CdaSection {
-  const all = [diagnoses.main, ...(diagnoses.secondary ?? [])];
-  const contentId = (index: number): string => `OBS_${index + 1}`;
-
-  return {
-    templateId: { "@root": REFERRAL_TEMPLATE.DIAGNOSES_SECTION },
-    code: loinc(LOINC_CODE.DIAGNOSIS, "Diagnosis"),
-    title: "Rozpoznania",
-    text: {
-      paragraph: {
-        caption: "Rozpoznania wg ICD-10:",
-        content: all.map((diagnosis, index) => ({
-          "@ID": contentId(index),
-          "#": `${diagnosis.icd10Code} ${diagnosis.description}`,
-        })),
-      },
-    },
-    entry: all.map((diagnosis, index) =>
-      buildDiagnosisEntry(diagnosis, contentId(index), index === 0),
-    ),
-  };
-}
-
-function buildDiagnosisEntry(
-  diagnosis: DiagnosisInput,
-  contentId: string,
-  isMain: boolean,
-): Record<string, unknown> {
-  const snomed = isMain ? SNOMED_CODE.PRINCIPAL_DIAGNOSIS : SNOMED_CODE.SECONDARY_DIAGNOSIS;
-  const templateRoot = isMain
-    ? REFERRAL_TEMPLATE.MAIN_DIAGNOSIS_ENTRY
-    : REFERRAL_TEMPLATE.SECONDARY_DIAGNOSIS_ENTRY;
-
-  const observation: Record<string, unknown> = {
-    "@classCode": "OBS",
-    "@moodCode": "EVN",
-    code: {
-      "@code": diagnosis.icd10Code,
-      "@codeSystem": CDA_OID.ICD10,
-      "@codeSystemName": "icd10",
-      "@displayName": diagnosis.icd10Name,
-    },
-    text: { reference: { "@value": `#${contentId}` } },
-  };
-  if (diagnosis.bodySide) {
-    const side = BODY_SIDE[diagnosis.bodySide];
-    observation.targetSiteCode = {
-      "@code": side.code,
-      "@codeSystem": CDA_OID.SNOMED_CT,
-      "@codeSystemName": "SNOMED CT",
-      "@displayName": side.display,
-    };
-  }
-
-  return {
-    templateId: { "@root": templateRoot },
-    organizer: {
-      "@classCode": "BATTERY",
-      "@moodCode": "EVN",
-      code: {
-        "@code": snomed.code,
-        "@codeSystem": CDA_OID.SNOMED_CT,
-        "@codeSystemName": "SNOMED CT",
-        "@displayName": snomed.display,
-      },
-      statusCode: { "@code": "completed" },
-      component: { observation },
     },
   };
 }
@@ -553,101 +462,5 @@ export function buildAmbulatoryTreatmentSection(treatment: AmbulatoryTreatment):
         "#": `${treatment.location}${term}`,
       },
     },
-  };
-}
-
-// ─────────────────────────────────────────────────────────────
-// Załączniki
-// ─────────────────────────────────────────────────────────────
-
-export interface Attachment {
-  readonly idRoot: string;
-  readonly idExtension: string;
-  readonly loincCode: string;
-  readonly loincDisplay: string;
-  /** Kod klasy dokumentu P1 (np. "06.10"). */
-  readonly p1ClassCode: string;
-  readonly p1ClassDisplay: string;
-  readonly description: string;
-  /** Dokument zeskanowany — używa szablonu EXTERNAL_DOCUMENT_SCAN i pomija setId. */
-  readonly isScan?: boolean;
-  readonly setIdRoot?: string;
-  readonly setIdExtension?: string;
-  readonly versionNumber?: number;
-}
-
-export function buildAttachmentsSection(attachments: readonly Attachment[]): CdaSection {
-  const attachmentId = (index: number): string => `ZAL_${index + 1}`;
-  return {
-    templateId: { "@root": REFERRAL_TEMPLATE.ATTACHMENTS_SECTION },
-    title: "Załączniki",
-    text: {
-      list: {
-        item: attachments.map((attachment, index) => ({
-          "@ID": attachmentId(index),
-          "#": attachment.description,
-        })),
-      },
-    },
-    entry: {
-      organizer: {
-        "@classCode": "CLUSTER",
-        "@moodCode": "EVN",
-        templateId: { "@root": REFERRAL_TEMPLATE.ATTACHMENT_ORGANIZER_ENTRY },
-        statusCode: { "@code": "completed" },
-        reference: attachments.map((attachment, index) =>
-          buildAttachmentReference(attachment, attachmentId(index)),
-        ),
-      },
-    },
-  };
-}
-
-function buildAttachmentReference(
-  attachment: Attachment,
-  attachmentId: string,
-): Record<string, unknown> {
-  const externalDocTemplate = attachment.isScan
-    ? REFERRAL_TEMPLATE.EXTERNAL_DOCUMENT_SCAN
-    : REFERRAL_TEMPLATE.EXTERNAL_DOCUMENT;
-
-  const externalDocument: Record<string, unknown> = {
-    "@classCode": "DOC",
-    "@moodCode": "EVN",
-    templateId: { "@root": externalDocTemplate },
-    id: { "@extension": attachment.idExtension, "@root": attachment.idRoot },
-    code: {
-      "@code": attachment.loincCode,
-      "@codeSystem": CDA_OID.LOINC,
-      "@codeSystemName": "LOINC",
-      "@displayName": attachment.loincDisplay,
-      translation: {
-        "@code": attachment.p1ClassCode,
-        "@codeSystem": CDA_OID.DOC_CLASS_P1,
-        "@codeSystemName": "Klasa dokumentów P1",
-        "@displayName": attachment.p1ClassDisplay,
-      },
-    },
-    text: { reference: { "@value": `#${attachmentId}` } },
-  };
-
-  if (attachment.setIdRoot && attachment.setIdExtension) {
-    externalDocument.setId = {
-      "@extension": attachment.setIdExtension,
-      "@root": attachment.setIdRoot,
-    };
-  } else if (!attachment.isScan) {
-    externalDocument.setId = { "@nullFlavor": "NA" };
-  }
-  externalDocument.versionNumber =
-    attachment.versionNumber !== undefined
-      ? { "@value": String(attachment.versionNumber) }
-      : { "@nullFlavor": "NA" };
-
-  return {
-    "@typeCode": "REFR",
-    templateId: { "@root": REFERRAL_TEMPLATE.ATTACHMENT_REFERENCE_ENTRY },
-    seperatableInd: { "@value": "false" },
-    externalDocument,
   };
 }

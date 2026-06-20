@@ -1,24 +1,16 @@
 /**
- * Stałe specyficzne dla skierowania na leczenie uzdrowiskowe (CDA PL IG 1.3.2):
- * szablon dokumentu, szablony sekcji i wpisów, kody LOINC/SNOMED oraz słowniki
- * (typ świadczenia, tryb, uzasadnienia, korespondencja). Generyczne OID-y i
- * szablony nagłówka pochodzą z `@p1/cda`.
+ * Stałe specyficzne dla skierowania na leczenie uzdrowiskowe (CDA PL IG 1.3.2).
+ * Sekcje wspólne (rozpoznania, załączniki) i ich stałe są w `../common`.
  */
 
 export const REFERRAL_TEMPLATE = {
   HEALTH_RESORT_REFERRAL: "2.16.840.1.113883.3.4424.13.10.1.9",
-  // Sekcje body
   SOCIAL_HISTORY_SECTION: "2.16.840.1.113883.3.4424.13.10.3.9",
   MEDICAL_HISTORY_SECTION: "2.16.840.1.113883.3.4424.13.10.3.10",
   PHYSICAL_EXAM_SECTION: "2.16.840.1.113883.3.4424.13.10.3.11",
-  DIAGNOSES_SECTION: "2.16.840.1.113883.3.4424.13.10.3.1",
   LAB_RESULTS_SECTION: "2.16.840.1.113883.3.4424.13.10.3.7",
   CORRESPONDENCE_SECTION: "2.16.840.1.113883.3.4424.13.10.3.166",
   AMBULATORY_TREATMENT_SECTION: "2.16.840.1.113883.3.4424.13.10.3.2",
-  ATTACHMENTS_SECTION: "2.16.840.1.113883.3.4424.13.10.3.39",
-  // Wpisy (entry)
-  MAIN_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.1",
-  SECONDARY_DIAGNOSIS_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.2",
   CORRESPONDENCE_ACT_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.174",
   SYSTOLIC_BP_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.169",
   DIASTOLIC_BP_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.170",
@@ -27,10 +19,6 @@ export const REFERRAL_TEMPLATE = {
   HEART_RATE_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.173",
   JUSTIFICATION_ORGANIZER_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.237",
   LAB_OBSERVATION_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.20",
-  ATTACHMENT_ORGANIZER_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.31",
-  ATTACHMENT_REFERENCE_ENTRY: "2.16.840.1.113883.3.4424.13.10.4.32",
-  EXTERNAL_DOCUMENT: "2.16.840.1.113883.3.4424.13.10.4.33",
-  EXTERNAL_DOCUMENT_SCAN: "2.16.840.1.113883.3.4424.13.10.4.34",
 } as const;
 
 export const LOINC_CODE = {
@@ -38,26 +26,11 @@ export const LOINC_CODE = {
   SOCIAL_HISTORY: "29762-2",
   MEDICAL_HISTORY: "10164-2",
   PHYSICAL_FINDINGS: "29545-1",
-  DIAGNOSIS: "29548-5",
   LAB_DATA: "30954-2",
   CORRESPONDENCE: "91878-9",
   REASON_FOR_REFERRAL: "42349-1",
   ANNOTATION_COMMENT: "48767-8",
 } as const;
-
-/** Kody SNOMED CT używane w sekcji rozpoznań. */
-export const SNOMED_CODE = {
-  PRINCIPAL_DIAGNOSIS: { code: "8319008", display: "Principal diagnosis" },
-  SECONDARY_DIAGNOSIS: { code: "85097005", display: "Secondary diagnosis" },
-} as const;
-
-/** Strona ciała (targetSiteCode, SNOMED CT). */
-export const BODY_SIDE = {
-  LEFT: { code: "7771000", display: "Left (qualifier value)" },
-  RIGHT: { code: "24028007", display: "Right (qualifier value)" },
-  BOTH: { code: "51440002", display: "Bilateral (qualifier value)" },
-} as const;
-export type BodySide = keyof typeof BODY_SIDE;
 
 /** Sposób korespondencji z pacjentem. */
 export const CORRESPONDENCE_MODE = {

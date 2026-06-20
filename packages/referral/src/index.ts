@@ -4,4 +4,6 @@
  */
 
 export * from "./submit.js";
+export * from "./common/index.js";
 export * from "./health-resort/index.js";
+export * from "./general/index.js";

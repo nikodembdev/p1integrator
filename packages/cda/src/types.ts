@@ -94,6 +94,8 @@ export interface ClinicalDocumentInput {
   readonly nfzBranchCode: string;
   /** Sekcje kliniczne `structuredBody` (obiekty z builderów sekcji). */
   readonly sections?: readonly CdaSection[];
+  /** Szablon komponentu `structuredBody` (różny per typ dokumentu; domyślnie 2.35). */
+  readonly structuredBodyTemplateId?: string;
 
   /** Identyfikator dokumentu (domyślnie generowany). */
   readonly documentId?: string;

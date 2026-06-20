@@ -59,7 +59,9 @@ export function buildClinicalDocument(input: ClinicalDocumentInput): ClinicalDoc
   clinicalDocument.ele(header);
 
   const component = clinicalDocument.ele("component");
-  component.ele("templateId", { root: CDA_TEMPLATE.STRUCTURED_BODY });
+  component.ele("templateId", {
+    root: input.structuredBodyTemplateId ?? CDA_TEMPLATE.STRUCTURED_BODY,
+  });
   const structuredBody = component.ele("structuredBody");
   for (const section of input.sections ?? []) {
     structuredBody.ele({ component: { "@typeCode": "COMP", section } });
