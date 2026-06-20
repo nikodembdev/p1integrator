@@ -1,6 +1,10 @@
 import { buildClinicalDocumentHeader } from "./clinical-document.js";
 import type { CorrespondenceMode } from "./constants.js";
 import {
+  type AmbulatoryTreatment,
+  type Attachment,
+  buildAmbulatoryTreatmentSection,
+  buildAttachmentsSection,
   buildCorrespondenceSection,
   buildDiagnosesSection,
   buildLabResultsSection,
@@ -24,12 +28,16 @@ export interface HealthResortReferralInput extends Omit<
   readonly diagnoses: ReferralDiagnoses;
   readonly labResults?: readonly LabResult[];
   readonly correspondenceMode: CorrespondenceMode;
+  /** Leczenie ambulatoryjne — uwzględniane tylko w trybie realizacji TA. */
+  readonly ambulatoryTreatment?: AmbulatoryTreatment;
+  readonly attachments?: readonly Attachment[];
 }
 
 /**
  * Buduje kompletny dokument CDA „skierowanie do uzdrowiska": nagłówek + sekcje
  * body w kolejności zgodnej z IG: wywiad społeczny → wywiad → badanie przedmiotowe
- * → rozpoznania → wyniki badań → korespondencja.
+ * → rozpoznania → wyniki badań → korespondencja → leczenie ambulatoryjne →
+ * załączniki.
  */
 export function buildHealthResortReferralCda(
   input: HealthResortReferralInput,
@@ -43,6 +51,12 @@ export function buildHealthResortReferralCda(
     sections.push(buildLabResultsSection(input.labResults));
   }
   sections.push(buildCorrespondenceSection(input.correspondenceMode));
+  if (input.ambulatoryTreatment && input.realizationMode === "TA") {
+    sections.push(buildAmbulatoryTreatmentSection(input.ambulatoryTreatment));
+  }
+  if (input.attachments && input.attachments.length > 0) {
+    sections.push(buildAttachmentsSection(input.attachments));
+  }
 
   const {
     socialHistory: _s,
@@ -51,6 +65,8 @@ export function buildHealthResortReferralCda(
     diagnoses: _d,
     labResults: _l,
     correspondenceMode: _c,
+    ambulatoryTreatment: _a,
+    attachments: _at,
     ...header
   } = input;
   return buildClinicalDocumentHeader({ ...header, bodyComponents: sections });

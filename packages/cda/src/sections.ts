@@ -412,3 +412,124 @@ export function buildLabResultsSection(results: readonly LabResult[]): CdaSectio
     })),
   };
 }
+
+// ─────────────────────────────────────────────────────────────
+// Leczenie ambulatoryjne (tylko tryb TA)
+// ─────────────────────────────────────────────────────────────
+
+export interface AmbulatoryTreatment {
+  readonly location: string;
+  readonly term?: string;
+}
+
+export function buildAmbulatoryTreatmentSection(treatment: AmbulatoryTreatment): CdaSection {
+  const term = treatment.term ? `, termin: ${treatment.term}` : "";
+  return {
+    templateId: { "@root": CDA_TEMPLATE.AMBULATORY_TREATMENT_SECTION },
+    code: loinc(LOINC_CODE.ANNOTATION_COMMENT, "Annotation comment"),
+    title: "Leczenie Ambulatoryjne",
+    text: {
+      paragraph: {
+        "@ID": "p1_la_miejsce",
+        caption: { "@styleCode": "Bold", "#": "Preferowane miejsce leczenia ambulatoryjnego:" },
+        "#": `${treatment.location}${term}`,
+      },
+    },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Załączniki
+// ─────────────────────────────────────────────────────────────
+
+export interface Attachment {
+  readonly idRoot: string;
+  readonly idExtension: string;
+  readonly loincCode: string;
+  readonly loincDisplay: string;
+  /** Kod klasy dokumentu P1 (np. "06.10"). */
+  readonly p1ClassCode: string;
+  readonly p1ClassDisplay: string;
+  readonly description: string;
+  /** Dokument zeskanowany — używa szablonu EXTERNAL_DOCUMENT_SCAN i pomija setId. */
+  readonly isScan?: boolean;
+  readonly setIdRoot?: string;
+  readonly setIdExtension?: string;
+  readonly versionNumber?: number;
+}
+
+export function buildAttachmentsSection(attachments: readonly Attachment[]): CdaSection {
+  const attachmentId = (index: number): string => `ZAL_${index + 1}`;
+  return {
+    templateId: { "@root": CDA_TEMPLATE.ATTACHMENTS_SECTION },
+    title: "Załączniki",
+    text: {
+      list: {
+        item: attachments.map((attachment, index) => ({
+          "@ID": attachmentId(index),
+          "#": attachment.description,
+        })),
+      },
+    },
+    entry: {
+      organizer: {
+        "@classCode": "CLUSTER",
+        "@moodCode": "EVN",
+        templateId: { "@root": CDA_TEMPLATE.ATTACHMENT_ORGANIZER_ENTRY },
+        statusCode: { "@code": "completed" },
+        reference: attachments.map((attachment, index) =>
+          buildAttachmentReference(attachment, attachmentId(index)),
+        ),
+      },
+    },
+  };
+}
+
+function buildAttachmentReference(
+  attachment: Attachment,
+  attachmentId: string,
+): Record<string, unknown> {
+  const externalDocTemplate = attachment.isScan
+    ? CDA_TEMPLATE.EXTERNAL_DOCUMENT_SCAN
+    : CDA_TEMPLATE.EXTERNAL_DOCUMENT;
+
+  const externalDocument: Record<string, unknown> = {
+    "@classCode": "DOC",
+    "@moodCode": "EVN",
+    templateId: { "@root": externalDocTemplate },
+    id: { "@extension": attachment.idExtension, "@root": attachment.idRoot },
+    code: {
+      "@code": attachment.loincCode,
+      "@codeSystem": CDA_OID.LOINC,
+      "@codeSystemName": "LOINC",
+      "@displayName": attachment.loincDisplay,
+      translation: {
+        "@code": attachment.p1ClassCode,
+        "@codeSystem": CDA_OID.DOC_CLASS_P1,
+        "@codeSystemName": "Klasa dokumentów P1",
+        "@displayName": attachment.p1ClassDisplay,
+      },
+    },
+    text: { reference: { "@value": `#${attachmentId}` } },
+  };
+
+  if (attachment.setIdRoot && attachment.setIdExtension) {
+    externalDocument.setId = {
+      "@extension": attachment.setIdExtension,
+      "@root": attachment.setIdRoot,
+    };
+  } else if (!attachment.isScan) {
+    externalDocument.setId = { "@nullFlavor": "NA" };
+  }
+  externalDocument.versionNumber =
+    attachment.versionNumber !== undefined
+      ? { "@value": String(attachment.versionNumber) }
+      : { "@nullFlavor": "NA" };
+
+  return {
+    "@typeCode": "REFR",
+    templateId: { "@root": CDA_TEMPLATE.ATTACHMENT_REFERENCE_ENTRY },
+    seperatableInd: { "@value": "false" },
+    externalDocument,
+  };
+}

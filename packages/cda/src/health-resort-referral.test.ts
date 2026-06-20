@@ -136,4 +136,50 @@ describe("buildHealthResortReferralCda", () => {
     expect(xml).not.toContain("<title>Wywiad</title>");
     expect(xml).toContain("<title>Rozpoznania</title>");
   });
+
+  it("includes ambulatory treatment (TA mode) and attachments when provided", () => {
+    const xml = buildHealthResortReferralCda({
+      ...input,
+      realizationMode: "TA",
+      ambulatoryTreatment: { location: "Poradnia X", term: "2026-09" },
+      attachments: [
+        {
+          idRoot: "2.16.1",
+          idExtension: "A1",
+          loincCode: "11488-4",
+          loincDisplay: "Consultation note",
+          p1ClassCode: "06.10",
+          p1ClassDisplay: "Konsultacja",
+          description: "Opis załącznika",
+          versionNumber: 1,
+        },
+        {
+          idRoot: "2.16.1",
+          idExtension: "A2",
+          loincCode: "11528-7",
+          loincDisplay: "Radiology study",
+          p1ClassCode: "06.20",
+          p1ClassDisplay: "Obrazowanie",
+          description: "Skan RTG",
+          isScan: true,
+        },
+      ],
+    }).xml;
+    expect(xml).toContain("<title>Leczenie Ambulatoryjne</title>");
+    expect(xml).toContain("Poradnia X, termin: 2026-09");
+    expect(xml).toContain("<title>Załączniki</title>");
+    expect(xml).toContain('<item ID="ZAL_1">Opis załącznika</item>');
+    expect(xml).toContain('<reference value="#ZAL_1"/>');
+    expect(xml).toContain("Klasa dokumentów P1");
+    expect(xml).toContain('<versionNumber value="1"/>');
+    expect(xml).toContain('root="2.16.840.1.113883.3.4424.13.10.4.34"'); // scan template
+  });
+
+  it("omits ambulatory treatment outside TA mode", () => {
+    const xml = buildHealthResortReferralCda({
+      ...input,
+      ambulatoryTreatment: { location: "Poradnia X" },
+    }).xml;
+    expect(xml).not.toContain("<title>Leczenie Ambulatoryjne</title>");
+  });
 });
