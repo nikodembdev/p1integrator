@@ -18,6 +18,13 @@ export interface CdaPatientAddress {
   readonly use?: string;
 }
 
+/** Miejsce urodzenia pacjenta (recordTarget/birthplace) — wymagane przez część typów (np. psychiatryczny). */
+export interface CdaBirthplace {
+  readonly city?: string;
+  readonly postalCode?: string;
+  readonly country?: string;
+}
+
 /** Adres organizacji (autora). */
 export interface CdaOrgAddress {
   readonly postalCode: string;
@@ -37,6 +44,8 @@ export interface CdaPatient {
   readonly gender?: Gender;
   readonly phone?: string;
   readonly email?: string;
+  /** Miejsce urodzenia — emitowane jako `birthplace/place/addr`, gdy podane. */
+  readonly birthplace?: CdaBirthplace;
 }
 
 /** Organizacja autora: miejsce pracy → podmiot (REGON 14 → REGON 9) + NFZ. */
@@ -96,6 +105,8 @@ export interface ClinicalDocumentInput {
   readonly sections?: readonly CdaSection[];
   /** Szablon komponentu `structuredBody` (różny per typ dokumentu; domyślnie 2.35). */
   readonly structuredBodyTemplateId?: string;
+  /** Szablon recordTarget (różny per typ dokumentu; domyślnie 2.26). */
+  readonly recordTargetTemplateId?: string;
 
   /** Identyfikator dokumentu (domyślnie generowany). */
   readonly documentId?: string;

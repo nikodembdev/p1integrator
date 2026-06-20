@@ -41,7 +41,11 @@ export function buildClinicalDocument(input: ClinicalDocumentInput): ClinicalDoc
     languageCode: { "@code": "pl-PL" },
     setId: { "@extension": documentSetId, "@root": `${input.localRoot}.4.2` },
     versionNumber: { "@value": "1" },
-    recordTarget: buildRecordTarget(input.patient, input.localRoot),
+    recordTarget: buildRecordTarget(
+      input.patient,
+      input.localRoot,
+      input.recordTargetTemplateId ?? CDA_TEMPLATE.PATIENT,
+    ),
     author: buildAuthor(input.author, documentDate),
     custodian: buildCustodian(),
     legalAuthenticator: buildLegalAuthenticator(input.legalAuthenticator, documentDate),
@@ -70,7 +74,11 @@ export function buildClinicalDocument(input: ClinicalDocumentInput): ClinicalDoc
   return { xml: root.end({ prettyPrint: true }), documentId, documentDate };
 }
 
-function buildRecordTarget(patient: CdaPatient, localRoot: string): XmlObject {
+function buildRecordTarget(
+  patient: CdaPatient,
+  localRoot: string,
+  templateRoot: string,
+): XmlObject {
   const patientRole: XmlObject = {
     id: [
       {
@@ -98,9 +106,21 @@ function buildRecordTarget(patient: CdaPatient, localRoot: string): XmlObject {
     };
   }
   person.birthTime = { "@value": patient.birthDate };
+  if (patient.birthplace) person.birthplace = buildBirthplace(patient.birthplace);
   patientRole.patient = person;
 
-  return { templateId: { "@root": CDA_TEMPLATE.PATIENT }, patientRole };
+  return { templateId: { "@root": templateRoot }, patientRole };
+}
+
+/** `birthplace/place/addr` — miejsce urodzenia (wymagane m.in. przez recordTarget psychiatryczny .2.40). */
+function buildBirthplace(birthplace: NonNullable<CdaPatient["birthplace"]>): XmlObject {
+  const addr: XmlObject = { country: birthplace.country ?? "Polska" };
+  if (birthplace.postalCode) addr.postalCode = birthplace.postalCode;
+  if (birthplace.city) addr.city = birthplace.city;
+  return {
+    "@classCode": "BIRTHPL",
+    place: { "@classCode": "PLC", "@determinerCode": "INSTANCE", addr },
+  };
 }
 
 function buildPatientAddress(address: CdaPatientAddress): XmlObject {
