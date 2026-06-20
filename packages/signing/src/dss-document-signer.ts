@@ -46,7 +46,7 @@ export function createDssDocumentSigner(options: DssDocumentSignerOptions): Docu
       form.append("document", new Blob([documentXml], { type: "application/xml" }), "document.xml");
       form.append(
         "certificate",
-        new Blob([options.certificate.p12], { type: "application/x-pkcs12" }),
+        new Blob([new Uint8Array(options.certificate.p12)], { type: "application/x-pkcs12" }),
         "certificate.p12",
       );
       form.append("keystorePassword", options.certificate.password);
