@@ -31,6 +31,12 @@ import {
   type ReferralDiagnoses,
   type ReferralMedicalHistory,
 } from "./sections.js";
+import type { P1Error, Result } from "@p1/core";
+import {
+  submitReferralDocument,
+  type ReferralSubmissionResult,
+  type ReferralTransport,
+} from "../submit.js";
 
 const POLISH_CLASSIFIERS_NAME = "PolskieKlasyfikatoryHL7v3";
 
@@ -133,4 +139,16 @@ export function buildHealthResortReferralCda(
     code: buildReferralCode(treatmentType, realizationMode),
     sections,
   });
+}
+
+/**
+ * Wystawia skierowanie uzdrowiskowe end-to-end: buduje CDA i wysyła je do P1
+ * generyczną orkiestracją (`submitReferralDocument`). Cienki wrapper — pozostałe
+ * typy skierowań analogicznie reużyją `submitReferralDocument`.
+ */
+export function issueHealthResortReferral(
+  input: HealthResortReferralInput,
+  transport: ReferralTransport,
+): Promise<Result<ReferralSubmissionResult, P1Error>> {
+  return submitReferralDocument(buildHealthResortReferralCda(input).xml, transport);
 }
