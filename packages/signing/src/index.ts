@@ -1,9 +1,6 @@
 /**
- * @p1/signing - adaptery portu DocumentSigner (XAdES-BES):
- * - `createDssDocumentSigner` — zewnętrzny serwis Java/DSS,
- * - `createXadesDocumentSigner` — podpisywarka in-process (xadesjs + WebCrypto).
- * Port `DocumentSigner` jest zdefiniowany w `@p1/core`.
+ * @p1/signing - podpisywarka XAdES-BES in-process (`createXadesDocumentSigner`),
+ * adapter portu `DocumentSigner` (zdefiniowanego w `@p1/core`). Bez zewnętrznych serwisów.
  */
 
-export * from "./dss-document-signer.js";
 export * from "./xades-document-signer.js";

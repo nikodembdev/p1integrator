@@ -6,7 +6,12 @@ import * as xpath from "xpath";
 import { ExclusiveCanonicalization } from "xml-crypto";
 import type { DocumentSigner } from "@p1/core";
 import * as xadesjs from "xadesjs";
-import type { SigningCertificate } from "./dss-document-signer.js";
+
+/** Certyfikat podpisujący (kontener PKCS#12 + hasło). */
+export interface SigningCertificate {
+  readonly p12: Buffer;
+  readonly password: string;
+}
 
 const EXC_C14N = "http://www.w3.org/2001/10/xml-exc-c14n#";
 const DSIG_NS = "http://www.w3.org/2000/09/xmldsig#";
