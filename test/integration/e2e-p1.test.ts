@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { issueGeneralReferral, type ReferralTransport } from "@p1/referral";
-import { createDssDocumentSigner } from "@p1/signing";
+import { createXadesDocumentSigner } from "@p1/signing";
 import { createNodeHttpClient, parseP12 } from "@p1/transport";
 import { describe, expect, it } from "vitest";
 import {
@@ -35,8 +35,7 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)(
       );
       const transport: ReferralTransport = {
         context: e2eContext,
-        documentSigner: createDssDocumentSigner({
-          endpoint: a.xadesUrl,
+        documentSigner: createXadesDocumentSigner({
           certificate: {
             p12: readFileSync(resolve(a.certDir, "Adam713 Leczniczy.p12")),
             password: a.certPassword,

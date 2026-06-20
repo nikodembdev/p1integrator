@@ -10,7 +10,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { HttpClient } from "../packages/core/src/index.js";
 import { issueGeneralReferral, type ReferralTransport } from "../packages/referral/src/index.js";
-import { createDssDocumentSigner } from "../packages/signing/src/index.js";
+import { createXadesDocumentSigner } from "../packages/signing/src/index.js";
 import { createNodeHttpClient, parseP12 } from "../packages/transport/src/index.js";
 import {
   buildE2eGeneralInput,
@@ -50,8 +50,7 @@ const httpClient: HttpClient = {
 
 const transport: ReferralTransport = {
   context: e2eContext,
-  documentSigner: createDssDocumentSigner({
-    endpoint: a.xadesUrl,
+  documentSigner: createXadesDocumentSigner({
     certificate: {
       p12: readFileSync(resolve(a.certDir, "Adam713 Leczniczy.p12")),
       password: a.certPassword,
