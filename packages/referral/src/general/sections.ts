@@ -33,7 +33,7 @@ export function buildProceduresSection(input: ReferralProcedures): CdaSection {
     ],
   };
   const procedureParagraphs = input.procedures.map((procedure, index) => ({
-    "@ID": `OBS_${index + 1}`,
+    "@ID": `p1_procedura_pozycja_${index + 1}`,
     content: [
       { "@ID": `p1_procedura_opis_${index + 1}`, "@styleCode": "Bold", "#": "Rodzaj procedury:" },
       { "@ID": `p1_procedura_icd9_opis_${index + 1}`, "#": "ICD9:" },
