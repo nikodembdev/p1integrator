@@ -90,6 +90,8 @@ export interface PrescriptionDosage {
   periodValue?: string;
   repeatNumber?: string;
   doseQuantity?: string;
+  /** Jednostka dawki (np. „tabl."); brak → „szt." w narracji. */
+  doseUnit?: string;
   rateUnit?: string;
   rateValue?: string;
 }

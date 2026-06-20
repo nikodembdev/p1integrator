@@ -2,10 +2,12 @@
  * Konfiguracja konta integracyjnego P1 czytana WYŁĄCZNIE z env. Realne wartości trzymaj w `.local/p1.env` (gitignored) — jest ładowany
  * automatycznie; wzór kluczy: `.env.example`.
  */
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import type { CallContext } from "@p1/core";
 import type { GeneralReferralInput } from "@p1/referral";
+import type { DrugPrescriptionInput } from "@p1/prescription";
 
 const ENV_FILE = resolve(import.meta.dirname, "../../.local/p1.env");
 if (existsSync(ENV_FILE) && typeof process.loadEnvFile === "function") {
@@ -25,6 +27,12 @@ export const p1Account = {
   certPassword: e.CERT_PASSWORD ?? e.P1_CERT_PASSWORD ?? "",
   xadesUrl: e.P1_XADES_URL ?? "http://localhost:8080/api/v1/sign",
   endpoint: e.P1_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaSkierowaniaWS",
+  receptaEndpoint:
+    e.P1_RECEPTA_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaReceptyWS",
+  // Recepta: id → <wezeł>.2.1 (rootRecepty). Domyślnie NASZ węzeł OID (P1_LOCAL_ROOT) —
+  // REG.WER.376 wymaga zgodności węzła w numerze recepty z kontekstem wywołania.
+  receptaLocalRoot: e.P1_RECEPTA_LOCAL_ROOT ?? e.P1_LOCAL_ROOT ?? "",
+  versionSetRoot: e.P1_RECEPTA_VERSIONSET_ROOT ?? `${e.P1_LOCAL_ROOT ?? ""}.2.2`,
   rejectUnauthorized: e.P1_TLS_REJECT_UNAUTHORIZED !== "false",
 
   providerRoot: OID.PROVIDER,
@@ -135,5 +143,88 @@ export function buildE2eGeneralInput(): GeneralReferralInput {
       place: { code: "0010", name: "Poradnia (gabinet) lekarza POZ" },
       procedures: [{ icd9Code: "89.00", icd9Name: "Porada lekarska" }],
     },
+  };
+}
+
+/**
+ * Przykładowa recepta na lek dla danego pacjenta/podmiotu (dane konta z env).
+ * `prescriptionNumber` musi być unikalny — generowany z czasu wywołania.
+ * Dane leku z oficjalnego wzorca (RPL_PL format: kod 100000xxx + EAN GS1).
+ */
+/** Dzisiejsza data w formacie YYYYMMDD. */
+function today(): string {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function buildE2ePrescriptionInput(
+  // Numer recepty: 22 znaki UUID hex (uppercase, bez myślników) — format wymagany przez REG.WER.213.
+  prescriptionNumber: string = randomUUID().replace(/-/g, "").toUpperCase().slice(0, 22),
+): DrugPrescriptionInput {
+  const a = p1Account;
+  return {
+    localRoot: a.receptaLocalRoot,
+    prescriptionNumber,
+    versionSetId: { root: a.versionSetRoot, extension: prescriptionNumber },
+    patient: {
+      pesel: a.patient.pesel,
+      givenNames: [a.patient.given],
+      familyName: a.patient.family,
+      birthDate: a.patient.birth,
+      gender: a.patient.gender,
+      address: {
+        postalCode: "01-381",
+        city: "Warszawa",
+        street: "Powstańców Śląskich",
+        houseNumber: "8B",
+      },
+    },
+    author: {
+      npwz: a.npwz,
+      givenNames: ["Adam"],
+      familyName: "Leczniczy",
+      organization: {
+        podmiotExt: a.podmiotExt,
+        regon14: a.regon14,
+        name: "Poradnia (gabinet) lekarza POZ",
+        phone: "+48570690376",
+        address: {
+          postalCode: "01-797",
+          city: "Warszawa",
+          street: "Powązkowska",
+          houseNumber: "44",
+        },
+      },
+    },
+    legalAuthenticator: { npwz: a.npwz },
+    drug: {
+      code: "100000126",
+      name: "Zofran",
+      availabilityCategory: "Rp",
+      packageEan: "05909990805617",
+      packageName: "Zofran 8 mg",
+      // formCode = POSTAĆ OPAKOWANIA (PostacOpakowaniaLeku, EDQM container), nie postać dawkowania.
+      formCode: "30066000",
+      formName: "Tablet container",
+      capacityUnit: "tabl.",
+      capacityValue: "10",
+      ingredients: [
+        {
+          numeratorValue: "8",
+          numeratorUnit: "mg",
+          denominatorValue: "1",
+          code: "23432",
+          name: "Ondansetronum",
+        },
+      ],
+    },
+    dosage: {
+      // dawkowanie strukturalne — narracja liczona przez builder ("3 x dziennie po 1 szt.")
+      periodUnit: "h",
+      periodValue: "8",
+      doseQuantity: "1",
+      startDate: today(),
+    },
+    payment: { nfzBranch: a.nfzBranch, level: "100%", levelDisplay: "100%", packageCount: "1" },
   };
 }

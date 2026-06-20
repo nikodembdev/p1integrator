@@ -1,5 +1,5 @@
 import { create } from "xmlbuilder2";
-import { CDA_OID, formatCdaDate, type XmlObject } from "@p1/cda";
+import { CDA_OID, formatCdaDateTime, type XmlObject } from "@p1/cda";
 import {
   DOSAGE_INSTRUCTION_ACT_TEMPLATE,
   MANUFACTURED_MATERIAL_TEMPLATE,
@@ -29,7 +29,7 @@ const FINSTRUCT_ACT_TEMPLATE = [
  * autora), więc to dedykowany builder — wzorowany na oficjalnej „recepta-poprawna".
  */
 export function buildDrugPrescriptionCda(input: DrugPrescriptionInput): DrugPrescriptionResult {
-  const effectiveDate = input.effectiveDate ?? formatCdaDate(input.now ?? new Date());
+  const effectiveDate = input.effectiveDate ?? formatCdaDateTime(input.now ?? new Date());
   const versionNumber = input.versionNumber ?? 1;
   const substitutionAllowed = input.substitution ?? true;
 
@@ -272,45 +272,53 @@ function buildPrescriptionSection(
     return c;
   };
 
+  // Narracja MUSI odzwierciedlać blok strukturalny (REG.WER.3252) — wyliczamy ją
+  // z danych, replikując oficjalną transformatę narracyjną P1 (1.3.2).
+  const strength = drug.strengthText ?? computeStrengthNarrative(drug.ingredients);
+  const dosageText = computeDosageNarrative(dosage, effectiveDate);
+
   const sbadmContent: XmlObject[] = [
     content("p1_nazwaLeku", drug.name, "xPLbig"),
-    content("p1_mocSkladnikowLeku", drug.strengthText ?? ""),
+    content("p1_mocSkladnikowLeku", strength),
   ];
   if (!substitutionAllowed) sbadmContent.push(content("p1_nieZamieniac", "NZ", "xPLbig"));
 
-  const text: XmlObject = {
-    paragraph: [
-      { "@ID": "SBADM_1", content: sbadmContent },
-      {
-        content: [
-          content("p1_iloscLeku", payment.packageCount),
-          content("p1_krotnosc_opis", `x ${drug.formName} po`),
-          content("p1_wielkoscOpakowania", `${drug.capacityValue} ${drug.capacityUnit}`),
-        ],
-      },
-      {
-        "@ID": "DS_1",
-        content: [
-          content("p1_stosowanie_opis_1", "D.S."),
-          content("p1_stosowanie_wartosc_1", dosage.text, "Bold"),
-        ],
-      },
-      {
-        "@ID": "ACT_1",
-        content: [
-          content("p1_odplatnosc_opis", "Odpłatność"),
-          content("p1_odplatnosc_wartosc", payment.level, "Bold"),
-        ],
-      },
-      {
-        "@ID": "TEXT1",
-        content: [
-          content("p1_infoDlaWydajacego_opis_1", "Informacja dla osoby wydającej lek:"),
-          content("p1_infoDlaWydajacego_wartosc_1", input.dispenserInfo ?? ""),
-        ],
-      },
-    ],
-  };
+  const paragraphs: XmlObject[] = [
+    { "@ID": "SBADM_1", content: sbadmContent },
+    {
+      content: [
+        content("p1_iloscLeku", payment.packageCount),
+        content("p1_krotnosc_opis", `x ${drug.formName} po`),
+        content("p1_wielkoscOpakowania", `${drug.capacityValue} ${drug.capacityUnit}`),
+      ],
+    },
+    {
+      "@ID": "DS_1",
+      content: [
+        content("p1_stosowanie_opis_1", "D.S."),
+        ...(dosageText ? [content("p1_stosowanie_wartosc_1", dosageText, "Bold")] : []),
+      ],
+    },
+    {
+      "@ID": "ACT_1",
+      content: [
+        content("p1_odplatnosc_opis", "Odpłatność"),
+        content("p1_odplatnosc_wartosc", payment.level, "Bold"),
+      ],
+    },
+  ];
+  // Akapit „informacja dla wydającego" tylko gdy istnieje odpowiadający akt FINSTRUCT.
+  if (input.dispenserInfo) {
+    paragraphs.push({
+      "@ID": "TEXT1",
+      content: [
+        content("p1_infoDlaWydajacego_opis_1", "Informacja dla osoby wydającej lek:"),
+        content("p1_infoDlaWydajacego_wartosc_1", input.dispenserInfo),
+      ],
+    });
+  }
+
+  const text: XmlObject = { paragraph: paragraphs };
 
   return {
     templateId: [
@@ -370,8 +378,13 @@ function buildSubstanceAdministration(
     statusCode: { "@code": "completed" },
   };
   if (effectiveTime.length > 0) sbadm.effectiveTime = effectiveTime;
-  if (dosage.repeatNumber) sbadm.repeatNumber = { "@value": dosage.repeatNumber };
-  if (dosage.doseQuantity) sbadm.doseQuantity = { "@value": dosage.doseQuantity };
+  // repeatNumber jest mandatory w P1 (plCdaDrugPrescriptionEntry); domyślnie 0 (bez powtórzeń).
+  sbadm.repeatNumber = { "@value": dosage.repeatNumber ?? "0" };
+  if (dosage.doseQuantity) {
+    sbadm.doseQuantity = dosage.doseUnit
+      ? { "@unit": dosage.doseUnit, "@value": dosage.doseQuantity }
+      : { "@value": dosage.doseQuantity };
+  }
   if (dosage.rateValue) {
     sbadm.rateQuantity = { "@unit": dosage.rateUnit ?? "1", "@value": dosage.rateValue };
   }
@@ -566,4 +579,102 @@ function buildInstructionRelationship(
       statusCode: { "@code": "completed" },
     },
   };
+}
+
+// --- Generowanie bloku narracyjnego ze struktury (replika transformaty P1 1.3.2) ---
+
+const POLISH_MONTHS_GENITIVE = [
+  "",
+  "stycznia",
+  "lutego",
+  "marca",
+  "kwietnia",
+  "maja",
+  "czerwca",
+  "lipca",
+  "sierpnia",
+  "września",
+  "października",
+  "listopada",
+  "grudnia",
+] as const;
+
+/** Data YYYYMMDD → „D miesiąca YYYY r." (format transformaty narracyjnej). */
+function formatPolishDate(yyyymmdd: string): string {
+  const year = Number(yyyymmdd.slice(0, 4));
+  const month = Number(yyyymmdd.slice(4, 6));
+  const day = Number(yyyymmdd.slice(6, 8));
+  return `${day} ${POLISH_MONTHS_GENITIVE[month] ?? ""} ${year} r.`;
+}
+
+/** YYYYMMDD → liczba porównywalna (jak w transformacie). */
+function dateToNumber(yyyymmdd: string): number {
+  return (
+    10000 * Number(yyyymmdd.slice(0, 4)) +
+    100 * Number(yyyymmdd.slice(4, 6)) +
+    Number(yyyymmdd.slice(6, 8))
+  );
+}
+
+function ingredientStrength(ing: DrugPrescriptionInput["drug"]["ingredients"][number]): string {
+  let s = ing.numeratorValue;
+  if (ing.numeratorUnit) s += ` ${ing.numeratorUnit}`;
+  // mianownik tylko gdy wartość != 1 lub podano jednostkę != 1
+  if (ing.denominatorValue && (ing.denominatorValue !== "1" || ing.denominatorUnit)) {
+    s += ` / ${ing.denominatorValue}`;
+    if (ing.denominatorUnit) s += ` ${ing.denominatorUnit}`;
+  }
+  return s;
+}
+
+/** Wylicza `p1_mocSkladnikowLeku` ze składników (replika transformaty). */
+function computeStrengthNarrative(
+  ingredients: DrugPrescriptionInput["drug"]["ingredients"],
+): string {
+  if (ingredients.length === 0) return "";
+  const first = ingredients[0];
+  if (ingredients.length === 1 && first) return `(${ingredientStrength(first)})`;
+
+  const denUnits = new Set(ingredients.map((i) => i.denominatorUnit).filter(Boolean));
+  const denValues = new Set(ingredients.map((i) => i.denominatorValue).filter(Boolean));
+  if (denUnits.size === 1 && denValues.size <= 1) {
+    const nums = ingredients
+      .map((i) => i.numeratorValue + (i.numeratorUnit ? ` ${i.numeratorUnit}` : ""))
+      .join(" + ");
+    const denUnit = [...denUnits][0] ?? "";
+    const denValue = [...denValues][0];
+    const denPrefix = denValues.size === 1 && denValue !== "1" ? `${denValue ?? ""} ` : "";
+    return `(${nums}) / ${denPrefix}${denUnit}`;
+  }
+  return ingredients.map(ingredientStrength).join(" + ");
+}
+
+/** Wylicza `p1_stosowanie_wartosc_1` z dawkowania (replika transformaty). */
+function computeDosageNarrative(
+  dosage: DrugPrescriptionInput["dosage"],
+  supplyDate: string,
+): string {
+  if (!dosage.periodUnit || !dosage.periodValue || !dosage.doseQuantity) return "";
+
+  let freq: string;
+  if (dosage.periodUnit === "h" && dosage.periodValue === "24") freq = "Raz dziennie";
+  else if (dosage.periodUnit === "h" && dosage.periodValue === "12") freq = "2 x dziennie";
+  else if (dosage.periodUnit === "h" && dosage.periodValue === "8") freq = "3 x dziennie";
+  else if (dosage.periodUnit === "h" && dosage.periodValue === "6") freq = "4 x dziennie";
+  else freq = `Co ${dosage.periodValue} ${dosage.periodUnit}`;
+
+  const dose = dosage.doseUnit
+    ? `${dosage.doseQuantity} ${dosage.doseUnit}`
+    : `${dosage.doseQuantity} szt.`;
+  let s = `${freq} po ${dose}`;
+
+  if (dosage.startDate && dateToNumber(dosage.startDate) > dateToNumber(supplyDate)) {
+    s += `, rozpocząć ${formatPolishDate(dosage.startDate)}`;
+  }
+  if (dosage.endDate && dosage.endDate.length >= 6) {
+    s += `, zakończyć do ${formatPolishDate(dosage.endDate)}`;
+  }
+  const repeat = Number(dosage.repeatNumber ?? "0");
+  if (repeat >= 1) s += `, powtórzyć cykl ${repeat}${repeat === 1 ? " raz" : " razy"}`;
+  return s;
 }
