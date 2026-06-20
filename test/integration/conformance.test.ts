@@ -12,7 +12,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error - saxon-js nie dostarcza typów
 import SaxonJS from "saxon-js";
-import { referralCases } from "./fixtures.js";
+import { prescriptionCases, referralCases } from "./fixtures.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const LOCAL = resolve(ROOT, ".local");
@@ -46,7 +46,7 @@ function schematronErrors(sefPath: string, xml: string): string[] {
 }
 
 describe("konformancja CDA skierowań (Schematron P1 + XSD)", () => {
-  for (const referral of referralCases) {
+  for (const referral of [...referralCases, ...prescriptionCases]) {
     const sefPath = resolve(LOCAL, referral.sef);
 
     it.skipIf(!existsSync(sefPath))(`${referral.name}: Schematron P1 — 0 błędów`, () => {
