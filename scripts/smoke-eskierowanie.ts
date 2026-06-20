@@ -42,9 +42,11 @@ const wssP12 = readFileSync(resolve(CERT_DIR, "Podmiot_leczniczy_713-wss.p12"));
 const context: CallContext = {
   subject: { root: "2.16.840.1.113883.3.4424.2.3.1", extension: "000000927722" },
   user: { root: "2.16.840.1.113883.3.4424.1.6.2", extension: "4727124" },
+  // MUŚ kontekstu = komórka (root .2.3.3) + krótki kod res7 "001" (NIE pełne id z dokumentu).
+  // Z tą wartością P1 zwraca Sukces + kodSkierowania.
   workplace: {
-    root: process.env.MUS_ROOT ?? "2.16.840.1.113883.3.4424.2.3.2",
-    extension: process.env.MUS_EXT ?? "000000927722-01",
+    root: process.env.MUS_ROOT ?? "2.16.840.1.113883.3.4424.2.3.3",
+    extension: process.env.MUS_EXT ?? "001",
   },
   businessRole: "DOCTOR",
 };
