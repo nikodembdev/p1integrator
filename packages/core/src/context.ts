@@ -8,6 +8,13 @@ import type { Oid } from "./oid.js";
 export const CONTEXT_NAMESPACE = "http://csioz.gov.pl/p1/kontekst/mt/v20180509";
 
 /**
+ * Domyślny prefiks URN nazw atrybutów kontekstu (e-skierowanie). Inne usługi P1
+ * używają własnego prefiksu (np. e-recepta: `urn:csioz:p1:erecepta:kontekst:`) —
+ * patrz `contextToAttributes(context, urnPrefix)`.
+ */
+export const CONTEXT_URN_PREFIX = "urn:csioz:p1:kontekst:";
+
+/**
  * Rola biznesowa: angielski klucz (publiczne API) → wartość atrybutu
  * `rolaBiznesowa` wprost z P1 (wire). Użytkownik posługuje się kluczem.
  */
@@ -26,18 +33,26 @@ export const BUSINESS_ROLE = {
 } as const;
 export type BusinessRole = keyof typeof BUSINESS_ROLE;
 
-/** Nazwy atrybutów kontekstu (NazwaAtrybutuKontekstuMT) - klucze wprost z P1. */
-export const CONTEXT_ATTR = {
-  idPodmiotuOidRoot: "urn:csioz:p1:kontekst:idPodmiotuOidRoot",
-  idPodmiotuOidExt: "urn:csioz:p1:kontekst:idPodmiotuOidExt",
-  idUzytkownikaOidRoot: "urn:csioz:p1:kontekst:idUzytkownikaOidRoot",
-  idUzytkownikaOidExt: "urn:csioz:p1:kontekst:idUzytkownikaOidExt",
-  idMiejscaPracyOidRoot: "urn:csioz:p1:kontekst:idMiejscaPracyOidRoot",
-  idMiejscaPracyOidExt: "urn:csioz:p1:kontekst:idMiejscaPracyOidExt",
-  rolaBiznesowa: "urn:csioz:p1:kontekst:rolaBiznesowa",
-  idAsystentaMedycznegoOidRoot: "urn:csioz:p1:kontekst:idAsystentaMedycznegoOidRoot",
-  idAsystentaMedycznegoOidExt: "urn:csioz:p1:kontekst:idAsystentaMedycznegoOidExt",
+/** Sufiksy nazw atrybutów kontekstu (NazwaAtrybutuKontekstuMT) — bez prefiksu URN. */
+const CONTEXT_ATTR_SUFFIX = {
+  idPodmiotuOidRoot: "idPodmiotuOidRoot",
+  idPodmiotuOidExt: "idPodmiotuOidExt",
+  idUzytkownikaOidRoot: "idUzytkownikaOidRoot",
+  idUzytkownikaOidExt: "idUzytkownikaOidExt",
+  idMiejscaPracyOidRoot: "idMiejscaPracyOidRoot",
+  idMiejscaPracyOidExt: "idMiejscaPracyOidExt",
+  rolaBiznesowa: "rolaBiznesowa",
+  idAsystentaMedycznegoOidRoot: "idAsystentaMedycznegoOidRoot",
+  idAsystentaMedycznegoOidExt: "idAsystentaMedycznegoOidExt",
 } as const;
+
+/** Pełne nazwy atrybutów kontekstu z domyślnym prefiksem (e-skierowanie). */
+export const CONTEXT_ATTR = Object.fromEntries(
+  Object.entries(CONTEXT_ATTR_SUFFIX).map(([key, suffix]) => [
+    key,
+    `${CONTEXT_URN_PREFIX}${suffix}`,
+  ]),
+) as Record<keyof typeof CONTEXT_ATTR_SUFFIX, string>;
 
 /** Wygodny, dziedzinowy widok Kontekstu (zamiast surowej listy atrybutów). */
 export interface CallContext {
@@ -61,21 +76,33 @@ export interface ContextAttribute {
 /**
  * Spłaszcza dziedzinowy Kontekst do listy atrybutów (nazwa → wartość),
  * gotowej do serializacji w nagłówku WS-Security przez `@p1/transport`.
+ * `urnPrefix` pozwala wybrać dialekt URN usługi (domyślnie e-skierowanie;
+ * e-recepta używa `urn:csioz:p1:erecepta:kontekst:`).
  */
-export function contextToAttributes(context: CallContext): ContextAttribute[] {
+export function contextToAttributes(
+  context: CallContext,
+  urnPrefix: string = CONTEXT_URN_PREFIX,
+): ContextAttribute[] {
+  const name = (suffix: string): string => `${urnPrefix}${suffix}`;
   const attributes: ContextAttribute[] = [
-    { name: CONTEXT_ATTR.idPodmiotuOidRoot, value: context.subject.root },
-    { name: CONTEXT_ATTR.idPodmiotuOidExt, value: context.subject.extension },
-    { name: CONTEXT_ATTR.idUzytkownikaOidRoot, value: context.user.root },
-    { name: CONTEXT_ATTR.idUzytkownikaOidExt, value: context.user.extension },
-    { name: CONTEXT_ATTR.idMiejscaPracyOidRoot, value: context.workplace.root },
-    { name: CONTEXT_ATTR.idMiejscaPracyOidExt, value: context.workplace.extension },
-    { name: CONTEXT_ATTR.rolaBiznesowa, value: BUSINESS_ROLE[context.businessRole] },
+    { name: name(CONTEXT_ATTR_SUFFIX.idPodmiotuOidRoot), value: context.subject.root },
+    { name: name(CONTEXT_ATTR_SUFFIX.idPodmiotuOidExt), value: context.subject.extension },
+    { name: name(CONTEXT_ATTR_SUFFIX.idUzytkownikaOidRoot), value: context.user.root },
+    { name: name(CONTEXT_ATTR_SUFFIX.idUzytkownikaOidExt), value: context.user.extension },
+    { name: name(CONTEXT_ATTR_SUFFIX.idMiejscaPracyOidRoot), value: context.workplace.root },
+    { name: name(CONTEXT_ATTR_SUFFIX.idMiejscaPracyOidExt), value: context.workplace.extension },
+    { name: name(CONTEXT_ATTR_SUFFIX.rolaBiznesowa), value: BUSINESS_ROLE[context.businessRole] },
   ];
   if (context.medicalAssistant) {
     attributes.push(
-      { name: CONTEXT_ATTR.idAsystentaMedycznegoOidRoot, value: context.medicalAssistant.root },
-      { name: CONTEXT_ATTR.idAsystentaMedycznegoOidExt, value: context.medicalAssistant.extension },
+      {
+        name: name(CONTEXT_ATTR_SUFFIX.idAsystentaMedycznegoOidRoot),
+        value: context.medicalAssistant.root,
+      },
+      {
+        name: name(CONTEXT_ATTR_SUFFIX.idAsystentaMedycznegoOidExt),
+        value: context.medicalAssistant.extension,
+      },
     );
   }
   return attributes;

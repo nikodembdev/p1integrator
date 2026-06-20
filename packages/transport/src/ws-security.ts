@@ -24,6 +24,11 @@ export interface WsSecurityOptions {
   readonly ttlSeconds?: number;
   /** Sufiks identyfikatorów `wsu:Id` — wstrzykiwalny dla testów. */
   readonly idSuffix?: string;
+  /**
+   * Namespace elementu `kontekstWywolania` do zlokalizowania go w XPath podpisu.
+   * Domyślnie e-skierowanie (v20180509); musi być spójny z kopertą (e-recepta: v20170510).
+   */
+  readonly contextNamespace?: string;
 }
 
 const SECURITY_PLACEHOLDER = /<wsse:Security[\s\S]*?<\/wsse:Security>/;
@@ -64,9 +69,10 @@ export function signWsSecurity(envelopeXml: string, options: WsSecurityOptions):
     canonicalizationAlgorithm: CANONICALIZATION_ALGORITHM,
   });
 
+  const contextNamespace = options.contextNamespace ?? CONTEXT_NAMESPACE;
   const signedElements = [
     "//*[local-name(.)='Body']",
-    `//*[local-name(.)='kontekstWywolania' and namespace-uri(.)='${CONTEXT_NAMESPACE}']`,
+    `//*[local-name(.)='kontekstWywolania' and namespace-uri(.)='${contextNamespace}']`,
     `//*[local-name(.)='Timestamp' and namespace-uri(.)='${WSU_NS}']`,
   ];
   for (const xpath of signedElements) {

@@ -1,0 +1,231 @@
+import {
+  type CallContext,
+  type Clock,
+  type DocumentSigner,
+  err,
+  type HttpClient,
+  ok,
+  type OperationOutcome,
+  type P1Error,
+  P1TransportError,
+  type Result,
+} from "@p1/core";
+import {
+  buildSoapEnvelope,
+  parseSoapResponse,
+  signWsSecurity,
+  type WsSecurityCertificate,
+} from "@p1/transport";
+import { buildDrugPrescriptionCda } from "./document.js";
+import type { DrugPrescriptionInput } from "./types.js";
+
+/** Namespace usługi ObslugaRecepty (v20170510 — inny niż e-skierowanie!). */
+export const PRESCRIPTION_WS_NS = "http://csioz.gov.pl/p1/erecepta/ws/v20170510";
+export const PRESCRIPTION_MT_NS = "http://csioz.gov.pl/p1/erecepta/mt/v20170510";
+/** Namespace `kontekstWywolania` dla e-recepty (wersja v20170510). */
+export const PRESCRIPTION_CONTEXT_NAMESPACE = "http://csioz.gov.pl/p1/kontekst/mt/v20170510";
+/** Prefiks URN nazw atrybutów kontekstu e-recepty. */
+export const PRESCRIPTION_CONTEXT_URN_PREFIX = "urn:csioz:p1:erecepta:kontekst:";
+
+const SOAP_ACTION = "urn:zapisPakietuRecept";
+
+/**
+ * Zależności transportu dla wysyłki pakietu recept (operacja `zapisPakietuRecept`).
+ * Analogiczne do `ReferralTransport`, ale z dialektem kontekstu e-recepty.
+ */
+export interface PrescriptionTransport {
+  readonly context: CallContext;
+  /** Podpis XAdES dokumentu CDA (port DocumentSigner). */
+  readonly documentSigner: DocumentSigner;
+  /** Klient HTTP z mTLS. */
+  readonly httpClient: HttpClient;
+  /** Certyfikat do podpisu WS-Security koperty. */
+  readonly wsSecurityCertificate: WsSecurityCertificate;
+  /** Endpoint SOAP usługi ObslugaReceptyWS (zależny od środowiska). */
+  readonly endpoint: string;
+  /** Zegar — do deterministycznego Timestamp w testach. */
+  readonly clock?: Clock;
+}
+
+/** Pojedyncza recepta do umieszczenia w pakiecie. */
+export interface PrescriptionInPackage {
+  /** Identyfikator recepty w pakiecie (`identyfikatorDokumentuWPakiecie`). */
+  readonly id: number;
+  /** Surowy (niepodpisany) dokument CDA recepty. */
+  readonly cdaXml: string;
+}
+
+/** Wynik zapisu pojedynczej recepty z pakietu. */
+export interface PrescriptionResult {
+  /** `numerReceptyWPakiecie` — koreluje z `id` przekazanej recepty. */
+  readonly id?: string;
+  /** `kluczRecepty` — klucz dostępowy nadany przez P1 (gdy weryfikacja OK). */
+  readonly key?: string;
+}
+
+export interface PrescriptionPackageResult {
+  /** `kodPakietuRecept` — 4 cyfry + PESEL (gdy całość zweryfikowana bezbłędnie). */
+  readonly packageCode?: string;
+  /** `kluczPakietuRecept` — klucz pakietu (gdy całość zweryfikowana bezbłędnie). */
+  readonly packageKey?: string;
+  /** Klucze poszczególnych recept. */
+  readonly prescriptions: readonly PrescriptionResult[];
+  /** Wynik biznesowy operacji (WynikMT). */
+  readonly outcome?: OperationOutcome;
+}
+
+/**
+ * Wysyła pakiet recept operacją `zapisPakietuRecept`: każda recepta jest
+ * podpisywana XAdES i kodowana base64 do `<r:tresc>`, opakowana w
+ * `pakietRecept/recepty/recepta`; koperta SOAP + WS-Security (dialekt kontekstu
+ * e-recepty) → mTLS → parsowanie `WynikMT` + kluczy pakietu/recept.
+ */
+export async function submitPrescriptionPackage(
+  prescriptions: readonly PrescriptionInPackage[],
+  transport: PrescriptionTransport,
+): Promise<Result<PrescriptionPackageResult, P1Error>> {
+  const receptyXml: string[] = [];
+  for (const prescription of prescriptions) {
+    const signedCda = await transport.documentSigner.signXades(prescription.cdaXml);
+    const base64 = Buffer.from(signedCda, "utf8").toString("base64");
+    receptyXml.push(
+      `<r:recepta>` +
+        `<r:identyfikatorDokumentuWPakiecie>${prescription.id}</r:identyfikatorDokumentuWPakiecie>` +
+        `<r:tresc>${base64}</r:tresc>` +
+        `</r:recepta>`,
+    );
+  }
+
+  const body =
+    `<ws:ZapisPakietuReceptRequest><pakietRecept>` +
+    `<r:recepty>${receptyXml.join("")}</r:recepty>` +
+    `</pakietRecept></ws:ZapisPakietuReceptRequest>`;
+
+  const envelope = buildSoapEnvelope({
+    context: transport.context,
+    body,
+    namespaces: { ws: PRESCRIPTION_WS_NS, r: PRESCRIPTION_MT_NS },
+    contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
+    contextUrnPrefix: PRESCRIPTION_CONTEXT_URN_PREFIX,
+  });
+
+  const now = transport.clock?.now();
+  const signed = signWsSecurity(envelope, {
+    certificate: transport.wsSecurityCertificate,
+    contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
+    ...(now !== undefined ? { now } : {}),
+  });
+
+  let responseBody: string;
+  try {
+    const response = await transport.httpClient.send({
+      url: transport.endpoint,
+      method: "POST",
+      headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: SOAP_ACTION },
+      body: signed,
+    });
+    responseBody = response.body;
+  } catch (cause) {
+    return err(new P1TransportError("Prescription package submission request failed", { cause }));
+  }
+
+  const parsed = parseSoapResponse(responseBody);
+  if (!parsed.ok) return parsed;
+
+  const packageCode = findText(parsed.value.body, "kodPakietuRecept");
+  const packageKey = findText(parsed.value.body, "kluczPakietuRecept");
+  return ok({
+    ...(packageCode !== undefined ? { packageCode } : {}),
+    ...(packageKey !== undefined ? { packageKey } : {}),
+    prescriptions: extractPrescriptionResults(parsed.value.body),
+    ...(parsed.value.outcome !== undefined ? { outcome: parsed.value.outcome } : {}),
+  });
+}
+
+/**
+ * Buduje CDA recepty z `input` i wysyła ją jako jednoelementowy pakiet.
+ * Wygodne wejście dla najczęstszego przypadku (jedna recepta).
+ */
+export async function issueDrugPrescription(
+  input: DrugPrescriptionInput,
+  transport: PrescriptionTransport,
+): Promise<Result<PrescriptionPackageResult, P1Error>> {
+  const { xml } = buildDrugPrescriptionCda(input);
+  return submitPrescriptionPackage([{ id: 1, cdaXml: xml }], transport);
+}
+
+/** Wyciąga klucze poszczególnych recept z `weryfikowanaRecepta`. */
+function extractPrescriptionResults(body: unknown): PrescriptionResult[] {
+  const nodes = collectRecords(body, "weryfikowanaRecepta");
+  return nodes.map((node) => {
+    const id = findText(node, "numerReceptyWPakiecie");
+    const key = findText(node, "kluczRecepty");
+    return {
+      ...(id !== undefined ? { id } : {}),
+      ...(key !== undefined ? { key } : {}),
+    };
+  });
+}
+
+function collectRecords(node: unknown, key: string): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+    if (value !== null && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      if (key in record) {
+        const found = record[key];
+        if (Array.isArray(found)) {
+          for (const item of found) if (isRecord(item)) out.push(item);
+        } else if (isRecord(found)) {
+          out.push(found);
+        }
+      }
+      for (const child of Object.values(record)) visit(child);
+    }
+  };
+  visit(node);
+  return out;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function findText(node: unknown, key: string): string | undefined {
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = findText(item, key);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+  if (node !== null && typeof node === "object") {
+    const record = node as Record<string, unknown>;
+    if (key in record) return coerce(record[key]);
+    for (const value of Object.values(record)) {
+      const found = findText(value, key);
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
+function coerce(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = coerce(item);
+      if (text !== undefined) return text;
+    }
+    return undefined;
+  }
+  if (value !== null && typeof value === "object" && "#text" in value) {
+    return coerce((value as Record<string, unknown>)["#text"]);
+  }
+  return undefined;
+}
