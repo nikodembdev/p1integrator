@@ -1,6 +1,5 @@
 /**
- * Konfiguracja konta integracyjnego P1 czytana WYŁĄCZNIE z env (żadnych danych konta
- * w repo). Realne wartości trzymaj w `.local/p1.env` (gitignored) — jest ładowany
+ * Konfiguracja konta integracyjnego P1 czytana WYŁĄCZNIE z env. Realne wartości trzymaj w `.local/p1.env` (gitignored) — jest ładowany
  * automatycznie; wzór kluczy: `.env.example`.
  */
 import { existsSync } from "node:fs";
@@ -15,7 +14,6 @@ if (existsSync(ENV_FILE) && typeof process.loadEnvFile === "function") {
 
 const e = process.env;
 
-/** Publiczne, standardowe OID-y P1 (nie są danymi konta — mogą zostać na stałe). */
 const OID = {
   PROVIDER: "2.16.840.1.113883.3.4424.2.3.1",
   NPWZ: "2.16.840.1.113883.3.4424.1.6.2",
