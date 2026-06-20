@@ -11,6 +11,7 @@ export default tseslint.config(
       "**/*.config.*",
       "tsup.base.ts",
       "scripts/**",
+      "test/**",
       ".changeset/**",
     ],
   },
