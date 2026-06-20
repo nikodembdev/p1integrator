@@ -2,12 +2,12 @@ import type { OperationOutcome } from "./outcome.js";
 
 /**
  * Taksonomia błędów P1. Dwa tory:
- *  - techniczny (BladMT, wyjatki.xsd) — stały enum `ErrorCodeMajor`/`ErrorCodeMinor`,
+ *  - techniczny (BladMT, wyjatki.xsd) - stały enum `ErrorCodeMajor`/`ErrorCodeMinor`,
  *    mapowany na konkretne podklasy przez `technicalErrorToP1Error`,
- *  - biznesowy (WynikMT) — `P1BusinessError` opakowujący `OperationOutcome`.
+ *  - biznesowy (WynikMT) - `P1BusinessError` opakowujący `OperationOutcome`.
  *
  * Konwencja: nazwy typów po angielsku, ale *klucze* enumów technicznych zostają
- * po polsku — to dosłowne lustro `wyjatki.xsd` (łatwy grep wobec specyfikacji P1).
+ * po polsku - to dosłowne lustro `wyjatki.xsd` (łatwy grep wobec specyfikacji P1).
  */
 
 export type P1ErrorKind =
@@ -19,7 +19,7 @@ export type P1ErrorKind =
   | "transport";
 
 // ─────────────────────────────────────────────────────────────
-// Kody błędów technicznych (BladMT) — klucze wprost z wyjatki.xsd
+// Kody błędów technicznych (BladMT) - klucze wprost z wyjatki.xsd
 // ─────────────────────────────────────────────────────────────
 
 export const ERROR_CODE_MAJOR = {

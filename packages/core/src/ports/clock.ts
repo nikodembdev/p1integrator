@@ -1,4 +1,4 @@
-/** Port zegara — pozwala na deterministyczne testy znaczników czasu (Timestamp). */
+/** Port zegara - pozwala na deterministyczne testy znaczników czasu (Timestamp). */
 export interface Clock {
   now(): Date;
 }

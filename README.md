@@ -4,12 +4,12 @@ TypeScript SDK ucywilizowujący API polskiej platformy P1 (e-zdrowie).
 Zamienia surowe SOAP / CDA / XAdES / WS-Security na czyste, typowane,
 dziedzinowe API.
 
-> ⚠️ Wczesny etap rozwoju (0.x) — publiczne API jeszcze niestabilne.
+> ⚠️ Wczesny etap rozwoju (0.x) - publiczne API jeszcze niestabilne.
 
 ## Moduły (etap 1)
 
-- `@p1/prescription` — e-recepta
-- `@p1/referral` — e-skierowanie (w tym skierowanie do uzdrowiska)
+- `@p1/prescription` - e-recepta
+- `@p1/referral` - e-skierowanie (w tym skierowanie do uzdrowiska)
 
 ## Architektura (monorepo)
 

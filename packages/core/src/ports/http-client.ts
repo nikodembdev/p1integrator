@@ -15,7 +15,7 @@ export interface HttpResponse {
 
 /**
  * Port transportu HTTP. Konfiguracja połączenia (mTLS, timeouty, retry, proxy)
- * jest sprawą adaptera — rdzeń zna tylko request/response. Domyślny adapter
+ * jest sprawą adaptera - rdzeń zna tylko request/response. Domyślny adapter
  * (Node + mTLS) dostarcza `@p1/transport`.
  */
 export interface HttpClient {

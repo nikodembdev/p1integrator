@@ -26,7 +26,7 @@ export const BUSINESS_ROLE = {
 } as const;
 export type BusinessRole = keyof typeof BUSINESS_ROLE;
 
-/** Nazwy atrybutów kontekstu (NazwaAtrybutuKontekstuMT) — klucze wprost z P1. */
+/** Nazwy atrybutów kontekstu (NazwaAtrybutuKontekstuMT) - klucze wprost z P1. */
 export const CONTEXT_ATTR = {
   idPodmiotuOidRoot: "urn:csioz:p1:kontekst:idPodmiotuOidRoot",
   idPodmiotuOidExt: "urn:csioz:p1:kontekst:idPodmiotuOidExt",
@@ -43,7 +43,7 @@ export const CONTEXT_ATTR = {
 export interface CallContext {
   /** Podmiot medyczny (idPodmiotu). */
   readonly subject: Oid;
-  /** Użytkownik — pracownik medyczny (idUzytkownika). */
+  /** Użytkownik - pracownik medyczny (idUzytkownika). */
   readonly user: Oid;
   /** Miejsce pracy (idMiejscaPracy). */
   readonly workplace: Oid;

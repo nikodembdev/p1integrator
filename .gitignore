@@ -1,10 +1,10 @@
 # ─────────────────────────────────────────────────────────────
-# POUFNE / TYLKO LOKALNIE — pod żadnym pozorem nie commitować
+# POUFNE / TYLKO LOKALNIE - pod żadnym pozorem nie commitować
 # ─────────────────────────────────────────────────────────────
 # Cały lokalny obszar: dokumentacja P1, specyfikacje, próbki, notatki
 /.local/
 
-# Certyfikaty i klucze (defense-in-depth — łapane też poza /.local)
+# Certyfikaty i klucze (defense-in-depth - łapane też poza /.local)
 *.p12
 *.pfx
 *.pem

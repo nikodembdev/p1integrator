@@ -1,5 +1,5 @@
 /**
- * WynikMT — wynik wykonania operacji *biznesowej* P1.
+ * WynikMT - wynik wykonania operacji *biznesowej* P1.
  * (namespace: http://csioz.gov.pl/p1/wspolne/mt/v20180509)
  *
  * Odróżnij od `TechnicalErrorCode` (BladMT, wyjatki.xsd): tam jest stały enum
