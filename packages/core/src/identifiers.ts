@@ -2,7 +2,7 @@ import { P1ValidationError } from "./errors.js";
 import type { Result } from "./result.js";
 import { err, ok } from "./result.js";
 
-/** PESEL — 11 cyfr z poprawną sumą kontrolną. */
+/** PESEL - 11 cyfr z poprawną sumą kontrolną. */
 export type Pesel = string & { readonly __brand: "Pesel" };
 
 const PESEL_WEIGHTS = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3] as const;
@@ -27,7 +27,7 @@ export function pesel(value: string): Result<Pesel, P1ValidationError> {
 export const peselSex = (value: Pesel): "M" | "F" => (Number(value[9]) % 2 === 0 ? "F" : "M");
 
 /**
- * NPWZ — numer prawa wykonywania zawodu (lekarz), 7 cyfr.
+ * NPWZ - numer prawa wykonywania zawodu (lekarz), 7 cyfr.
  * Pierwsza cyfra to cyfra kontrolna: (Σ pozycja_i · cyfra_i) mod 11 dla cyfr 2..7.
  * TODO: zweryfikować algorytm wobec dokumentacji integracyjnej P1.
  */

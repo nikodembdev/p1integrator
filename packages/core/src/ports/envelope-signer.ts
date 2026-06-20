@@ -6,7 +6,7 @@ export interface WsSecurityTargets {
 
 /**
  * Port podpisu WS-Security koperty SOAP (XML-DSig, RSA-SHA256).
- * W odróżnieniu od `DocumentSigner` (XAdES dokumentu) — to podpis *koperty*,
+ * W odróżnieniu od `DocumentSigner` (XAdES dokumentu) - to podpis *koperty*,
  * realizowany pure-JS (xml-crypto) w `@p1/transport`.
  */
 export interface EnvelopeSigner {

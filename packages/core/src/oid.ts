@@ -31,14 +31,14 @@ export const oidEquals = (a: Oid, b: Oid): boolean =>
 export const OID_ROOT = {
   /** PESEL usługobiorcy */
   PESEL: "2.16.840.1.113883.3.4424.1.1.616",
-  /** NPWZ — lekarz / lekarz dentysta */
+  /** NPWZ - lekarz / lekarz dentysta */
   NPWZ_DOCTOR: "2.16.840.1.113883.3.4424.1.6.2",
-  /** PWZ — pielęgniarka / położna */
+  /** PWZ - pielęgniarka / położna */
   PWZ_NURSE_MIDWIFE: "2.16.840.1.113883.3.4424.1.6.3",
-  /** PWZ — farmaceuta */
+  /** PWZ - farmaceuta */
   PWZ_PHARMACIST: "2.16.840.1.113883.3.4424.1.6.1",
-  /** PWZ — diagnosta laboratoryjny */
+  /** PWZ - diagnosta laboratoryjny */
   PWZ_LAB_DIAGNOSTICIAN: "2.16.840.1.113883.3.4424.1.6.4",
-  /** PWZ — fizjoterapeuta */
+  /** PWZ - fizjoterapeuta */
   PWZ_PHYSIOTHERAPIST: "2.16.840.1.113883.3.4424.1.6.5",
 } as const;

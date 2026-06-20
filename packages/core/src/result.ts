@@ -1,7 +1,7 @@
 /**
  * Minimalny, niezależny od wyjątków typ wyniku.
  * Operacje, które mogą się nie powieść w przewidywalny sposób, zwracają `Result`
- * zamiast rzucać — błędy P1 są danymi, nie wyjątkami sterującymi przepływem.
+ * zamiast rzucać - błędy P1 są danymi, nie wyjątkami sterującymi przepływem.
  */
 
 export interface Ok<T> {

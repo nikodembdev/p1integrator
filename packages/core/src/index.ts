@@ -1,5 +1,5 @@
 /**
- * @p1/core — rdzeń SDK P1: typy domenowe, Result, taksonomia błędów,
+ * @p1/core - rdzeń SDK P1: typy domenowe, Result, taksonomia błędów,
  * Kontekst, identyfikatory, rejestr środowisk oraz porty (HttpClient,
  * DocumentSigner, EnvelopeSigner, Clock).
  */
