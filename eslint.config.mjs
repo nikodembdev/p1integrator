@@ -10,6 +10,7 @@ export default tseslint.config(
       ".local/**",
       "**/*.config.*",
       "tsup.base.ts",
+      "scripts/**",
       ".changeset/**",
     ],
   },

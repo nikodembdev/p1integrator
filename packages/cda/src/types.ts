@@ -1,4 +1,10 @@
-import type { Gender, RealizationMode, TreatmentType } from "./constants.js";
+import type { Gender } from "./oids.js";
+
+/** Obiekt XML w formacie xmlbuilder2 (atrybuty z prefiksem `@`, tekst pod `#`). */
+export type XmlObject = Record<string, unknown>;
+
+/** Sekcja body — obiekt zawartości elementu `<section>`, budowany w module domenowym. */
+export type CdaSection = XmlObject;
 
 /** Adres pacjenta (recordTarget). */
 export interface CdaPatientAddress {
@@ -10,6 +16,13 @@ export interface CdaPatientAddress {
   readonly country?: string;
   /** Kod użycia adresu, np. "PST", "HP". */
   readonly use?: string;
+}
+
+/** Miejsce urodzenia pacjenta (recordTarget/birthplace) — wymagane przez część typów (np. psychiatryczny). */
+export interface CdaBirthplace {
+  readonly city?: string;
+  readonly postalCode?: string;
+  readonly country?: string;
 }
 
 /** Adres organizacji (autora). */
@@ -31,6 +44,8 @@ export interface CdaPatient {
   readonly gender?: Gender;
   readonly phone?: string;
   readonly email?: string;
+  /** Miejsce urodzenia — emitowane jako `birthplace/place/addr`, gdy podane. */
+  readonly birthplace?: CdaBirthplace;
 }
 
 /** Organizacja autora: miejsce pracy → podmiot (REGON 14 → REGON 9) + NFZ. */
@@ -42,11 +57,23 @@ export interface CdaAuthorOrganization {
   readonly regon9: string;
   readonly name: string;
   readonly address: CdaOrgAddress;
-  readonly phone?: string;
+  /** Telefon organizacji — wymagany przez Schematron P1 (telecom min 1x). */
+  readonly phone: string;
   /** Kod oddziału NFZ, np. "07". */
   readonly nfzBranchCode: string;
   /** Numer umowy NFZ. */
   readonly nfzContractNumber: string;
+  /**
+   * Jednostka organizacyjna (root .2.3.2), np. "000000927722-01" — poziom MUŚ między
+   * komórką a podmiotem. Gdy podana, emitowana jest pełna hierarchia P1
+   * (komórka → jednostka → podmiot); musi zgadzać się z `idMiejscaPracy` z kontekstu
+   * wywołania oraz z rejestracją w CWUd.
+   */
+  readonly orgUnitExt?: string;
+  readonly orgUnitName?: string;
+  /** Kod specjalności komórki (standardIndustryClassCode, cz. VIII kodu resortowego), np. "0010". */
+  readonly cellSpecialtyCode?: string;
+  readonly cellSpecialtyName?: string;
 }
 
 export interface CdaAuthor {
@@ -71,17 +98,26 @@ export interface CdaLegalAuthenticator {
   readonly functionDisplay: string;
 }
 
-export interface ClinicalDocumentHeaderInput {
+/** Wejście generycznego buildera dokumentu CDA (część specyficzna: templateId/code/sekcje). */
+export interface ClinicalDocumentInput {
   /** Bazowy root lokalny podmiotu (`id_lokalne_podmiotu`); z niego pochodzą .4.1/.4.2/.17.1. */
   readonly localRoot: string;
+  /** Szablon dokumentu (specyficzny dla typu). */
+  readonly templateId: { readonly root: string; readonly extension?: string };
+  /** Element `<code>` dokumentu (obiekt xmlbuilder2) — specyficzny dla typu. */
+  readonly code: XmlObject;
   readonly title: string;
-  readonly treatmentType: TreatmentType;
-  readonly realizationMode: RealizationMode;
   readonly patient: CdaPatient;
   readonly author: CdaAuthor;
   readonly legalAuthenticator: CdaLegalAuthenticator;
   /** Kod oddziału NFZ dla participant (np. "07"). */
   readonly nfzBranchCode: string;
+  /** Sekcje kliniczne `structuredBody` (obiekty z builderów sekcji). */
+  readonly sections?: readonly CdaSection[];
+  /** Szablon komponentu `structuredBody` (różny per typ dokumentu; domyślnie 2.35). */
+  readonly structuredBodyTemplateId?: string;
+  /** Szablon recordTarget (różny per typ dokumentu; domyślnie 2.26). */
+  readonly recordTargetTemplateId?: string;
 
   /** Identyfikator dokumentu (domyślnie generowany). */
   readonly documentId?: string;
@@ -91,8 +127,6 @@ export interface ClinicalDocumentHeaderInput {
   readonly now?: Date;
   /** Nadpisanie czasu wystawienia (YYYYMMDDHHmmss). */
   readonly documentDate?: string;
-  /** Gotowy XML komponentów `structuredBody` (sekcje body — PR2). */
-  readonly bodyComponentsXml?: string;
 }
 
 export interface ClinicalDocumentResult {
