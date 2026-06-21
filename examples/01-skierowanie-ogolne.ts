@@ -7,11 +7,15 @@
  * podpisuje je (XAdES), pakuje w kopertę SOAP + WS-Security i wysyła mTLS-em do P1.
  * Bez certyfikatów/konfiguracji przykład pokaże tylko zbudowany dokument (offline).
  */
-import { buildGeneralReferralCda, issueGeneralReferral } from "@p1/referral";
+import {
+  buildGeneralReferralCda,
+  type GeneralReferralInput,
+  issueGeneralReferral,
+} from "@p1/referral";
 import { account, patient, previewXml, referralTransport } from "./config.js";
 
 // 1) Dane skierowania — to jest wszystko, co opisuje konkretny dokument.
-const input = {
+const input: GeneralReferralInput = {
   localRoot: account.localRoot, // węzeł OID usługodawcy
   title: "Skierowanie do poradni specjalistycznej",
   nfzBranchCode: account.nfzBranch,

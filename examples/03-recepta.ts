@@ -8,13 +8,17 @@
  * kod i klucz pakietu oraz `kluczRecepty` (przyda się do ewentualnego anulowania).
  */
 import { randomUUID } from "node:crypto";
-import { buildDrugPrescriptionCda, issueDrugPrescription } from "@p1/prescription";
+import {
+  buildDrugPrescriptionCda,
+  type DrugPrescriptionInput,
+  issueDrugPrescription,
+} from "@p1/prescription";
 import { account, patient, prescriptionTransport, previewXml } from "./config.js";
 
 // Numer recepty (id dokumentu) = 22 znaki HEX (wymóg formatu P1).
 const prescriptionNumber = randomUUID().replace(/-/g, "").toUpperCase().slice(0, 22);
 
-const input = {
+const input: DrugPrescriptionInput = {
   localRoot: account.localRoot,
   prescriptionNumber,
   // Zbiór wersji dokumentu (setId) — root bazuje na węźle OID usługodawcy.
@@ -75,7 +79,7 @@ const input = {
 
   // Odpłatność: B | R | 30% | 50% | 100% (pełnopłatne).
   payment: { nfzBranch: account.nfzBranch, level: "100%", packageCount: "1" },
-} as const;
+};
 
 previewXml(buildDrugPrescriptionCda(input).xml);
 

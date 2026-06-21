@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@p1/core": ["../packages/core/src/index.ts"],
+      "@p1/cda": ["../packages/cda/src/index.ts"],
+      "@p1/signing": ["../packages/signing/src/index.ts"],
+      "@p1/transport": ["../packages/transport/src/index.ts"],
+      "@p1/prescription": ["../packages/prescription/src/index.ts"],
+      "@p1/referral": ["../packages/referral/src/index.ts"]
+    }
+  },
+  "include": ["**/*.ts"]
+}

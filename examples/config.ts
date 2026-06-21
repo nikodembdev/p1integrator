@@ -56,7 +56,7 @@ export const account = {
     street: "Powązkowska",
     houseNumber: "44",
   },
-} as const;
+};
 
 /** Pacjent testowy (zarejestrowany w CWUb na środowisku integracyjnym). */
 export const patient = {
@@ -71,7 +71,7 @@ export const patient = {
     street: "Powstańców Śląskich",
     houseNumber: "8B",
   },
-} as const;
+};
 
 /** Kontekst wywołania (ten sam dla skierowania i recepty — dialekt dobiera transport). */
 export const context: CallContext = {

@@ -6,10 +6,14 @@
  * Skierowanie uzdrowiskowe ma bogatszą treść niż ogólne: tryb leczenia, wywiad,
  * badanie przedmiotowe (parametry życiowe + układy), wyniki badań i tryb korespondencji.
  */
-import { buildHealthResortReferralCda, issueHealthResortReferral } from "@p1/referral";
+import {
+  buildHealthResortReferralCda,
+  type HealthResortReferralInput,
+  issueHealthResortReferral,
+} from "@p1/referral";
 import { account, patient, previewXml, referralTransport } from "./config.js";
 
-const input = {
+const input: HealthResortReferralInput = {
   localRoot: account.localRoot,
   title: "Skierowanie na leczenie uzdrowiskowe",
   nfzBranchCode: account.nfzBranch,
