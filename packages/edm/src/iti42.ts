@@ -7,8 +7,9 @@ import {
   P1TransportError,
   type Result,
 } from "@p1/core";
-import { signWsSecurity, type WsSecurityCertificate } from "@p1/transport";
+import type { WsSecurityCertificate } from "@p1/transport";
 import { buildRegistryObjectList, type DocumentIndexInput } from "./ebrim.js";
+import { buildSignedEdmEnvelope, EBRS_STATUS_SUCCESS, soap12ContentType } from "./soap-edm.js";
 
 /**
  * ITI-42 (Register Document Set-b) - zapis indeksu EDM w rejestrze P1.
@@ -16,13 +17,8 @@ import { buildRegistryObjectList, type DocumentIndexInput } from "./ebrim.js";
  * + podpis X.509 (Body+Timestamp), WS-Addressing, nad mTLS. Odpowiedź: ebRS RegistryResponse.
  */
 
-const SOAP12_NS = "http://www.w3.org/2003/05/soap-envelope";
-const WSA_NS = "http://www.w3.org/2005/08/addressing";
-const WSU_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
-const WSSE_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
 const LCM_NS = "urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0";
 const ACTION = "urn:ihe:iti:2007:RegisterDocumentSet-b";
-const STATUS_SUCCESS = "urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Success";
 
 /** Domyślny endpoint ITI-42 (środowisko integracyjne). */
 export const DEFAULT_ITI42_ENDPOINT = "https://isus.ezdrowie.gov.pl/services/ObslugaEdmIti42WS";
@@ -58,41 +54,20 @@ export interface RegisterDocumentSetResult {
   readonly raw: string;
 }
 
-const escapeXml = (v: string): string =>
-  v.replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[c] ?? c);
-
 /** Buduje podpisaną kopertę ITI-42 z osadzoną asercją SAML. */
 export function buildRegisterDocumentSetRequest(input: RegisterDocumentSetInput): string {
-  const endpoint = input.endpoint ?? DEFAULT_ITI42_ENDPOINT;
-  const messageId = input.messageId ?? `urn:uuid:${input.idSuffix ?? "message"}`;
-
-  const envelope =
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<soapenv:Envelope xmlns:soapenv="${SOAP12_NS}" xmlns:wsu="${WSU_NS}" xmlns:lcm="${LCM_NS}">` +
-    `<soapenv:Header>` +
-    `<wsa:Action xmlns:wsa="${WSA_NS}">${ACTION}</wsa:Action>` +
-    `<wsa:To xmlns:wsa="${WSA_NS}">${escapeXml(endpoint)}</wsa:To>` +
-    `<wsa:MessageID xmlns:wsa="${WSA_NS}">${escapeXml(messageId)}</wsa:MessageID>` +
-    `<wsse:Security xmlns:wsse="${WSSE_NS}"></wsse:Security>` +
-    `</soapenv:Header>` +
-    `<soapenv:Body wsu:Id="Body">` +
-    `<lcm:SubmitObjectsRequest>${buildRegistryObjectList(input.index)}</lcm:SubmitObjectsRequest>` +
-    `</soapenv:Body></soapenv:Envelope>`;
-
-  const signed = signWsSecurity(envelope, {
+  return buildSignedEdmEnvelope({
+    action: ACTION,
+    endpoint: input.endpoint ?? DEFAULT_ITI42_ENDPOINT,
+    bodyXml: `<lcm:SubmitObjectsRequest>${buildRegistryObjectList(input.index)}</lcm:SubmitObjectsRequest>`,
+    assertionXml: input.assertionXml,
     certificate: input.wsSecurityCertificate,
-    includeContextReference: false,
+    namespaces: { lcm: LCM_NS },
     ...(input.now !== undefined ? { now: input.now } : {}),
     ...(input.ttlSeconds !== undefined ? { ttlSeconds: input.ttlSeconds } : {}),
     ...(input.idSuffix !== undefined ? { idSuffix: input.idSuffix } : {}),
+    ...(input.messageId !== undefined ? { messageId: input.messageId } : {}),
   });
-
-  return injectAssertion(signed, input.assertionXml);
-}
-
-/** Wstawia asercję SAML zaraz po otwarciu `<wsse:Security ...>` (token nośny). */
-function injectAssertion(signedEnvelope: string, assertionXml: string): string {
-  return signedEnvelope.replace(/(<wsse:Security\b[^>]*>)/, `$1${assertionXml}`);
 }
 
 /**
@@ -111,7 +86,7 @@ export async function registerDocumentSet(
     const response = await httpClient.send({
       url: endpoint,
       method: "POST",
-      headers: { "Content-Type": `application/soap+xml; charset=utf-8; action="${ACTION}"` },
+      headers: { "Content-Type": soap12ContentType(ACTION) },
       body,
     });
     responseBody = response.body;
@@ -126,7 +101,7 @@ export async function registerDocumentSet(
   }
 
   return ok({
-    success: status === STATUS_SUCCESS,
+    success: status === EBRS_STATUS_SUCCESS,
     ...(status !== undefined ? { status } : {}),
     errors: parseErrors(responseBody),
     raw: responseBody,
