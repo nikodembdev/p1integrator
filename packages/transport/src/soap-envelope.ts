@@ -6,7 +6,7 @@ const BODY_ID = "Body";
 
 export interface SoapEnvelopeOptions {
   readonly context: CallContext;
-  /** Wewnętrzny XML elementu Body (żądanie operacji) — dostarcza moduł domenowy. */
+  /** Wewnętrzny XML elementu Body (żądanie operacji) - dostarcza moduł domenowy. */
   readonly body: string;
   /** Dodatkowe deklaracje namespace na <Envelope> (prefiks → URI), np. dla operacji. */
   readonly namespaces?: Readonly<Record<string, string>>;

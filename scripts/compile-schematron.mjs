@@ -1,6 +1,6 @@
 /**
  * Kompiluje surowy Schematron P1 (.sch, ART-DECOR) do SEF (Saxon-JS), gotowego
- * do walidacji. Kroki: inline include'ów (w JS — saxonowy iso_dsdl_include
+ * do walidacji. Kroki: inline include'ów (w JS - saxonowy iso_dsdl_include
  * przepełnia stos przy ~161 include'ach) → iso_abstract_expand → iso_svrl_for_xslt2
  * → fix błędnego regexa P1 → kompilacja SEF.
  *
@@ -35,7 +35,7 @@ function inline(path, seen = new Set()) {
 const tmp = mkdtempSync(join(tmpdir(), "p1-sch-"));
 const included = join(tmp, "included.sch");
 const expanded = join(tmp, "expanded.sch");
-// Walidator MUSI powstać w katalogu źródłowym .sch — reguły używają `doc('include/voc-*.xml')`
+// Walidator MUSI powstać w katalogu źródłowym .sch - reguły używają `doc('include/voc-*.xml')`
 // rozwiązywanego względem statycznego base URI walidatora (zapamiętanego w SEF).
 const validator = join(dirname(schPath), ".p1-validator.xsl");
 

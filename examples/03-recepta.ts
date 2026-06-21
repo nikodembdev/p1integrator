@@ -1,12 +1,7 @@
-/**
- * Przykład: wystawienie RECEPTY na jeden lek.
- *
- * Uruchom:  pnpm tsx examples/03-recepta.ts
- *
- * `issueDrugPrescription` buduje CDA recepty, podpisuje ją i wysyła jako
- * jednoelementowy pakiet (operacja `zapisPakietuRecept`). W odpowiedzi P1 zwraca
- * kod i klucz pakietu oraz `kluczRecepty` (przyda się do ewentualnego anulowania).
- */
+// Recepta na jeden lek. Pełny, rozpisany przykład wejścia (reszta recept bazuje
+// na recepta-base.ts). pnpm tsx examples/03-recepta.ts
+// issueDrugPrescription wysyła ją jako jednoelementowy pakiet (zapisPakietuRecept);
+// w odpowiedzi jest kluczRecepty potrzebny do anulowania.
 import { randomUUID } from "node:crypto";
 import {
   buildDrugPrescriptionCda,
@@ -21,7 +16,7 @@ const prescriptionNumber = randomUUID().replace(/-/g, "").toUpperCase().slice(0,
 const input: DrugPrescriptionInput = {
   localRoot: account.localRoot,
   prescriptionNumber,
-  // Zbiór wersji dokumentu (setId) — root bazuje na węźle OID usługodawcy.
+  // Zbiór wersji dokumentu (setId) - root bazuje na węźle OID usługodawcy.
   versionSetId: { root: `${account.localRoot}.2.2`, extension: prescriptionNumber },
 
   patient: {
@@ -55,7 +50,7 @@ const input: DrugPrescriptionInput = {
     availabilityCategory: "Rp", // Rp | Rpw | Rpz | OTC
     packageEan: "05909990805617",
     packageName: "Zofran 8 mg",
-    formCode: "30066000", // postać opakowania (EDQM) — np. „Tablet container"
+    formCode: "30066000", // postać opakowania (EDQM) - np. „Tablet container"
     formName: "Tablet container",
     capacityUnit: "tabl.",
     capacityValue: "10",
@@ -85,7 +80,7 @@ previewXml(buildDrugPrescriptionCda(input).xml);
 
 const transport = prescriptionTransport();
 if (!transport) {
-  console.log("Brak konfiguracji P1 (.local/p1.env + certy) — pominięto wysyłkę.");
+  console.log("Brak konfiguracji P1 (.local/p1.env + certy) - pominięto wysyłkę.");
   process.exit(0);
 }
 

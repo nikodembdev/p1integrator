@@ -23,7 +23,7 @@ import {
 import { buildDrugPrescriptionCda } from "./document.js";
 import type { DrugPrescriptionInput } from "./types.js";
 
-/** Namespace usługi ObslugaRecepty (v20170510 — inny niż e-skierowanie!). */
+/** Namespace usługi ObslugaRecepty (v20170510 - inny niż e-skierowanie!). */
 export const PRESCRIPTION_WS_NS = "http://csioz.gov.pl/p1/erecepta/ws/v20170510";
 export const PRESCRIPTION_MT_NS = "http://csioz.gov.pl/p1/erecepta/mt/v20170510";
 /** Namespace `kontekstWywolania` dla e-recepty (wersja v20170510). */
@@ -48,7 +48,7 @@ export interface PrescriptionTransport {
   readonly wsSecurityCertificate: WsSecurityCertificate;
   /** Endpoint SOAP usługi ObslugaReceptyWS (zależny od środowiska). */
   readonly endpoint: string;
-  /** Zegar — do deterministycznego Timestamp w testach. */
+  /** Zegar - do deterministycznego Timestamp w testach. */
   readonly clock?: Clock;
 }
 
@@ -62,16 +62,16 @@ export interface PrescriptionInPackage {
 
 /** Wynik zapisu pojedynczej recepty z pakietu. */
 export interface PrescriptionResult {
-  /** `numerReceptyWPakiecie` — koreluje z `id` przekazanej recepty. */
+  /** `numerReceptyWPakiecie` - koreluje z `id` przekazanej recepty. */
   readonly id?: string;
-  /** `kluczRecepty` — klucz dostępowy nadany przez P1 (gdy weryfikacja OK). */
+  /** `kluczRecepty` - klucz dostępowy nadany przez P1 (gdy weryfikacja OK). */
   readonly key?: string;
 }
 
 export interface PrescriptionPackageResult {
-  /** `kodPakietuRecept` — 4 cyfry + PESEL (gdy całość zweryfikowana bezbłędnie). */
+  /** `kodPakietuRecept` - 4 cyfry + PESEL (gdy całość zweryfikowana bezbłędnie). */
   readonly packageCode?: string;
-  /** `kluczPakietuRecept` — klucz pakietu (gdy całość zweryfikowana bezbłędnie). */
+  /** `kluczPakietuRecept` - klucz pakietu (gdy całość zweryfikowana bezbłędnie). */
   readonly packageKey?: string;
   /** Klucze poszczególnych recept. */
   readonly prescriptions: readonly PrescriptionResult[];
@@ -147,10 +147,7 @@ export async function submitPrescriptionPackage(
   });
 }
 
-/**
- * Buduje CDA recepty z `input` i wysyła ją jako jednoelementowy pakiet.
- * Wygodne wejście dla najczęstszego przypadku (jedna recepta).
- */
+/** Buduje CDA recepty z `input` i wysyła ją jako jednoelementowy pakiet. */
 export async function issueDrugPrescription(
   input: DrugPrescriptionInput,
   transport: PrescriptionTransport,
@@ -217,10 +214,7 @@ export async function submitPrescriptionCancellation(
   return ok(parsed.value.outcome !== undefined ? { outcome: parsed.value.outcome } : {});
 }
 
-/**
- * Buduje dokument anulujący z `input` i wysyła go (wraz z `kluczRecepty`).
- * Wygodne wejście dla anulowania pojedynczej recepty.
- */
+/** Buduje dokument anulujący z `input` i wysyła go wraz z `kluczRecepty`. */
 export async function cancelDrugPrescription(
   input: PrescriptionCancellationInput,
   kluczRecepty: string,

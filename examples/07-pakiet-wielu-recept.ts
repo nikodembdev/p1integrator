@@ -1,13 +1,7 @@
-/**
- * Przykład: PAKIET WIELU RECEPT w jednym wywołaniu (operacja `zapisPakietuRecept`).
- *
- * Uruchom:  pnpm tsx examples/07-pakiet-wielu-recept.ts
- *
- * `issueDrugPrescription` wysyła jedną receptę; pod spodem działa
- * `submitPrescriptionPackage`, które przyjmuje listę recept `{ id, cdaXml }`. Tu
- * budujemy dwie recepty i wysyłamy je razem. P1 zwraca klucz pakietu oraz klucz
- * każdej recepty (skorelowany z `id`).
- */
+// Wiele recept w jednym pakiecie (zapisPakietuRecept).
+// pnpm tsx examples/07-pakiet-wielu-recept.ts
+// submitPrescriptionPackage przyjmuje listę { id, cdaXml }; P1 zwraca klucz pakietu
+// i klucz każdej recepty (skorelowany z id).
 import {
   buildDrugPrescriptionCda,
   type DrugPrescriptionInput,
@@ -16,10 +10,10 @@ import {
 import { prescriptionTransport, previewXml } from "./config.js";
 import { baseDrugPrescription } from "./recepta-base.js";
 
-// Recepta 1 — Zofran (bazowa).
+// Recepta 1 - Zofran (bazowa).
 const recepta1: DrugPrescriptionInput = baseDrugPrescription();
 
-// Recepta 2 — inny lek na tę samą wizytę.
+// Recepta 2 - inny lek na tę samą wizytę.
 const recepta2: DrugPrescriptionInput = baseDrugPrescription({
   drug: {
     code: "100000200",
@@ -48,7 +42,7 @@ previewXml(buildDrugPrescriptionCda(recepta1).xml);
 
 const transport = prescriptionTransport();
 if (!transport) {
-  console.log("Brak konfiguracji P1 (.local/p1.env + certy) — pominięto wysyłkę.");
+  console.log("Brak konfiguracji P1 (.local/p1.env + certy) - pominięto wysyłkę.");
   process.exit(0);
 }
 
@@ -65,7 +59,7 @@ if (!result.ok) {
   process.exit(1);
 }
 if (result.value.outcome?.major === "urn:csioz:p1:kod:major:Sukces") {
-  console.log("✅ Sukces — kodPakietu:", result.value.packageCode);
+  console.log("✅ Sukces - kodPakietu:", result.value.packageCode);
   for (const p of result.value.prescriptions) {
     console.log(`   recepta #${p.id}: kluczRecepty = ${p.key}`);
   }

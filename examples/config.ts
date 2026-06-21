@@ -1,15 +1,7 @@
-/**
- * Wspólna konfiguracja przykładów — „instalacja raz".
- *
- * Tu mieszka cała powtarzalna „hydraulika": dane konta (OID-y podmiotu/lekarza),
- * kontekst wywołania oraz złożenie transportu (mTLS + podpisywarka XAdES +
- * certyfikat WS-Security). Pojedynczy przykład (np. `01-skierowanie-ogolne.ts`)
- * skupia się już tylko na DANYCH dokumentu i wywołaniu jednej funkcji z libki.
- *
- * Wartości czyta z `.local/p1.env` (gitignored) — wzór kluczy: `.env.example`.
- * Bez kompletu env i certyfikatów przykład i tak ZBUDUJE dokument (offline) i go
- * wypisze; wyśle do P1 tylko, gdy konfiguracja jest dostępna.
- */
+// Wspólne dla przykładów: dane konta, kontekst i złożenie transportu (mTLS +
+// podpisywarka XAdES + cert WS-Security), żeby pojedynczy przykład zajmował się
+// tylko danymi dokumentu. Wartości z `.local/p1.env` (wzór: `.env.example`);
+// bez certów transport jest niedostępny i przykłady tylko budują dokument.
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { CallContext } from "@p1/core";
@@ -31,7 +23,7 @@ const OID = {
 } as const;
 
 /**
- * Dane konta i lekarza. Z env, a w razie braku — przykładowe placeholdery (dokument
+ * Dane konta i lekarza. Z env, a w razie braku - przykładowe placeholdery (dokument
  * zbuduje się offline, ale realna wysyłka wymaga prawdziwych wartości z przydziału CSIOZ).
  */
 export const account = {
@@ -73,7 +65,7 @@ export const patient = {
   },
 };
 
-/** Kontekst wywołania (ten sam dla skierowania i recepty — dialekt dobiera transport). */
+/** Kontekst wywołania (ten sam dla skierowania i recepty - dialekt dobiera transport). */
 export const context: CallContext = {
   subject: { root: account.providerRoot, extension: account.podmiotExt },
   user: { root: account.npwzRoot, extension: account.npwz },
@@ -91,7 +83,7 @@ const certDir =
   e.P1_CERT_DIR ?? resolve(import.meta.dirname, "../.local/certs/Podmiot_leczniczy_713");
 const certPassword = e.CERT_PASSWORD ?? e.P1_CERT_PASSWORD ?? "";
 
-/** Zależności transportu (bez endpointu) — wspólne dla skierowań i recept. */
+/** Zależności transportu (bez endpointu) - wspólne dla skierowań i recept. */
 export interface TransportDeps {
   readonly context: CallContext;
   readonly documentSigner: DocumentSigner;
@@ -101,7 +93,7 @@ export interface TransportDeps {
 
 /**
  * Składa transport z certyfikatów w `.local/certs`. Zwraca `undefined`, gdy brakuje
- * certyfikatów/hasła — wtedy przykład pokaże tylko zbudowany dokument (offline).
+ * certyfikatów/hasła - wtedy przykład pokaże tylko zbudowany dokument (offline).
  */
 export function tryBuildTransport(): (TransportDeps & { endpoint: string }) | undefined {
   const tlsP12 = resolve(certDir, "Podmiot_leczniczy_713-tls.p12");
@@ -138,7 +130,7 @@ export function prescriptionTransport(): (TransportDeps & { endpoint: string }) 
 /** Wypisuje fragment zbudowanego dokumentu (do podglądu w przykładach offline). */
 export function previewXml(xml: string): void {
   const lines = xml.split("\n");
-  console.log("\n— zbudowany dokument CDA (pierwsze 25 linii) —");
+  console.log("\n- zbudowany dokument CDA (pierwsze 25 linii) -");
   console.log(lines.slice(0, 25).join("\n"));
-  console.log(`… (łącznie ${lines.length} linii, ${xml.length} znaków)\n`);
+  console.log(`... (łącznie ${lines.length} linii, ${xml.length} znaków)\n`);
 }

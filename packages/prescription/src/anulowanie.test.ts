@@ -74,7 +74,7 @@ describe("buildPrescriptionCancellationCda", () => {
     expect(xml).toContain("5369C8FAF459440CB472FB"); // identyfikator anulowanej recepty
   });
 
-  it("autor zwykły ma representedOrganization, pro auctore — adres+telefon", () => {
+  it("autor zwykły ma representedOrganization, pro auctore - adres+telefon", () => {
     const normal = buildPrescriptionCancellationCda(base).xml;
     expect(normal).toContain("representedOrganization");
 

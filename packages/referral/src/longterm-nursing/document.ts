@@ -35,7 +35,7 @@ export interface LongtermNursingReferralInput extends Omit<
   readonly history: string;
   /** Badanie przedmiotowe (sekcja obowiązkowa, narracyjna). */
   readonly physicalFindings: string;
-  /** Przedmiot skierowania — komórka pielęgniarskiej opieki długoterminowej. */
+  /** Przedmiot skierowania - komórka pielęgniarskiej opieki długoterminowej. */
   readonly encounter: RequestedEncounter;
   readonly attachments?: readonly Attachment[];
 }

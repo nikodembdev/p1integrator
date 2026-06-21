@@ -1,15 +1,10 @@
-/**
- * Bazowa recepta dla przykładów — kompletny, poprawny `DrugPrescriptionInput`
- * (lek gotowy Zofran, pełnopłatny). Poszczególne przykłady robią `baseDrugPrescription({ … })`
- * i nadpisują tylko to, co je wyróżnia, dzięki czemu widać samą różnicę.
- *
- * Pełną, rozpisaną strukturę wejścia pokazuje `03-recepta.ts`.
- */
+// Bazowa, poprawna recepta (lek gotowy Zofran, pełnopłatny). Przykłady robią
+// baseDrugPrescription({ ... }) i nadpisują tylko swoją różnicę. Pełne wejście: 03-recepta.ts.
 import { randomUUID } from "node:crypto";
 import type { DrugPrescriptionInput } from "@p1/prescription";
 import { account, patient } from "./config.js";
 
-/** Świeży numer recepty (22 znaki HEX — wymóg formatu P1). */
+/** Świeży numer recepty (22 znaki HEX - wymóg formatu P1). */
 export function newPrescriptionNumber(): string {
   return randomUUID().replace(/-/g, "").toUpperCase().slice(0, 22);
 }
@@ -90,7 +85,7 @@ export function reportPrescription(
     process.exit(1);
   }
   if (result.value.outcome?.major === "urn:csioz:p1:kod:major:Sukces") {
-    console.log("✅ Sukces — kluczRecepty:", result.value.prescriptions[0]?.key);
+    console.log("✅ Sukces - kluczRecepty:", result.value.prescriptions[0]?.key);
   } else {
     console.error("❌ P1 odrzucił dokument:", result.value.outcome?.major);
     console.error("  ", result.value.outcome?.message);

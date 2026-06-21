@@ -15,7 +15,7 @@ const loinc = (code: string, display: string): Record<string, unknown> => ({
 });
 
 // ─────────────────────────────────────────────────────────────
-// Generyczne cegiełki sekcji — współdzielone przez typy skierowań
+// Generyczne cegiełki sekcji - współdzielone przez typy skierowań
 // ─────────────────────────────────────────────────────────────
 
 /** Element `<code>` dokumentu skierowania: LOINC + translation na klasyfikację dokumentów P1. */
@@ -65,12 +65,12 @@ export interface RequestedEncounter {
   /** Kod specjalności komórki organizacyjnej (cz. VIII kodu resortowego), np. "2700"/"5160". */
   readonly cellCode: string;
   readonly cellName: string;
-  /** Tryb realizacji ("R" zwykły / "UR" pilny) — wymagany przez część typów (np. zakład opiekuńczy). */
+  /** Tryb realizacji ("R" zwykły / "UR" pilny) - wymagany przez część typów (np. zakład opiekuńczy). */
   readonly priority?: ReferralPriority;
 }
 
 /**
- * Wpis „Przedmiot skierowania" (encounter ENC/RQO) — wspólny dla typów wymagających
+ * Wpis „Przedmiot skierowania" (encounter ENC/RQO) - wspólny dla typów wymagających
  * wskazania komórki organizacyjnej (psychiatryczny .4.11, opiekuńczy/długoterminowy .4.9).
  */
 export function buildRequestedEncounterEntry(
@@ -104,7 +104,7 @@ export function buildRequestedEncounterEntry(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Rozpoznania (Diagnoses) — wspólne dla typów skierowań
+// Rozpoznania (Diagnoses) - wspólne dla typów skierowań
 // ─────────────────────────────────────────────────────────────
 
 export interface DiagnosisInput {
@@ -192,7 +192,7 @@ function buildDiagnosisEntry(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Załączniki — wspólne dla typów skierowań
+// Załączniki - wspólne dla typów skierowań
 // ─────────────────────────────────────────────────────────────
 
 export interface Attachment {
@@ -204,7 +204,7 @@ export interface Attachment {
   readonly p1ClassCode: string;
   readonly p1ClassDisplay: string;
   readonly description: string;
-  /** Dokument zeskanowany — używa szablonu EXTERNAL_DOCUMENT_SCAN i pomija setId. */
+  /** Dokument zeskanowany - używa szablonu EXTERNAL_DOCUMENT_SCAN i pomija setId. */
   readonly isScan?: boolean;
   readonly setIdRoot?: string;
   readonly setIdExtension?: string;

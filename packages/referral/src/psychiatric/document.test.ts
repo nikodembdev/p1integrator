@@ -75,7 +75,7 @@ describe("buildPsychiatricReferralCda", () => {
     expect(result.xml).toContain("<title>Powód skierowania</title>");
     expect(result.xml).toContain('root="2.16.840.1.113883.3.4424.13.10.4.11"'); // encounter entry
     expect(result.xml).toContain('code="2700"');
-    // sekcja .3.20 jest narracyjna — nie zawiera wpisów rozpoznań SNOMED (.4.1)
+    // sekcja .3.20 jest narracyjna - nie zawiera wpisów rozpoznań SNOMED (.4.1)
     expect(result.xml).not.toContain('code="8319008"');
   });
 });

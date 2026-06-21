@@ -1,13 +1,7 @@
-/**
- * Przykład: RECEPTA z zakazem zamiany („NZ"), informacją dla wydającego oraz lekiem
- * o dwóch substancjach czynnych.
- *
- * Uruchom:  pnpm tsx examples/05-recepta-nie-zamieniac.ts
- *
- * - `substitution: false` → adnotacja „NZ" (nie zamieniać) + odpowiedni akt,
- * - `dispenserInfo` → „Informacja dla osoby wydającej lek",
- * - kilka pozycji w `drug.ingredients` → moc składników liczona w narracji.
- */
+// Recepta: zakaz zamiany ("NZ"), informacja dla wydającego, lek wieloskładnikowy.
+// pnpm tsx examples/05-recepta-nie-zamieniac.ts
+// substitution:false -> "NZ" + akt zakazu; dispenserInfo -> akapit dla wydającego;
+// wiele pozycji w drug.ingredients -> moc składników liczona w narracji.
 import { buildDrugPrescriptionCda, issueDrugPrescription } from "@p1/prescription";
 import { prescriptionTransport, previewXml } from "./config.js";
 import { baseDrugPrescription, reportPrescription } from "./recepta-base.js";
@@ -40,7 +34,7 @@ const input = baseDrugPrescription({
       },
     ],
   },
-  substitution: false, // ⬅ „NZ" — nie zamieniać
+  substitution: false, // ⬅ „NZ" - nie zamieniać
   dispenserInfo: "Wydać opakowanie oryginalne",
 });
 
@@ -48,7 +42,7 @@ previewXml(buildDrugPrescriptionCda(input).xml);
 
 const transport = prescriptionTransport();
 if (!transport) {
-  console.log("Brak konfiguracji P1 (.local/p1.env + certy) — pominięto wysyłkę.");
+  console.log("Brak konfiguracji P1 (.local/p1.env + certy) - pominięto wysyłkę.");
   process.exit(0);
 }
 reportPrescription(await issueDrugPrescription(input, transport));

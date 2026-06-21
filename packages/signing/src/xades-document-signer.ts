@@ -61,14 +61,14 @@ const sha256b64 = (s: string): string =>
   createHash("sha256").update(Buffer.from(s, "utf8")).digest("base64");
 
 export interface XadesDocumentSignerOptions {
-  /** Certyfikat podpisujący (PKCS#12) — klucz lekarza. */
+  /** Certyfikat podpisujący (PKCS#12) - klucz lekarza. */
   readonly certificate: SigningCertificate;
 }
 
 /**
  * Podpisywarka XAdES-BES in-process (bez serwisu Java/DSS). Strukturę podpisu (enveloped,
  * QualifyingProperties: SigningTime + SigningCertificate) generuje xadesjs, ale 2× DigestValue
- * i SignatureValue PRZELICZAMY poprawną exclusive-c14n z xml-crypto — xmldsigjs liczy c14n
+ * i SignatureValue PRZELICZAMY poprawną exclusive-c14n z xml-crypto - xmldsigjs liczy c14n
  * niestandardowo, co P1 odrzuca. Podpis akceptowany przez P1 (zob. [[in-process-signing]]).
  *
  * Niuanse dopasowane do weryfikatora P1/DSS:
@@ -109,14 +109,14 @@ export function createXadesDocumentSigner(options: XadesDocumentSignerOptions): 
       const select = xpath.useNamespaces({ ds: DSIG_NS, xades: XADES_NS });
       const sig = (select("//ds:Signature", doc as any) as any[])[0];
 
-      // 1) DigestValue referencji dokumentu (URI="") — exc-c14n CAŁEGO dokumentu BEZ podpisu,
+      // 1) DigestValue referencji dokumentu (URI="") - exc-c14n CAŁEGO dokumentu BEZ podpisu,
       //    z prologiem (PI/komentarze przed korzeniem) tak jak liczy DSS.
       const docClone = doc.cloneNode(true) as any;
       const sigInClone = (select("//ds:Signature", docClone) as any[])[0];
       sigInClone.parentNode.removeChild(sigInClone);
       let prolog = "";
       for (let n = docClone.firstChild; n && n !== docClone.documentElement; n = n.nextSibling) {
-        // xmldom reprezentuje deklarację XML jako PI o target "xml" — c14n jej NIE zawiera.
+        // xmldom reprezentuje deklarację XML jako PI o target "xml" - c14n jej NIE zawiera.
         if (n.nodeType === 7 && n.target !== "xml") prolog += `<?${n.target} ${n.data}?>\n`;
         else if (n.nodeType === 8) prolog += `<!--${n.data}-->\n`;
       }
@@ -140,7 +140,7 @@ export function createXadesDocumentSigner(options: XadesDocumentSignerOptions): 
         c14n.process(signedProps, {}),
       );
 
-      // 3) SignatureValue — exc-c14n SignedInfo (z poprawionymi digestami) → RSA-SHA256.
+      // 3) SignatureValue - exc-c14n SignedInfo (z poprawionymi digestami) → RSA-SHA256.
       const signedInfo = (select("./ds:SignedInfo", sig) as any[])[0];
       (select("./ds:SignatureValue", sig) as any[])[0].textContent = createSign("RSA-SHA256")
         .update(Buffer.from(c14n.process(signedInfo, {}), "utf8"))

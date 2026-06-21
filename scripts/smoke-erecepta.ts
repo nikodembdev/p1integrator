@@ -24,7 +24,7 @@ import {
 
 if (!p1AccountComplete) {
   console.error(
-    "Brak kompletu danych konta — uzupełnij `.local/p1.env` (wzór: `.env.example`), w tym CERT_PASSWORD.",
+    "Brak kompletu danych konta - uzupełnij `.local/p1.env` (wzór: `.env.example`), w tym CERT_PASSWORD.",
   );
   process.exit(1);
 }

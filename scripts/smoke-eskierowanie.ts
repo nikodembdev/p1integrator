@@ -2,7 +2,7 @@
  * Smoke-test e2e: buduje skierowanie ogólne naszą libką, podpisuje (XAdES przez
  * lokalny serwis), pakuje w kopertę SOAP+WS-Security, wysyła mTLS-em na P1 integrację
  * i wypisuje SUROWĄ odpowiedź. Dane konta/pacjenta i sekrety z env (`.local/p1.env`),
- * certy z `.local/certs` — nic z tego nie ma w repo. Wzór: `.env.example`.
+ * certy z `.local/certs` - nic z tego nie ma w repo. Wzór: `.env.example`.
  *
  * Uruchom: pnpm tsx scripts/smoke-eskierowanie.ts
  */
@@ -21,7 +21,7 @@ import {
 
 if (!p1AccountComplete) {
   console.error(
-    "Brak kompletu danych konta — uzupełnij `.local/p1.env` (wzór: `.env.example`), w tym CERT_PASSWORD.",
+    "Brak kompletu danych konta - uzupełnij `.local/p1.env` (wzór: `.env.example`), w tym CERT_PASSWORD.",
   );
   process.exit(1);
 }

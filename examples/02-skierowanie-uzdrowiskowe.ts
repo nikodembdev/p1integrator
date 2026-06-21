@@ -1,11 +1,6 @@
-/**
- * Przykład: wystawienie SKIEROWANIA NA LECZENIE UZDROWISKOWE (.1.9).
- *
- * Uruchom:  pnpm tsx examples/02-skierowanie-uzdrowiskowe.ts
- *
- * Skierowanie uzdrowiskowe ma bogatszą treść niż ogólne: tryb leczenia, wywiad,
- * badanie przedmiotowe (parametry życiowe + układy), wyniki badań i tryb korespondencji.
- */
+// Skierowanie na leczenie uzdrowiskowe (.1.9).
+// pnpm tsx examples/02-skierowanie-uzdrowiskowe.ts
+// Więcej treści niż ogólne: tryb leczenia, wywiad, badanie, wyniki, korespondencja.
 import {
   buildHealthResortReferralCda,
   type HealthResortReferralInput,
@@ -70,7 +65,7 @@ const input: HealthResortReferralInput = {
   // Specyfika uzdrowiska:
   treatmentType: "LU", // LU = leczenie uzdrowiskowe (RU = rehabilitacja uzdrowiskowa)
   realizationMode: "TS", // TS = tryb stacjonarny (TA = ambulatoryjny)
-  socialHistory: "Pracuje umysłowo, nie pali, używki — nie dotyczy",
+  socialHistory: "Pracuje umysłowo, nie pali, używki - nie dotyczy",
   medicalHistory: {
     complaints: "Przewlekłe bóle kręgosłupa lędźwiowego",
     previousSpaTreatment: "NIE",
@@ -102,7 +97,7 @@ previewXml(buildHealthResortReferralCda(input).xml);
 
 const transport = referralTransport();
 if (!transport) {
-  console.log("Brak konfiguracji P1 (.local/p1.env + certy) — pominięto wysyłkę.");
+  console.log("Brak konfiguracji P1 (.local/p1.env + certy) - pominięto wysyłkę.");
   process.exit(0);
 }
 

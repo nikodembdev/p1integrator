@@ -27,7 +27,7 @@ import { createNodeHttpClient, parseP12 } from "@p1/transport";
 const transport: PrescriptionTransport = {
   context, // CallContext (OID-y podmiotu/użytkownika/miejsca + rola)
   documentSigner, // createXadesDocumentSigner({ certificate: { p12, password } })
-  httpClient, // createNodeHttpClient({ tls: { key, cert } }) — mTLS
+  httpClient, // createNodeHttpClient({ tls: { key, cert } }) - mTLS
   wsSecurityCertificate, // parseP12(wssP12, password)
   endpoint, // URL usługi ObslugaReceptyWS (zależny od środowiska)
 };
@@ -35,7 +35,7 @@ const transport: PrescriptionTransport = {
 const result = await issueDrugPrescription(input, transport);
 if (result.ok) {
   console.log(result.value.packageCode, result.value.packageKey);
-  console.log(result.value.prescriptions[0]?.key); // kluczRecepty — potrzebny do anulowania
+  console.log(result.value.prescriptions[0]?.key); // kluczRecepty - potrzebny do anulowania
 } else {
   console.error(result.error.kind, result.error.message);
 }
@@ -48,14 +48,14 @@ i kluczy poszczególnych recept. Pod spodem `submitPrescriptionPackage` przyjmuj
 
 > **Dialekt transportu e-recepty:** usługa używa wersji namespace `v20170510` oraz prefiksu
 > atrybutów kontekstu `urn:csioz:p1:erecepta:kontekst:` (inaczej niż e-skierowanie). Obsługuje
-> to transport automatycznie — nie trzeba nic ustawiać.
+> to transport automatycznie - nie trzeba nic ustawiać.
 
 ## Dane wejściowe
 
 ```ts
 const input = {
   localRoot: "2.16.840.1.113883.3.4424.2.7.XXXX", // węzeł OID usługodawcy
-  prescriptionNumber: "<22 znaki hex>",            // numer recepty (id) — format z REG.WER.213
+  prescriptionNumber: "<22 znaki hex>",            // numer recepty (id) - format z REG.WER.213
   versionSetId: { root: "<wezeł>.2.2", extension: "<numer zbioru wersji>" },
   patient: {
     pesel, givenNames, familyName, gender, birthDate, // YYYYMMDD
@@ -95,7 +95,7 @@ Pełny, działający przykład: `test/integration/p1-account.ts` (`buildE2ePresc
 
 > **Blok narracyjny jest liczony ze struktury.** P1 generuje narrację (moc składników,
 > dawkowanie) z bloku strukturalnego własnym XSL i porównuje (REG.WER.3252). Builder
-> odtwarza ten sam algorytm — nie podaje się tekstu dawkowania/mocy ręcznie.
+> odtwarza ten sam algorytm - nie podaje się tekstu dawkowania/mocy ręcznie.
 
 ## Odpłatność i refundacja
 
@@ -110,7 +110,7 @@ Pełny, działający przykład: `test/integration/p1-account.ts` (`buildE2ePresc
 | `100%` | pełnopłatne |
 
 `displayName` uzupełniany jest automatycznie ze słownika. Akt odpłatności
-(poziom + oddział NFZ) jest **zawsze** obecny — lek pełnopłatny to po prostu `level: "100%"`
+(poziom + oddział NFZ) jest **zawsze** obecny - lek pełnopłatny to po prostu `level: "100%"`
 (P1 wymaga aktu odpłatności zawsze, REG.WER.3222). Na jedną pozycję przypada jeden poziom;
 różne poziomy = osobne recepty w pakiecie.
 
@@ -131,9 +131,9 @@ potwierdzający.
 
 - **pro auctore / pro familiae** (`prescriptionType: "PA" | "PF"`): dodaje kwalifikator
   `RRECE`; autor wymaga `address` + `phone` zamiast `organization`. _Uwaga: numer recepty
-  pro auctore pochodzi z osobnej puli OID (root `…2.10.*`) przydzielonej do konta._
+  pro auctore pochodzi z osobnej puli OID (root `...2.10.*`) przydzielonej do konta._
 - **Rpw (lek z substancją narkotyczną):** `availabilityCategory: "Rpw"` + wymagane
-  `drug.totalActiveSubstance` (całkowita dawka substancji czynnej) — builder dodaje supply
+  `drug.totalActiveSubstance` (całkowita dawka substancji czynnej) - builder dodaje supply
   CDSC (.4.80). _Uwaga: lek musi być Rpw w Rejestrze Leków, a wystawiający musi mieć
   uprawnienie do leków narkotycznych._
 
@@ -161,20 +161,20 @@ const result = await cancelDrugPrescription(
     nfzBranch,
   },
   kluczRecepty, // klucz dostępowy z wystawienia
-  transport, // ten sam PrescriptionTransport — inna operacja SOAP wybierana wewnątrz
+  transport, // ten sam PrescriptionTransport - inna operacja SOAP wybierana wewnątrz
 );
 ```
 
-Dokument anulujący zastępuje oryginał (`relatedDocument` RPLC — dzieli `setId`,
+Dokument anulujący zastępuje oryginał (`relatedDocument` RPLC - dzieli `setId`,
 `versionNumber` = oryginał + 1).
 
 ## Walidacja
 
-- `pnpm tsx scripts/validate-prescription.ts` — recepta przez Schematron P1.
-- `pnpm test:conformance` — recepta i anulowanie przez **Schematron + XSD** (`drug-prescription`,
+- `pnpm tsx scripts/validate-prescription.ts` - recepta przez Schematron P1.
+- `pnpm test:conformance` - recepta i anulowanie przez **Schematron + XSD** (`drug-prescription`,
   `drug-cancellation`).
-- `pnpm test:e2e` — realne wystawienie i anulowanie na integrację (opt-in: `P1_E2E=1`).
+- `pnpm test:e2e` - realne wystawienie i anulowanie na integrację (opt-in: `P1_E2E=1`).
 - Smoke: `scripts/smoke-erecepta.ts`, `scripts/smoke-anulowanie-recepty.ts`.
 
-> Walidatory (SEF) i XSD pochodzą z poufnych materiałów P1 i leżą w `.local/` — testy
+> Walidatory (SEF) i XSD pochodzą z poufnych materiałów P1 i leżą w `.local/` - testy
 > konformancji pomijają się, gdy ich brak.

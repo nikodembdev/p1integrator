@@ -1,6 +1,6 @@
 /**
  * Stałe skierowania do zakładu opiekuńczego (pielęgnacyjno-opiekuńczego /
- * opiekuńczo-leczniczego) — plCdaReferralToCareFacility, CDA PL IG 1.3.2.
+ * opiekuńczo-leczniczego) - plCdaReferralToCareFacility, CDA PL IG 1.3.2.
  */
 
 export const CARE_FACILITY_TEMPLATE = {

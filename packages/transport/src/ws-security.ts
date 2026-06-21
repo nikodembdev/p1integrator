@@ -18,11 +18,11 @@ export interface WsSecurityCertificate {
 
 export interface WsSecurityOptions {
   readonly certificate: WsSecurityCertificate;
-  /** Znacznik czasu — wstrzykiwalny dla deterministycznych testów. */
+  /** Znacznik czasu - wstrzykiwalny dla deterministycznych testów. */
   readonly now?: Date;
   /** Czas ważności znacznika Timestamp (w sekundach). */
   readonly ttlSeconds?: number;
-  /** Sufiks identyfikatorów `wsu:Id` — wstrzykiwalny dla testów. */
+  /** Sufiks identyfikatorów `wsu:Id` - wstrzykiwalny dla testów. */
   readonly idSuffix?: string;
   /**
    * Namespace elementu `kontekstWywolania` do zlokalizowania go w XPath podpisu.

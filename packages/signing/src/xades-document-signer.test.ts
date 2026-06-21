@@ -9,7 +9,7 @@ import { createXadesDocumentSigner } from "./xades-document-signer.js";
 const DSIG = "http://www.w3.org/2000/09/xmldsig#";
 const XADES = "http://uri.etsi.org/01903/v1.3.2#";
 
-/** Generuje testowy PKCS#12 (RSA + self-signed) — bez sięgania po realne certy. */
+/** Generuje testowy PKCS#12 (RSA + self-signed) - bez sięgania po realne certy. */
 function makeTestP12(password: string): Buffer {
   const keys = forge.pki.rsa.generateKeyPair(2048);
   const cert = forge.pki.createCertificate();

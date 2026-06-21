@@ -38,7 +38,7 @@ import { issueGeneralReferral, type ReferralTransport } from "@p1/referral";
 const transport: ReferralTransport = {
   context, // CallContext (OID-y podmiotu/użytkownika/miejsca + rola)
   documentSigner, // createXadesDocumentSigner({ certificate: { p12, password } })
-  httpClient, // createNodeHttpClient({ tls: { key, cert } })  — mTLS
+  httpClient, // createNodeHttpClient({ tls: { key, cert } })  - mTLS
   wsSecurityCertificate, // parseP12(wssP12, password)
   endpoint, // URL usługi ObslugaSkierowaniaWS (zależny od środowiska)
 };
@@ -114,7 +114,7 @@ Pełne, działające przykłady wejść każdego typu: `test/integration/fixture
 - **Choroba zawodowa (.1.13):** `diagnosis` w systemie chorób zawodowych; przedmiot skierowania
   to stała poradnia medycyny pracy.
 
-## Miejsce udzielania świadczeń (MUŚ) — uwaga
+## Miejsce udzielania świadczeń (MUŚ) - uwaga
 
 P1 dopasowuje miejsce świadczeń z dokumentu do rejestracji w CWUd **oraz** do
 `idMiejscaPracy` z kontekstu. W CDA buduj pełną hierarchię organizacji
@@ -124,7 +124,7 @@ są specyficzne dla konta integracyjnego.
 
 ## Anulowanie (Nullification, .1.14)
 
-Osobny, prosty dokument IHE referujący anulowany dokument (`relatedDocument`, RPLC —
+Osobny, prosty dokument IHE referujący anulowany dokument (`relatedDocument`, RPLC -
 dzieli `setId` z oryginałem, `versionNumber` = oryginał + 1).
 
 ```ts
@@ -137,15 +137,15 @@ const result = await issueNullification({
   legalAuthenticator: { authorExt, authorRoot, functionCode, functionDisplay },
   annulledDocument: { idRoot, idExtension, setIdRoot?, setIdExtension?, versionNumber? },
   description: "Powód anulowania",
-}, transport);   // ten sam ReferralTransport — inna operacja SOAP wybierana wewnątrz
+}, transport);   // ten sam ReferralTransport - inna operacja SOAP wybierana wewnątrz
 ```
 
 ## Walidacja
 
-- `pnpm tsx scripts/validate-referral.ts <typ>` — pojedynczy typ przez Schematron P1.
-- `pnpm test:conformance` — wszystkie typy przez **Schematron + XSD** (extPL_r3).
+- `pnpm tsx scripts/validate-referral.ts <typ>` - pojedynczy typ przez Schematron P1.
+- `pnpm test:conformance` - wszystkie typy przez **Schematron + XSD** (extPL_r3).
   XSD wyłapuje to, czego Schematron nie sprawdza (np. unikalność `xs:ID`).
-- `pnpm test:e2e` — realne wystawienie na integrację (opt-in).
+- `pnpm test:e2e` - realne wystawienie na integrację (opt-in).
 
-> Walidatory (SEF) i XSD pochodzą z poufnych materiałów P1 i leżą w `.local/` — testy
+> Walidatory (SEF) i XSD pochodzą z poufnych materiałów P1 i leżą w `.local/` - testy
 > konformancji pomijają się, gdy ich brak.

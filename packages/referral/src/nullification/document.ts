@@ -28,7 +28,7 @@ export interface NullificationAuthor {
 
 /**
  * Dane pacjenta dla anulowania (recordTarget .2.3 wymaga id + imię/nazwisko).
- * UWAGA: NIE emitujemy `birthplace` — Schematron P1 ma błąd w regule .2.3 (kontekst
+ * UWAGA: NIE emitujemy `birthplace` - Schematron P1 ma błąd w regule .2.3 (kontekst
  * `patient/birthplace` z testem `count(birthplace)>=1` wymagałby birthplace zagnieżdżonego
  * w birthplace); reguła nie odpala się, gdy birthplace jest nieobecny.
  */

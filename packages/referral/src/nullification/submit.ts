@@ -29,7 +29,7 @@ export interface NullificationSubmissionResult {
 /**
  * Wysyła dokument CDA anulowania operacją `zapisDokumentuAnulowaniaSkierowania`:
  * podpis XAdES → koperta SOAP + WS-Security → mTLS → parsowanie WynikMT. Oprócz treści
- * (base64) request zawiera `numerSkierowania` — OID anulowanego skierowania.
+ * (base64) request zawiera `numerSkierowania` - OID anulowanego skierowania.
  */
 export async function submitNullificationDocument(
   cdaXml: string,

@@ -1,6 +1,6 @@
 # Przykłady (`examples/`)
 
-Gotowe, uruchamialne przykłady użycia biblioteki — pokazują, jak wywołać funkcje
+Gotowe, uruchamialne przykłady użycia biblioteki - pokazują, jak wywołać funkcje
 `@p1/*` bez zaglądania do kodu samej libki. Każdy przykład to jeden plik z danymi
 dokumentu wpisanymi inline (z komentarzami) i pojedynczym wywołaniem funkcji.
 
@@ -13,13 +13,13 @@ pnpm tsx examples/01-skierowanie-ogolne.ts
 ```
 
 Każdy przykład **najpierw buduje dokument CDA i wypisuje jego podgląd** (działa bez
-sieci), a następnie — jeśli dostępna jest konfiguracja P1 — wysyła go na środowisko
+sieci), a następnie - jeśli dostępna jest konfiguracja P1 - wysyła go na środowisko
 integracyjne i pokazuje wynik. Bez konfiguracji wysyłka jest pomijana.
 
 ## Konfiguracja (do realnej wysyłki)
 
 Wspólna „hydraulika" (dane konta, kontekst, certyfikaty, transport) jest w
-[`config.ts`](./config.ts). Wartości czytane są z `.local/p1.env` (gitignored) —
+[`config.ts`](./config.ts). Wartości czytane są z `.local/p1.env` (gitignored) -
 wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 
 - dane konta integracyjnego: `P1_LOCAL_ROOT`, `P1_PODMIOT_EXT`, `P1_NPWZ`,
@@ -27,7 +27,7 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
   `P1_MUS_EXT`, oraz pacjent `P1_PATIENT_*`,
 - certyfikaty PKCS#12 w `.local/certs/` (TLS, WS-Security, podpis lekarza) + `CERT_PASSWORD`.
 
-> Bez kompletu env/certów przykłady i tak zbudują poprawny dokument i go wypiszą —
+> Bez kompletu env/certów przykłady i tak zbudują poprawny dokument i go wypiszą -
 > tylko nie wyślą go do P1.
 
 ## Lista przykładów
@@ -36,15 +36,15 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
 | [`01-skierowanie-ogolne.ts`](./01-skierowanie-ogolne.ts)                       | skierowanie do poradni/szpitala (rozpoznania + procedury)             |
 | [`02-skierowanie-uzdrowiskowe.ts`](./02-skierowanie-uzdrowiskowe.ts)           | skierowanie na leczenie uzdrowiskowe (wywiad, badanie, wyniki, TERYT) |
-| [`03-recepta.ts`](./03-recepta.ts)                                             | recepta na jeden lek — pełny, rozpisany przykład (referencja)         |
+| [`03-recepta.ts`](./03-recepta.ts)                                             | recepta na jeden lek - pełny, rozpisany przykład (referencja)         |
 | [`04-recepta-uprawnienia-dodatkowe.ts`](./04-recepta-uprawnienia-dodatkowe.ts) | recepta z uprawnieniem dodatkowym pacjenta (sekcja .3.69)             |
 | [`05-recepta-nie-zamieniac.ts`](./05-recepta-nie-zamieniac.ts)                 | „NZ" + info dla wydającego + lek wieloskładnikowy                     |
 | [`06-recepta-pro-auctore.ts`](./06-recepta-pro-auctore.ts)                     | recepta pro auctore / pro familiae (RRECE)\*                          |
 | [`07-pakiet-wielu-recept.ts`](./07-pakiet-wielu-recept.ts)                     | wiele recept w jednym pakiecie (`submitPrescriptionPackage`)          |
 | [`08-anulowanie-recepty.ts`](./08-anulowanie-recepty.ts)                       | wystawienie, a następnie anulowanie recepty                           |
 
-Recepty `03`–`05`, `07`–`08` potwierdzone e2e (Sukces). \* `06` pro auctore buduje
-poprawny dokument, ale pełny e2e wymaga osobnej puli numerów recept (`…2.10.*`)
+Recepty `03`-`05`, `07`-`08` potwierdzone e2e (Sukces). \* `06` pro auctore buduje
+poprawny dokument, ale pełny e2e wymaga osobnej puli numerów recept (`...2.10.*`)
 przydzielonej do konta.
 
 ### Wymagają rozszerzenia biblioteki (osobny temat)
