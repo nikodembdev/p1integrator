@@ -168,6 +168,67 @@ const result = await cancelDrugPrescription(
 Dokument anulujący zastępuje oryginał (`relatedDocument` RPLC - dzieli `setId`,
 `versionNumber` = oryginał + 1).
 
+## Pobieranie recept pacjenta
+
+Dwie operacje odczytowe (nie podpisują dokumentu, więc transport może być węższy -
+`PrescriptionQueryTransport` to `PrescriptionTransport` bez `documentSigner`):
+
+```ts
+import { searchPatientPrescriptions, readPrescription } from "@p1/prescription";
+
+// 1) Lista recept pacjenta (operacja wyszukanieReceptUslugobiorcy).
+const search = await searchPatientPrescriptions(
+  {
+    pesel, // wymagane - PESEL usługobiorcy
+    status: "WYSTAWIONA", // opcjonalnie: WYSTAWIONA|ZABLOKOWANA|ZREALIZOWANA|CZESCIOWO_ZREALIZOWANA|ANULOWANA
+    issuedFrom, // opcjonalnie Date - dolne ograniczenie daty wystawienia
+    issuedTo, // opcjonalnie Date - górne ograniczenie
+    practitionerNpwz, // opcjonalnie - filtr po wystawiającym
+  },
+  transport,
+);
+if (search.ok) {
+  for (const p of search.value.prescriptions) {
+    console.log(p.status, p.issuedAt, p.prescriptionKey); // klucz do odczytu
+  }
+}
+
+// 2) Treść jednej recepty (operacja odczytRecepty) - dokument CDA z base64.
+const content = await readPrescription(prescriptionKey, transport);
+if (content.ok) console.log(content.value.cdaXml);
+```
+
+> **Limit wyników:** P1 odrzuca zbyt szerokie wyszukiwanie biznesowym błędem
+> `PrzekroczonaLiczbaWynikow` (HTTP 200, `wynik.major = ...:Blad`). Operacja zwraca
+> wtedy `ok` z pustą listą i wypełnionym `outcome` - sprawdzaj `outcome.major` i
+> zawężaj kryteria (zakres dat, status). Pełny przykład: `examples/10-pobieranie-recept.ts`.
+
+### Pozostałe operacje odczytowe
+
+Wszystkie przyjmują `PrescriptionQueryTransport` i zwracają `Result<…, P1Error>`:
+
+| Funkcja                              | Operacja SOAP                               | Zastosowanie                                                                           |
+| ------------------------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `searchPatientPrescriptions`         | `wyszukanieReceptUslugobiorcy`              | lista recept pacjenta po PESEL                                                         |
+| `searchPatientPrescriptionsExtended` | `rozszerzoneWyszukiwanieReceptUslugobiorcy` | jw. + filtr po nazwie leku i **stronicowanie** (obejście limitu wyników, `totalCount`) |
+| `readPatientPrescriptionKeys`        | `odczytKluczyReceptUslugobiorcy`            | same klucze recept pacjenta (wariant z uwierzytelnieniem e-Dowodem)                    |
+| `searchIssuerPrescriptions`          | `wyszukanieReceptWystawiajacego`            | recepty z perspektywy wystawiającego (po NPWZ/numerze)                                 |
+| `readPrescription`                   | `odczytRecepty`                             | treść jednej recepty (CDA)                                                             |
+| `readPrescriptionPackage`            | `odczytPakietuRecept`                       | treść całego pakietu recept (po `kluczPakietuRecept`)                                  |
+| `readPackageAccessData`              | `odczytDanychDostepowychPakietuRecept`      | klucz + kod pakietu i klucze/numery recept (po kluczu recepty)                         |
+| `readPrescriptionFulfillmentState`   | `odczytStanuRealizacjiRecepty`              | ilości do wydania/wydane i data wydawania                                              |
+| `readFulfillmentDocument`            | `odczytDokumentuRealizacjiRecepty`          | treść dokumentu realizacji (CDA) po identyfikatorze                                    |
+| `readCancellationDocument`           | `odczytDokumentuAnulowaniaRecepty`          | treść dokumentu anulowania (CDA) po identyfikatorze                                    |
+| `searchFulfillmentDocuments`         | `wyszukanieDokumentowRealizacjiRecept`      | lista dokumentów realizacji                                                            |
+| `searchCancellationDocuments`        | `wyszukanieDokumentowAnulowaniaRecept`      | lista dokumentów anulowania                                                            |
+
+> **Uprawnienia konta:** operacje realizacyjne/apteczne (`odczytStanuRealizacjiRecepty`,
+> `*DokumentowRealizacji*`, `odczytKluczy…` przez e-Dowód) wymagają roli realizatora.
+> Konto wystawiającego dostaje na nie SOAP Fault `brakUprawnienPodmiotu` (mapowany na
+> `P1AuthorizationError`). Potwierdzone e2e dla roli wystawiającego: wyszukania recept
+> (`…ReceptUslugobiorcy`, rozszerzone, `…ReceptWystawiajacego`), `odczytRecepty`,
+> `odczytPakietuRecept`, `odczytDanychDostepowychPakietuRecept`.
+
 ## Walidacja
 
 - `pnpm tsx scripts/validate-prescription.ts` - recepta przez Schematron P1.
