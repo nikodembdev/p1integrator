@@ -2,6 +2,9 @@
  * Builder zasobu FHIR Encounter dla Zdarzenia Medycznego (profil PLMedicalEvent).
  * Referencje (pacjent, lekarz, podmiot, komórka, płatnik) wskazywane przez identyfikatory
  * biznesowe (OID + wartość), zgodnie z przykładami P1.
+ *
+ * Przetestowany i wspierany jest tylko typ PORADA (type.code = "4"). Pole `type`
+ * przyjmuje dowolny kod, ale inne typy zdarzeń nie były weryfikowane.
  */
 
 /** Systemy kodowania / OID-y używane w Encounter ZM. */
