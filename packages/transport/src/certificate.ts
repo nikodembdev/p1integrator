@@ -3,7 +3,7 @@ import forge from "node-forge";
 export interface ParsedCertificate {
   readonly privateKeyPem: string;
   readonly certificatePem: string;
-  /** DER certyfikatu zakodowany Base64 — do `<wsse:BinarySecurityToken>`. */
+  /** DER certyfikatu zakodowany Base64 - do `<wsse:BinarySecurityToken>`. */
   readonly certificateBase64: string;
 }
 

@@ -1,5 +1,5 @@
 /**
- * @p1/prescription — e-recepta. Builder dokumentu recepty na lek
+ * @p1/prescription - e-recepta. Builder dokumentu recepty na lek
  * (CDA PL PRE / IHE Pharmacy 1.3.2) oraz typy wejściowe.
  */
 

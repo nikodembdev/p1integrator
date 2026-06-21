@@ -25,7 +25,7 @@ import {
 } from "../test/integration/p1-account.js";
 
 if (!p1AccountComplete) {
-  console.error("Brak kompletu danych konta — uzupełnij `.local/p1.env`.");
+  console.error("Brak kompletu danych konta - uzupełnij `.local/p1.env`.");
   process.exit(1);
 }
 
@@ -80,7 +80,7 @@ async function main(): Promise<void> {
     issued.value.outcome?.major,
   );
   if (!kluczRecepty) {
-    console.log("Brak kluczRecepty — nie mogę anulować.");
+    console.log("Brak kluczRecepty - nie mogę anulować.");
     return;
   }
 
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
     nfzBranch: input.payment.nfzBranch,
   };
 
-  console.log("2) Anuluję receptę (klucz powyżej)…");
+  console.log("2) Anuluję receptę (klucz powyżej)...");
   const cancelled = await cancelDrugPrescription(cancellation, kluczRecepty, transport);
   console.log("\n=== WYNIK ANULOWANIA ===");
   if (cancelled.ok) {

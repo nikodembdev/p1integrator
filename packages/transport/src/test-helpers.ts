@@ -8,7 +8,7 @@ export interface TestCertificate {
 
 /**
  * Generuje jednorazowy, samopodpisany certyfikat testowy w pamięci (klucz 1024-bit
- * dla szybkości). Nic nie trafia do repo — gitleaks zadowolony.
+ * dla szybkości). Nic nie trafia do repo - gitleaks zadowolony.
  */
 export function makeTestCertificate(password = "test"): TestCertificate {
   const keys = forge.pki.rsa.generateKeyPair(1024);

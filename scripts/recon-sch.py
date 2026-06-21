@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Rekonesans szablonu P1: z (zinline'owanego) .sch wyciąga kluczowe fakty do
-zbudowania typu skierowania — template dokumentu, structuredBody, obowiązkowe
+zbudowania typu skierowania - template dokumentu, structuredBody, obowiązkowe
 sekcje z kodami/tytułami oraz obowiązkowe wpisy (entry) per sekcja.
 
 Użycie: python3 scripts/recon-sch.py <inlined.sch>
@@ -28,7 +28,7 @@ print("=== template dokumentu (.1.x) ===")
 for r, lab in sorted(roots.items()):
     if r.startswith("1."):
         print(f"  .{r}  {lab}")
-print("=== structuredBody (.2.x — kandydaci) ===")
+print("=== structuredBody (.2.x - kandydaci) ===")
 for r, lab in sorted(roots.items()):
     if r.startswith("2."):
         print(f"  .{r}  {lab}")
@@ -68,7 +68,7 @@ for a in asserts():
     if mt:
         print(f"  {mt.group(1)}: '{mt.group(2)}'")
 
-# 5. Obowiązkowe wpisy/elementy w sekcjach (entry/observation/act/...) – mandatory min 1x
+# 5. Obowiązkowe wpisy/elementy w sekcjach (entry/observation/act/...) - mandatory min 1x
 print("=== obowiązkowe elementy wewn. sekcji (mandatory, bez section/templateId/code/title) ===")
 seen = set()
 for a in asserts():

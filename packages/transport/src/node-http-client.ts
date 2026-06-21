@@ -8,7 +8,7 @@ export interface NodeHttpClientTls {
   readonly key?: string | Buffer;
   readonly cert?: string | Buffer;
   readonly ca?: string | Buffer | ReadonlyArray<string | Buffer>;
-  /** Tylko do testów/diagnostyki — w produkcji zostaw domyślne (true). */
+  /** Tylko do testów/diagnostyki - w produkcji zostaw domyślne (true). */
   readonly rejectUnauthorized?: boolean;
 }
 

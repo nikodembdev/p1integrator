@@ -3,7 +3,7 @@ import type { Gender } from "./oids.js";
 /** Obiekt XML w formacie xmlbuilder2 (atrybuty z prefiksem `@`, tekst pod `#`). */
 export type XmlObject = Record<string, unknown>;
 
-/** Sekcja body — obiekt zawartości elementu `<section>`, budowany w module domenowym. */
+/** Sekcja body - obiekt zawartości elementu `<section>`, budowany w module domenowym. */
 export type CdaSection = XmlObject;
 
 /** Adres pacjenta (recordTarget). */
@@ -16,15 +16,15 @@ export interface CdaPatientAddress {
   readonly country?: string;
   /** Kod użycia adresu, np. "PST", "HP". */
   readonly use?: string;
-  /** TERYT TERC (gmina) — wymagany m.in. w skierowaniu uzdrowiskowym dla kraju Polska. */
+  /** TERYT TERC (gmina) - wymagany m.in. w skierowaniu uzdrowiskowym dla kraju Polska. */
   readonly terytTerc?: string;
-  /** TERYT SIMC (miejscowość) — j.w. */
+  /** TERYT SIMC (miejscowość) - j.w. */
   readonly terytSimc?: string;
-  /** TERYT ULIC (ulica) — wymagany, gdy podano ulicę (skierowanie uzdrowiskowe). */
+  /** TERYT ULIC (ulica) - wymagany, gdy podano ulicę (skierowanie uzdrowiskowe). */
   readonly terytUlic?: string;
 }
 
-/** Miejsce urodzenia pacjenta (recordTarget/birthplace) — wymagane przez część typów (np. psychiatryczny). */
+/** Miejsce urodzenia pacjenta (recordTarget/birthplace) - wymagane przez część typów (np. psychiatryczny). */
 export interface CdaBirthplace {
   readonly city?: string;
   readonly postalCode?: string;
@@ -50,7 +50,7 @@ export interface CdaPatient {
   readonly gender?: Gender;
   readonly phone?: string;
   readonly email?: string;
-  /** Miejsce urodzenia — emitowane jako `birthplace/place/addr`, gdy podane. */
+  /** Miejsce urodzenia - emitowane jako `birthplace/place/addr`, gdy podane. */
   readonly birthplace?: CdaBirthplace;
 }
 
@@ -63,14 +63,14 @@ export interface CdaAuthorOrganization {
   readonly regon9: string;
   readonly name: string;
   readonly address: CdaOrgAddress;
-  /** Telefon organizacji — wymagany przez Schematron P1 (telecom min 1x). */
+  /** Telefon organizacji - wymagany przez Schematron P1 (telecom min 1x). */
   readonly phone: string;
   /** Kod oddziału NFZ, np. "07". */
   readonly nfzBranchCode: string;
   /** Numer umowy NFZ. */
   readonly nfzContractNumber: string;
   /**
-   * Jednostka organizacyjna (root .2.3.2), np. "<nr-księgi>-01" — poziom MUŚ między
+   * Jednostka organizacyjna (root .2.3.2), np. "<nr-księgi>-01" - poziom MUŚ między
    * komórką a podmiotem. Gdy podana, emitowana jest pełna hierarchia P1
    * (komórka → jednostka → podmiot); musi zgadzać się z `idMiejscaPracy` z kontekstu
    * wywołania oraz z rejestracją w CWUd.
@@ -110,7 +110,7 @@ export interface ClinicalDocumentInput {
   readonly localRoot: string;
   /** Szablon dokumentu (specyficzny dla typu). */
   readonly templateId: { readonly root: string; readonly extension?: string };
-  /** Element `<code>` dokumentu (obiekt xmlbuilder2) — specyficzny dla typu. */
+  /** Element `<code>` dokumentu (obiekt xmlbuilder2) - specyficzny dla typu. */
   readonly code: XmlObject;
   readonly title: string;
   readonly patient: CdaPatient;

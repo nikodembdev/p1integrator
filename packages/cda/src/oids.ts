@@ -23,7 +23,7 @@ export const CDA_OID = {
   HL7_CONFIDENTIALITY: "2.16.840.1.113883.5.25",
   HL7_TYPE_ID: "2.16.840.1.113883.1.3",
   HL7_GENDER: "2.16.840.1.113883.5.1",
-  /** Specjalności komórek organizacyjnych (cz. VIII kodu resortowego) — miejsce/przedmiot skierowania. */
+  /** Specjalności komórek organizacyjnych (cz. VIII kodu resortowego) - miejsce/przedmiot skierowania. */
   ORG_CELL_SPECIALTY: "2.16.840.1.113883.3.4424.11.2.4",
   SPECIALTY_CODES: "2.16.840.1.113883.3.4424.11.3.3.1",
   FUNCTION_CODES: "2.16.840.1.113883.3.4424.11.3.18",

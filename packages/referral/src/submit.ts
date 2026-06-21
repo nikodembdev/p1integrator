@@ -22,7 +22,7 @@ const MT_NS = "http://csioz.gov.pl/p1/eskierowanie/mt/v20180509";
 const SOAP_ACTION = "urn:zapisDokumentuSkierowania";
 
 /**
- * Zależności transportu dla wysyłki skierowania — wspólne dla wszystkich typów
+ * Zależności transportu dla wysyłki skierowania - wspólne dla wszystkich typów
  * skierowań (operacja SOAP `zapisDokumentuSkierowania` jest jedna).
  */
 export interface ReferralTransport {
@@ -35,7 +35,7 @@ export interface ReferralTransport {
   readonly wsSecurityCertificate: WsSecurityCertificate;
   /** Endpoint SOAP usługi e-Skierowania (zależny od środowiska). */
   readonly endpoint: string;
-  /** Zegar — do deterministycznego Timestamp w testach. */
+  /** Zegar - do deterministycznego Timestamp w testach. */
   readonly clock?: Clock;
 }
 

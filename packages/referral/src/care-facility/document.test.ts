@@ -45,7 +45,7 @@ const input: CareFacilityReferralInput = {
     functionDisplay: "Lekarz",
   },
   currentMedication: "Leczenie przeciwbólowe i przeciwzakrzepowe",
-  barthelScore: "40 punktów — pacjent wymaga znacznej pomocy",
+  barthelScore: "40 punktów - pacjent wymaga znacznej pomocy",
   encounter: {
     cellCode: "5160",
     cellName: "Zakład/Oddział pielęgnacyjno-opiekuńczy",

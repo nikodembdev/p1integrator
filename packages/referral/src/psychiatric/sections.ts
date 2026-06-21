@@ -33,7 +33,7 @@ export function buildPsychiatricReasonForReferralSection(text: string): CdaSecti
 
 /**
  * Sekcja „Rozpoznania" psychiatryczna (.3.20). Model zamknięty: dozwolone tylko
- * templateId/id/code/title/text — sekcja jest WYŁĄCZNIE narracyjna (bez wpisów .4.1/.4.2,
+ * templateId/id/code/title/text - sekcja jest WYŁĄCZNIE narracyjna (bez wpisów .4.1/.4.2,
  * w przeciwieństwie do współdzielonej sekcji .3.1).
  */
 export function buildPsychiatricDiagnosisSection(diagnoses: ReferralDiagnoses): CdaSection {

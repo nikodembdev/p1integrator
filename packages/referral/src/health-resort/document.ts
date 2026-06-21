@@ -54,7 +54,7 @@ export interface HealthResortReferralInput extends Omit<
   readonly diagnoses: ReferralDiagnoses;
   readonly labResults?: readonly LabResult[];
   readonly correspondenceMode: CorrespondenceMode;
-  /** Leczenie ambulatoryjne — uwzględniane tylko w trybie realizacji TA. */
+  /** Leczenie ambulatoryjne - uwzględniane tylko w trybie realizacji TA. */
   readonly ambulatoryTreatment?: AmbulatoryTreatment;
   readonly attachments?: readonly Attachment[];
 }
@@ -145,7 +145,7 @@ export function buildHealthResortReferralCda(
 
 /**
  * Wystawia skierowanie uzdrowiskowe end-to-end: buduje CDA i wysyła je do P1
- * generyczną orkiestracją (`submitReferralDocument`). Cienki wrapper — pozostałe
+ * generyczną orkiestracją (`submitReferralDocument`). Cienki wrapper - pozostałe
  * typy skierowań analogicznie reużyją `submitReferralDocument`.
  */
 export function issueHealthResortReferral(

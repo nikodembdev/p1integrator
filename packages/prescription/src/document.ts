@@ -37,7 +37,7 @@ const FINSTRUCT_ACT_TEMPLATE = [
  * Builder dokumentu recepty na lek (plCdaDrugPrescription, CDA PL PRE / IHE
  * Pharmacy 1.3.2). Nagłówek różni się od skierowania (3 templateId, kwalifikatory
  * KDLEK/RLEK/TWREC/TRREC, brak NFZ boundedBy/participant, brak specjalności
- * autora), więc to dedykowany builder — wzorowany na oficjalnej „recepta-poprawna".
+ * autora), więc to dedykowany builder - wzorowany na oficjalnej „recepta-poprawna".
  */
 export function buildDrugPrescriptionCda(input: DrugPrescriptionInput): DrugPrescriptionResult {
   const effectiveDate = input.effectiveDate ?? formatCdaDateTime(input.now ?? new Date());
@@ -115,7 +115,7 @@ function buildHeader(
     qualifier("TWREC", "Tryb wystawienia recepty", "Z", CDA_OID.POLISH_CLASSIFIERS, "Zwykła"),
     qualifier("TRREC", "Tryb realizacji recepty", "Z", CDA_OID.POLISH_CLASSIFIERS, "Zwykły"),
   ];
-  // Rodzaj recepty elektronicznej (RRECE) — tylko dla pro auctore / pro familiae.
+  // Rodzaj recepty elektronicznej (RRECE) - tylko dla pro auctore / pro familiae.
   if (input.prescriptionType === "PA" || input.prescriptionType === "PF") {
     qualifiers.push(
       qualifier(
@@ -333,14 +333,18 @@ function buildPrescriptionSection(
     return c;
   };
 
-  // Narracja MUSI odzwierciedlać blok strukturalny (REG.WER.3252) — wyliczamy ją
+  // Narracja MUSI odzwierciedlać blok strukturalny (REG.WER.3252) - wyliczamy ją
   // z danych, replikując oficjalną transformatę narracyjną P1 (1.3.2).
   const strength = drug.strengthText ?? computeStrengthNarrative(drug.ingredients);
   const dosageText = computeDosageNarrative(dosage, effectiveDate);
 
+  // Kolejność węzłów MUSI odpowiadać transformacie narracyjnej P1 (REG.WER.3251):
+  // nazwa, moc, (puste pola edycyjne), ewentualnie „NZ".
   const sbadmContent: XmlObject[] = [
     content("p1_nazwaLeku", drug.name, "xPLbig"),
     content("p1_mocSkladnikowLeku", strength),
+    content("p1_edytuj_mocLeku"),
+    content("p1_edytuj_postacLeku"),
   ];
   if (!substitutionAllowed) sbadmContent.push(content("p1_nieZamieniac", "NZ", "xPLbig"));
 
@@ -358,13 +362,14 @@ function buildPrescriptionSection(
       content: [
         content("p1_stosowanie_opis_1", "D.S."),
         ...(dosageText ? [content("p1_stosowanie_wartosc_1", dosageText, "Bold")] : []),
+        content("p1_edytuj_stosowanie_wartosc_1", undefined, "Bold"),
       ],
     },
     {
       "@ID": "ACT_1",
       content: [
         content("p1_odplatnosc_opis", "Odpłatność"),
-        // XSL renderuje KOD poziomu (nie displayName) — „powszechnie rozumiany code".
+        // XSL renderuje KOD poziomu (nie displayName) - „powszechnie rozumiany code".
         content("p1_odplatnosc_wartosc", payment.level, "Bold"),
       ],
     },
@@ -390,7 +395,8 @@ function buildPrescriptionSection(
       "@ID": "TEXT1",
       content: [
         content("p1_infoDlaWydajacego_opis_1", "Informacja dla osoby wydającej lek:"),
-        content("p1_infoDlaWydajacego_wartosc_1", input.dispenserInfo),
+        // Transformata P1 1.3.2 zostawia tu puste pole edycyjne (treść nie jest renderowana).
+        content("p1_edytuj_infoDlaWydajacego_wartosc_1"),
       ],
     });
   }
@@ -422,8 +428,8 @@ function buildPrescriptionSection(
 }
 
 /**
- * Sekcja „Dane o ubezpieczeniu i uprawnieniach" (.3.69) — uprawnienia dodatkowe
- * pacjenta (RLUD: S/C/IB/…). Narracja liczona ze struktury (REG.WER.3252):
+ * Sekcja „Dane o ubezpieczeniu i uprawnieniach" (.3.69) - uprawnienia dodatkowe
+ * pacjenta (RLUD: S/C/IB/...). Narracja liczona ze struktury (REG.WER.3252):
  * oddział NFZ, lista kodów uprawnień, dokumenty uprawnień.
  */
 function buildPayersSection(input: DrugPrescriptionInput): XmlObject {
@@ -711,7 +717,7 @@ function buildSupplyRelationship(input: DrugPrescriptionInput, effectiveDate: st
     },
   };
 
-  // Akt refundacji (poziom odpłatności + oddział NFZ) — zawsze wymagany przez P1 (REG.WER.3222).
+  // Akt refundacji (poziom odpłatności + oddział NFZ) - zawsze wymagany przez P1 (REG.WER.3222).
   const refundacja: XmlObject = {
     "@typeCode": "COMP",
     act: {

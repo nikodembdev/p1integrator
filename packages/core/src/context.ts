@@ -9,7 +9,7 @@ export const CONTEXT_NAMESPACE = "http://csioz.gov.pl/p1/kontekst/mt/v20180509";
 
 /**
  * Domyślny prefiks URN nazw atrybutów kontekstu (e-skierowanie). Inne usługi P1
- * używają własnego prefiksu (np. e-recepta: `urn:csioz:p1:erecepta:kontekst:`) —
+ * używają własnego prefiksu (np. e-recepta: `urn:csioz:p1:erecepta:kontekst:`) -
  * patrz `contextToAttributes(context, urnPrefix)`.
  */
 export const CONTEXT_URN_PREFIX = "urn:csioz:p1:kontekst:";
@@ -33,7 +33,7 @@ export const BUSINESS_ROLE = {
 } as const;
 export type BusinessRole = keyof typeof BUSINESS_ROLE;
 
-/** Sufiksy nazw atrybutów kontekstu (NazwaAtrybutuKontekstuMT) — bez prefiksu URN. */
+/** Sufiksy nazw atrybutów kontekstu (NazwaAtrybutuKontekstuMT) - bez prefiksu URN. */
 const CONTEXT_ATTR_SUFFIX = {
   idPodmiotuOidRoot: "idPodmiotuOidRoot",
   idPodmiotuOidExt: "idPodmiotuOidExt",

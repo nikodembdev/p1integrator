@@ -55,7 +55,7 @@ export interface PrescriptionPatient {
 }
 
 export interface PrescriptionOrganization {
-  /** id_podmiotu — numer księgi rejestrowej (root .2.3.1 / .2.3.2). */
+  /** id_podmiotu - numer księgi rejestrowej (root .2.3.1 / .2.3.2). */
   podmiotExt: string;
   regon14: string;
   name: string;
@@ -71,11 +71,11 @@ export interface PrescriptionAuthor {
   prefix?: string;
   /** YYYYMMDD; domyślnie data wystawienia. */
   time?: string;
-  /** Organizacja (podmiot) — wymagana dla recepty zwykłej (ZW). */
+  /** Organizacja (podmiot) - wymagana dla recepty zwykłej (ZW). */
   organization?: PrescriptionOrganization;
-  /** Adres autora — wymagany dla recepty pro auctore / pro familiae. */
+  /** Adres autora - wymagany dla recepty pro auctore / pro familiae. */
   address?: { postalCode: string; city: string; street?: string; houseNumber: string };
-  /** Telefon autora — wymagany dla recepty pro auctore / pro familiae. */
+  /** Telefon autora - wymagany dla recepty pro auctore / pro familiae. */
   phone?: string;
 }
 
@@ -123,20 +123,20 @@ export interface PrescriptionDrug {
   formName: string;
   capacityUnit: string;
   capacityValue: string;
-  /** Moc/skład — tekst do narrative (np. „5 g / 50 ml + 20 mg"). */
+  /** Moc/skład - tekst do narrative (np. „5 g / 50 ml + 20 mg"). */
   strengthText?: string;
   ingredients: PrescriptionIngredient[];
-  /** Całkowita dawka substancji czynnej — wymagana dla leku Rpw (kategoria Rpw). */
+  /** Całkowita dawka substancji czynnej - wymagana dla leku Rpw (kategoria Rpw). */
   totalActiveSubstance?: TotalActiveSubstanceDose;
 }
 
 export interface PrescriptionDosage {
   /**
-   * Treść D.S. (sposób stosowania) — opcjonalna. Narrację dawkowania builder wylicza
+   * Treść D.S. (sposób stosowania) - opcjonalna. Narrację dawkowania builder wylicza
    * ze struktury (period/dawka/daty), więc zwykle nie trzeba jej podawać.
    */
   text?: string;
-  /** YYYYMMDD — początek/koniec stosowania (effectiveTime IVL_TS). */
+  /** YYYYMMDD - początek/koniec stosowania (effectiveTime IVL_TS). */
   startDate?: string;
   endDate?: string;
   /** Częstotliwość (effectiveTime PIVL_TS, operator A). */
@@ -185,7 +185,7 @@ export interface DrugPrescriptionInput {
    */
   payment: PrescriptionPayment;
   /**
-   * Uprawnienia dodatkowe pacjenta (sekcja .3.69) — np. S (senior), C (ciąża),
+   * Uprawnienia dodatkowe pacjenta (sekcja .3.69) - np. S (senior), C (ciąża),
    * IB (inwalida wojenny). Generują dodatkową sekcję „Dane o ubezpieczeniu i uprawnieniach".
    */
   entitlements?: readonly PrescriptionEntitlement[];

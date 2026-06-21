@@ -1,8 +1,8 @@
 # Podpisywarka (XAdES-BES in-process)
 
-`@p1/signing` zawiera **podpisywarkę** — `createXadesDocumentSigner` — która podpisuje
+`@p1/signing` zawiera **podpisywarkę** - `createXadesDocumentSigner` - która podpisuje
 dokument CDA podpisem XAdES-BES **wewnątrz procesu**, bez zewnętrznego serwisu (wcześniej
-był to sidecar Java/DSS — usunięty). Implementuje port `DocumentSigner` z `@p1/core`.
+był to sidecar Java/DSS - usunięty). Implementuje port `DocumentSigner` z `@p1/core`.
 Podpis jest akceptowany przez P1 (potwierdzone end-to-end na integracji).
 
 ## Użycie
@@ -21,7 +21,7 @@ const signer = createXadesDocumentSigner({
 const signedXml = await signer.signXades(cdaXml); // CDA z dołączonym <ds:Signature>
 ```
 
-Najczęściej nie woła się tego ręcznie — przekazuje się `signer` jako `documentSigner`
+Najczęściej nie woła się tego ręcznie - przekazuje się `signer` jako `documentSigner`
 w `ReferralTransport` i używa `issueXxxReferral` (zob. [docs/eskierowania.md](eskierowania.md)).
 
 ## Co produkuje
@@ -40,13 +40,13 @@ Hybryda dwóch bibliotek:
 
 1. **`xadesjs`** buduje strukturę podpisu (referencje, QualifyingProperties, KeyInfo).
    Silnik kryptograficzny to wbudowany `webcrypto` z `node:crypto` (bez `@peculiar/webcrypto`
-   — unika różnic interopu CJS między tsx a vitest). Klucz z `.p12` wyciąga `node-forge`.
+   - unika różnic interopu CJS między tsx a vitest). Klucz z `.p12` wyciąga `node-forge`.
 
-2. **`xml-crypto`** (`ExclusiveCanonicalization`) **przelicza** kluczowe wartości — bo
+2. **`xml-crypto`** (`ExclusiveCanonicalization`) **przelicza** kluczowe wartości - bo
    kanonikalizacja `xmldsigjs` (wewnątrz `xadesjs`) jest niestandardowa i P1 ją odrzuca,
    a exc-c14n z `xml-crypto` jest zgodny z `xmllint`/DSS (ten sam c14n co w WS-Security,
    który P1 akceptuje). Przeliczane są:
-   - `DigestValue` referencji dokumentu (z prologiem — patrz niżej),
+   - `DigestValue` referencji dokumentu (z prologiem - patrz niżej),
    - `DigestValue` referencji `SignedProperties`,
    - `SignatureValue` (RSA-SHA256 nad exc-c14n `SignedInfo`, `node:crypto`).
 
@@ -57,7 +57,7 @@ Każdy ustalony na podstawie konkretnego błędu zwróconego przez P1:
 - **PI `xml-stylesheet` musi zostać** w dokumencie (warstwa prezentacyjna; usunięcie →
   `REG.WER.070`). Digest referencji dokumentu liczony jest **z prologiem** (PI przed
   korzeniem + `"\n"`), z pominięciem deklaracji XML (xmldom pokazuje ją jako PI o target `xml`).
-- **Referencja `SignedProperties` musi mieć transformę `exc-c14n`** — `xadesjs` jej nie
+- **Referencja `SignedProperties` musi mieć transformę `exc-c14n`** - `xadesjs` jej nie
   dodaje, więc DSS użyłby inclusive c14n i digest by się nie zgadzał. Podpisywarka ją dokłada.
 - P1 akceptuje zwykłe `enveloped` + `exc-c14n` (XPath Filter 2.0 niepotrzebny);
   SHA-1 i SHA-256 są akceptowane (używamy SHA-256).
@@ -65,15 +65,15 @@ Każdy ustalony na podstawie konkretnego błędu zwróconego przez P1:
 ## Certyfikat i produkcja
 
 Podpisywarka podpisuje **miękkim `.p12`** (klucz + cert w pliku). Na integracji to certyfikat
-pracownika (np. „Adam713 Leczniczy"). To samo ograniczenie miał serwis Java/DSS — więc jego
+pracownika (np. „Adam713 Leczniczy"). To samo ograniczenie miał serwis Java/DSS - więc jego
 usunięcie nic nie odbiera.
 
 Gdyby produkcja wymagała podpisu kwalifikowanego na karcie/HSM, wystarczy **nowy adapter portu
-`DocumentSigner`** (np. PKCS#11) — bez zmian w builderach CDA i transporcie.
+`DocumentSigner`** (np. PKCS#11) - bez zmian w builderach CDA i transporcie.
 
 ## Test
 
 Test jednostkowy (offline, w CI) generuje jednorazowy `.p12` (node-forge), podpisuje minimalny
 dokument i **kryptograficznie weryfikuje** `SignatureValue` (względem exc-c14n `SignedInfo`)
-oraz digest referencji dokumentu — bez sięgania po realne certy:
+oraz digest referencji dokumentu - bez sięgania po realne certy:
 `packages/signing/src/xades-document-signer.test.ts`.

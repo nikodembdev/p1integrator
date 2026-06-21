@@ -38,7 +38,7 @@ export interface CareFacilityReferralInput extends Omit<
   readonly currentMedication: string;
   /** Ocena w skali Barthel (sekcja obowiązkowa, narracyjna). */
   readonly barthelScore: string;
-  /** Przedmiot skierowania — komórka zakładu opiekuńczego. */
+  /** Przedmiot skierowania - komórka zakładu opiekuńczego. */
   readonly encounter: RequestedEncounter;
   /** Uwagi (sekcja obowiązkowa, narracyjna). */
   readonly annotation: string;

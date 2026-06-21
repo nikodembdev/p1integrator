@@ -1,12 +1,6 @@
-/**
- * Przykład: wystawienie SKIEROWANIA OGÓLNEGO (do poradni / szpitala).
- *
- * Uruchom:  pnpm tsx examples/01-skierowanie-ogolne.ts
- *
- * Co się dzieje: składamy dane skierowania → `issueGeneralReferral` buduje CDA,
- * podpisuje je (XAdES), pakuje w kopertę SOAP + WS-Security i wysyła mTLS-em do P1.
- * Bez certyfikatów/konfiguracji przykład pokaże tylko zbudowany dokument (offline).
- */
+// Skierowanie ogólne (do poradni / szpitala).
+// pnpm tsx examples/01-skierowanie-ogolne.ts
+// Bez certów w .local buduje tylko dokument; z certami wysyła go do P1.
 import {
   buildGeneralReferralCda,
   type GeneralReferralInput,
@@ -14,7 +8,6 @@ import {
 } from "@p1/referral";
 import { account, patient, previewXml, referralTransport } from "./config.js";
 
-// 1) Dane skierowania — to jest wszystko, co opisuje konkretny dokument.
 const input: GeneralReferralInput = {
   localRoot: account.localRoot, // węzeł OID usługodawcy
   title: "Skierowanie do poradni specjalistycznej",
@@ -25,11 +18,10 @@ const input: GeneralReferralInput = {
     givenNames: patient.givenNames,
     familyName: patient.familyName,
     birthDate: patient.birthDate, // YYYYMMDD
-    gender: patient.gender, // "M" | "F" | "UN"
+    gender: patient.gender,
     address: { ...patient.address, use: "PST" },
   },
 
-  // Lekarz wystawiający + podmiot, w ramach którego pracuje.
   author: {
     authorExt: account.npwz,
     authorRoot: account.npwzRoot,
@@ -76,13 +68,12 @@ const input: GeneralReferralInput = {
   },
 };
 
-// 2) (opcjonalnie) podgląd samego dokumentu — działa bez sieci.
+// podgląd samego dokumentu (bez sieci)
 previewXml(buildGeneralReferralCda(input).xml);
 
-// 3) Wysyłka do P1 (gdy dostępne certy/konfiguracja).
 const transport = referralTransport();
 if (!transport) {
-  console.log("Brak konfiguracji P1 (.local/p1.env + certy) — pominięto wysyłkę.");
+  console.log("Brak konfiguracji P1 (.local/p1.env + certy) - pominięto wysyłkę.");
   process.exit(0);
 }
 

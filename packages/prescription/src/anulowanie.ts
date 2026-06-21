@@ -30,7 +30,7 @@ const CANCELLATION_TRANSLATION = "08.80";
 export interface CancelledPrescriptionRef {
   /** Numer anulowanej recepty (id @extension oryginału). */
   prescriptionNumber: string;
-  /** Identyfikator zbioru wersji oryginału (setId) — dzielony przez dokument anulujący. */
+  /** Identyfikator zbioru wersji oryginału (setId) - dzielony przez dokument anulujący. */
   versionSetId: { root: string; extension: string };
   /** Numer wersji oryginału (domyślnie 1); anulowanie = +1. */
   versionNumber?: number;
@@ -45,14 +45,14 @@ export interface PrescriptionCancellationInput {
   localRoot: string;
   /** Numer dokumentu anulującego (id @extension); generowany, jeśli pominięty. */
   cancellationNumber: string;
-  /** Rodzaj recepty (ZW/PA/PF) — wpływa na dane autora. */
+  /** Rodzaj recepty (ZW/PA/PF) - wpływa na dane autora. */
   prescriptionType?: PrescriptionType;
   effectiveDate?: string;
   now?: Date;
   cancelled: CancelledPrescriptionRef;
   patient: PrescriptionPatient;
   author: PrescriptionAuthor;
-  /** Specjalność autora (np. „0718"/„neurologia") — wymagana przez szablon .2.4. */
+  /** Specjalność autora (np. „0718"/„neurologia") - wymagana przez szablon .2.4. */
   authorSpecialtyCode?: string;
   authorSpecialtyName?: string;
   legalAuthenticator: PrescriptionLegalAuthenticator;

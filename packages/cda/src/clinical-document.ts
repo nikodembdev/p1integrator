@@ -112,7 +112,7 @@ function buildRecordTarget(
   return { templateId: { "@root": templateRoot }, patientRole };
 }
 
-/** `birthplace/place/addr` — miejsce urodzenia (wymagane m.in. przez recordTarget psychiatryczny .2.40). */
+/** `birthplace/place/addr` - miejsce urodzenia (wymagane m.in. przez recordTarget psychiatryczny .2.40). */
 function buildBirthplace(birthplace: NonNullable<CdaPatient["birthplace"]>): XmlObject {
   const addr: XmlObject = { country: birthplace.country ?? "Polska" };
   if (birthplace.postalCode) addr.postalCode = birthplace.postalCode;
@@ -132,7 +132,7 @@ function buildPatientAddress(address: CdaPatientAddress): XmlObject {
   addr.streetName = address.street ?? { "@nullFlavor": "NA" };
   addr.houseNumber = address.houseNumber;
   if (address.unitId) addr.unitID = address.unitId;
-  // Kody TERYT (censusTract) — wymagane m.in. przez skierowanie uzdrowiskowe dla Polski.
+  // Kody TERYT (censusTract) - wymagane m.in. przez skierowanie uzdrowiskowe dla Polski.
   const teryt: string[] = [];
   if (address.terytTerc) teryt.push(`TERYT TERC: ${address.terytTerc}`);
   if (address.terytSimc) teryt.push(`TERYT SIMC: ${address.terytSimc}`);
@@ -213,7 +213,7 @@ function buildRepresentedOrganization(org: CdaAuthorOrganization): XmlObject {
     },
   };
 
-  // Gdy podano jednostkę organizacyjną (MUŚ, .2.3.2) — wstaw ją między komórkę a podmiot.
+  // Gdy podano jednostkę organizacyjną (MUŚ, .2.3.2) - wstaw ją między komórkę a podmiot.
   if (org.orgUnitExt) {
     representedOrganization.asOrganizationPartOf = {
       wholeOrganization: {

@@ -110,7 +110,7 @@ const { xml } = buildDrugPrescriptionCda(prescriptionSample);
 if (process.env.DUMP) writeFileSync(resolve(here, "../.local/last-prescription.xml"), xml);
 
 if (!existsSync(SEF)) {
-  console.error(`Brak SEF (${SEF}) — skompiluj walidator. Pomijam.`);
+  console.error(`Brak SEF (${SEF}) - skompiluj walidator. Pomijam.`);
   process.exit(0);
 }
 
@@ -133,7 +133,7 @@ for (const match of result.principalResult.matchAll(
 }
 
 const errors = violations.filter((v) => v.role !== "warning");
-console.log(`\nWalidacja Schematron P1 (recepta) — dokument ${xml.length} znaków`);
+console.log(`\nWalidacja Schematron P1 (recepta) - dokument ${xml.length} znaków`);
 console.log(`Błędy: ${errors.length}, ostrzeżenia: ${violations.length - errors.length}\n`);
 for (const v of errors.slice(0, 50)) {
   console.log(`• ${v.text}`);

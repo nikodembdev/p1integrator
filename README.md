@@ -4,13 +4,13 @@ TypeScript SDK ucywilizowujący API polskiej platformy P1 (e-zdrowie).
 Zamienia surowe SOAP / CDA / XAdES / WS-Security na czyste, typowane,
 dziedzinowe API.
 
-> ⚠️ Wczesny etap rozwoju (0.x) — publiczne API jeszcze niestabilne.
+> ⚠️ Wczesny etap rozwoju (0.x) - publiczne API jeszcze niestabilne.
 
 ## Status
 
-- ✅ **e-skierowanie** — 7 typów dokumentów + anulowanie, każdy zwalidowany Schematronem P1 i XSD; **potwierdzone end-to-end na środowisku integracyjnym** (P1 zwraca `Sukces` + `kodSkierowania`). Zob. [docs/eskierowania.md](docs/eskierowania.md).
-- ✅ **podpisywarka XAdES in-process** — podpis dokumentu bez zewnętrznego serwisu. Zob. [docs/podpisywarka.md](docs/podpisywarka.md).
-- ✅ **e-recepta** — wystawianie (pakiet recept) + anulowanie, odpłatności i uprawnienia dodatkowe; zwalidowane Schematronem P1 i XSD; **potwierdzone end-to-end na integracji** (`Sukces`). Zob. [docs/erecepta.md](docs/erecepta.md).
+- ✅ **e-skierowanie** - 7 typów dokumentów + anulowanie, każdy zwalidowany Schematronem P1 i XSD; **potwierdzone end-to-end na środowisku integracyjnym** (P1 zwraca `Sukces` + `kodSkierowania`). Zob. [docs/eskierowania.md](docs/eskierowania.md).
+- ✅ **podpisywarka XAdES in-process** - podpis dokumentu bez zewnętrznego serwisu. Zob. [docs/podpisywarka.md](docs/podpisywarka.md).
+- ✅ **e-recepta** - wystawianie (pakiet recept) + anulowanie, odpłatności i uprawnienia dodatkowe; zwalidowane Schematronem P1 i XSD; **potwierdzone end-to-end na integracji** (`Sukces`). Zob. [docs/erecepta.md](docs/erecepta.md).
 
 ## Co potrafi (w skrócie)
 
@@ -37,7 +37,7 @@ wysyłka mTLS → parsowanie `WynikMT`. Dostępna jest też warstwa czystych bui
 
 ```
 packages/
-├── core/          # typy domenowe, Result/błędy, porty (DocumentSigner, HttpClient…), kontekst
+├── core/          # typy domenowe, Result/błędy, porty (DocumentSigner, HttpClient...), kontekst
 ├── cda/           # typowany builder CDA PL IG 1.3.2 (generyczny buildClinicalDocument)
 ├── signing/       # podpisywarka XAdES-BES in-process (adapter portu DocumentSigner)
 ├── transport/     # HttpClient mTLS + koperty SOAP + WS-Security + parser odpowiedzi
@@ -46,21 +46,21 @@ packages/
 ```
 
 Wzorzec **porty + adaptery**: czyste buildery i orkiestracja zależą od portów
-(`DocumentSigner`, `HttpClient`, …) wstrzykiwanych przez konsumenta. Szczegóły:
+(`DocumentSigner`, `HttpClient`, ...) wstrzykiwanych przez konsumenta. Szczegóły:
 [docs/architektura.md](docs/architektura.md).
 
 ## Walidacja i testy
 
-- `pnpm test` — testy jednostkowe (offline, w tym podpisywarka self-verify).
-- `pnpm test:conformance` — każdy typ dokumentu przez **Schematron P1 + XSD** (wymaga assetów w `.local/`, inaczej się pomija).
-- `pnpm test:e2e` — realny strzał w P1 integrację (opt-in: `P1_E2E=1`, certy w `.local/`).
+- `pnpm test` - testy jednostkowe (offline, w tym podpisywarka self-verify).
+- `pnpm test:conformance` - każdy typ dokumentu przez **Schematron P1 + XSD** (wymaga assetów w `.local/`, inaczej się pomija).
+- `pnpm test:e2e` - realny strzał w P1 integrację (opt-in: `P1_E2E=1`, certy w `.local/`).
 
 ## Dokumentacja
 
-- [Architektura](docs/architektura.md) — warstwy, porty/adaptery, przepływ żądania, kontekst.
-- [e-skierowania](docs/eskierowania.md) — typy dokumentów, budowa CDA, wystawianie, anulowanie.
-- [e-recepta](docs/erecepta.md) — recepta na lek, odpłatności, uprawnienia dodatkowe, warianty, anulowanie.
-- [Podpisywarka](docs/podpisywarka.md) — podpis XAdES-BES in-process.
+- [Architektura](docs/architektura.md) - warstwy, porty/adaptery, przepływ żądania, kontekst.
+- [e-skierowania](docs/eskierowania.md) - typy dokumentów, budowa CDA, wystawianie, anulowanie.
+- [e-recepta](docs/erecepta.md) - recepta na lek, odpłatności, uprawnienia dodatkowe, warianty, anulowanie.
+- [Podpisywarka](docs/podpisywarka.md) - podpis XAdES-BES in-process.
 
 ## Materiały poufne
 
