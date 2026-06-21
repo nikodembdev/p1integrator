@@ -109,6 +109,19 @@ export const DRUG_AVAILABILITY_CATEGORIES = {
   OTC: "OTC",
 } as const;
 
+/** Rodzaj recepty elektronicznej (RRECE, codeSystem .13.5.1). */
+export const PRESCRIPTION_TYPES = {
+  ZW: "zwykła",
+  PA: "pro auctore",
+  PF: "pro familia",
+} as const;
+
+/** Szablon supply „całkowita dawka substancji czynnej" (Rpw, .4.80). */
+export const TOTAL_ACTIVE_DOSE_TEMPLATE = "2.16.840.1.113883.3.4424.13.10.4.80";
+/** Kod CDSC (Całkowita Dawka Substancji Czynnej) + jego system. */
+export const TOTAL_ACTIVE_DOSE_CODE = "CDSC";
+export const TOTAL_ACTIVE_DOSE_CODE_SYSTEM = "2.16.840.1.113883.3.4424.13.5.3.14";
+
 /** Uprawnienia dodatkowe publicznego ubezpieczenia (RLUD, codeSystem .11.3.1). */
 export const ADDITIONAL_ENTITLEMENTS = {
   AZ: "AZ",

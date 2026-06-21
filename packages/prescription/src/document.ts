@@ -15,10 +15,14 @@ import {
   PRESCRIPTION_HEADER_TEMPLATE,
   PRESCRIPTION_OID,
   PRESCRIPTION_SECTION_TEMPLATE,
+  PRESCRIPTION_TYPES,
   SPECIAL_ENTITLEMENT_TEMPLATE,
   SUBSTANCE_ADMINISTRATION_TEMPLATE,
   SUBSTITUTION_ACT_TEMPLATE,
   SUPPLY_TEMPLATE,
+  TOTAL_ACTIVE_DOSE_CODE,
+  TOTAL_ACTIVE_DOSE_CODE_SYSTEM,
+  TOTAL_ACTIVE_DOSE_TEMPLATE,
 } from "./constants.js";
 import type { DrugPrescriptionInput, DrugPrescriptionResult } from "./types.js";
 
@@ -100,6 +104,30 @@ function buildHeader(
       : { "@code": value, "@codeSystem": valueSystem },
   });
 
+  const qualifiers: XmlObject[] = [
+    qualifier(
+      "KDLEK",
+      "Kategoria dostępności leku",
+      drug.availabilityCategory ?? "Rp",
+      PRESCRIPTION_OID.DRUG_AVAILABILITY,
+    ),
+    qualifier("RLEK", "Rodzaj leku", "G", CDA_OID.POLISH_CLASSIFIERS, "Lek gotowy"),
+    qualifier("TWREC", "Tryb wystawienia recepty", "Z", CDA_OID.POLISH_CLASSIFIERS, "Zwykła"),
+    qualifier("TRREC", "Tryb realizacji recepty", "Z", CDA_OID.POLISH_CLASSIFIERS, "Zwykły"),
+  ];
+  // Rodzaj recepty elektronicznej (RRECE) — tylko dla pro auctore / pro familiae.
+  if (input.prescriptionType === "PA" || input.prescriptionType === "PF") {
+    qualifiers.push(
+      qualifier(
+        "RRECE",
+        "Rodzaj recepty elektronicznej",
+        input.prescriptionType,
+        CDA_OID.POLISH_CLASSIFIERS,
+        PRESCRIPTION_TYPES[input.prescriptionType],
+      ),
+    );
+  }
+
   return {
     typeId: { "@extension": "POCD_HD000040", "@root": CDA_OID.HL7_TYPE_ID },
     templateId: [
@@ -122,17 +150,7 @@ function buildHeader(
         "@codeSystem": CDA_OID.DOC_CLASS_P1,
         "@codeSystemName": "KLAS_DOK_P1",
         "@displayName": PRESCRIPTION_CODE.DOC_P1_CLASS_DISPLAY,
-        qualifier: [
-          qualifier(
-            "KDLEK",
-            "Kategoria dostępności leku",
-            drug.availabilityCategory ?? "Rp",
-            PRESCRIPTION_OID.DRUG_AVAILABILITY,
-          ),
-          qualifier("RLEK", "Rodzaj leku", "G", CDA_OID.POLISH_CLASSIFIERS, "Lek gotowy"),
-          qualifier("TWREC", "Tryb wystawienia recepty", "Z", CDA_OID.POLISH_CLASSIFIERS, "Zwykła"),
-          qualifier("TRREC", "Tryb realizacji recepty", "Z", CDA_OID.POLISH_CLASSIFIERS, "Zwykły"),
-        ],
+        qualifier: qualifiers,
       },
     },
     title: PRESCRIPTION_CODE.DOC_P1_CLASS_DISPLAY,
@@ -142,7 +160,7 @@ function buildHeader(
     setId: { "@extension": input.versionSetId.extension, "@root": input.versionSetId.root },
     versionNumber: { "@value": String(versionNumber) },
     recordTarget: buildRecordTarget(input),
-    author: buildAuthor(author, effectiveDate),
+    author: buildAuthor(author, effectiveDate, input.prescriptionType ?? "ZW"),
     custodian: buildCustodian(),
     legalAuthenticator: {
       templateId: { "@root": PRESCRIPTION_HEADER_TEMPLATE.LEGAL_AUTHENTICATOR },
@@ -203,8 +221,82 @@ function buildRecordTarget(input: DrugPrescriptionInput): XmlObject {
   };
 }
 
-function buildAuthor(author: DrugPrescriptionInput["author"], effectiveDate: string): XmlObject {
-  const org = author.organization;
+function buildAuthor(
+  author: DrugPrescriptionInput["author"],
+  effectiveDate: string,
+  prescriptionType: "ZW" | "PA" | "PF",
+): XmlObject {
+  const assignedAuthor: XmlObject = {
+    id: { "@extension": author.npwz, "@root": CDA_OID.NPWZ, "@displayable": "true" },
+  };
+
+  if (prescriptionType === "PA" || prescriptionType === "PF") {
+    // Pro auctore / pro familiae: autor z adresem i telefonem, bez organizacji.
+    if (!author.address || !author.phone) {
+      throw new Error("Recepta pro auctore/familiae wymaga adresu i telefonu autora");
+    }
+    assignedAuthor.addr = {
+      postalCode: author.address.postalCode,
+      city: author.address.city,
+      streetName: author.address.street,
+      houseNumber: author.address.houseNumber,
+    };
+    assignedAuthor.telecom = { "@value": `tel:${author.phone}` };
+    assignedAuthor.assignedPerson = {
+      templateId: { "@root": PRESCRIPTION_HEADER_TEMPLATE.PERSON },
+      name: {
+        prefix: author.prefix ?? "lek.",
+        given: [...author.givenNames],
+        family: author.familyName,
+      },
+    };
+  } else {
+    const org = author.organization;
+    if (!org) throw new Error("Recepta zwykła wymaga danych organizacji autora");
+    assignedAuthor.assignedPerson = {
+      templateId: { "@root": PRESCRIPTION_HEADER_TEMPLATE.PERSON },
+      name: {
+        prefix: author.prefix ?? "lek.",
+        given: [...author.givenNames],
+        family: author.familyName,
+      },
+    };
+    assignedAuthor.representedOrganization = {
+      templateId: { "@root": PRESCRIPTION_HEADER_TEMPLATE.ORGANIZATION_UNIT },
+      id: {
+        "@extension": `${org.podmiotExt}-001`,
+        "@root": "2.16.840.1.113883.3.4424.2.3.2",
+        "@displayable": "true",
+      },
+      name: org.name,
+      telecom: { "@use": "PUB", "@value": `tel:${org.phone}` },
+      addr: {
+        postalCode: org.address.postalCode,
+        city: org.address.city,
+        streetName: org.address.street,
+        houseNumber: org.address.houseNumber,
+      },
+      asOrganizationPartOf: {
+        wholeOrganization: {
+          id: {
+            "@extension": org.regon14,
+            "@root": "2.16.840.1.113883.3.4424.2.2.2",
+            "@displayable": "true",
+          },
+          asOrganizationPartOf: {
+            wholeOrganization: {
+              id: {
+                "@extension": org.podmiotExt,
+                "@root": "2.16.840.1.113883.3.4424.2.3.1",
+                "@displayable": "true",
+              },
+            },
+          },
+        },
+      },
+    };
+  }
+
   return {
     templateId: { "@root": PRESCRIPTION_HEADER_TEMPLATE.AUTHOR },
     functionCode: {
@@ -213,51 +305,7 @@ function buildAuthor(author: DrugPrescriptionInput["author"], effectiveDate: str
       "@displayName": "Lekarz",
     },
     time: { "@value": author.time ?? effectiveDate },
-    assignedAuthor: {
-      id: { "@extension": author.npwz, "@root": CDA_OID.NPWZ, "@displayable": "true" },
-      assignedPerson: {
-        templateId: { "@root": PRESCRIPTION_HEADER_TEMPLATE.PERSON },
-        name: {
-          prefix: author.prefix ?? "lek.",
-          given: [...author.givenNames],
-          family: author.familyName,
-        },
-      },
-      representedOrganization: {
-        templateId: { "@root": PRESCRIPTION_HEADER_TEMPLATE.ORGANIZATION_UNIT },
-        id: {
-          "@extension": `${org.podmiotExt}-001`,
-          "@root": "2.16.840.1.113883.3.4424.2.3.2",
-          "@displayable": "true",
-        },
-        name: org.name,
-        telecom: { "@use": "PUB", "@value": `tel:${org.phone}` },
-        addr: {
-          postalCode: org.address.postalCode,
-          city: org.address.city,
-          streetName: org.address.street,
-          houseNumber: org.address.houseNumber,
-        },
-        asOrganizationPartOf: {
-          wholeOrganization: {
-            id: {
-              "@extension": org.regon14,
-              "@root": "2.16.840.1.113883.3.4424.2.2.2",
-              "@displayable": "true",
-            },
-            asOrganizationPartOf: {
-              wholeOrganization: {
-                id: {
-                  "@extension": org.podmiotExt,
-                  "@root": "2.16.840.1.113883.3.4424.2.3.1",
-                  "@displayable": "true",
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+    assignedAuthor,
   };
 }
 
@@ -321,6 +369,21 @@ function buildPrescriptionSection(
       ],
     },
   ];
+  // Akapit całkowitej dawki substancji czynnej (Rpw).
+  if (drug.totalActiveSubstance) {
+    const t = drug.totalActiveSubstance;
+    paragraphs.push({
+      "@ID": "SPLY_1",
+      content: [
+        content("p1_potwIlosciSubstCzynnej_opis_1", "Potwierdzono ilość substancji czynnej"),
+        content(
+          "p1_potwIlosciSubstCzynnej_wartosc_1",
+          `${t.numeratorValue} ${t.numeratorUnit}`,
+          "Bold",
+        ),
+      ],
+    });
+  }
   // Akapit „informacja dla wydającego" tylko gdy istnieje odpowiadający akt FINSTRUCT.
   if (input.dispenserInfo) {
     paragraphs.push({
@@ -649,7 +712,7 @@ function buildSupplyRelationship(input: DrugPrescriptionInput, effectiveDate: st
   };
 
   // Akt refundacji (poziom odpłatności + oddział NFZ) — zawsze wymagany przez P1 (REG.WER.3222).
-  supply.entryRelationship = {
+  const refundacja: XmlObject = {
     "@typeCode": "COMP",
     act: {
       "@classCode": "ACT",
@@ -700,7 +763,53 @@ function buildSupplyRelationship(input: DrugPrescriptionInput, effectiveDate: st
     },
   };
 
+  // Dla Rpw całkowita dawka substancji czynnej (.4.80) jest dzieckiem głównego supply.
+  supply.entryRelationship = drug.totalActiveSubstance
+    ? [refundacja, buildTotalActiveDose(drug.totalActiveSubstance)]
+    : refundacja;
+
   return { "@typeCode": "COMP", supply };
+}
+
+function buildTotalActiveDose(
+  total: NonNullable<DrugPrescriptionInput["drug"]["totalActiveSubstance"]>,
+): XmlObject {
+  const denominator: XmlObject = { "@value": total.denominatorValue, "@xsi:type": "PQ" };
+  if (total.denominatorUnit) denominator["@unit"] = total.denominatorUnit;
+  const pharmCode: XmlObject = { "@code": total.code, "@codeSystem": PRESCRIPTION_OID.GS1 };
+  if (total.name) pharmCode["@displayName"] = total.name;
+  return {
+    "@typeCode": "COMP",
+    supply: {
+      "@classCode": "SPLY",
+      "@moodCode": "EVN",
+      templateId: { "@root": TOTAL_ACTIVE_DOSE_TEMPLATE },
+      code: { "@code": TOTAL_ACTIVE_DOSE_CODE, "@codeSystem": TOTAL_ACTIVE_DOSE_CODE_SYSTEM },
+      text: { reference: { "@value": "#SPLY_1" } },
+      product: {
+        manufacturedProduct: {
+          manufacturedMaterial: {
+            "pharm:ingredient": {
+              "@classCode": "ACTI",
+              "pharm:quantity": {
+                numerator: {
+                  "@unit": total.numeratorUnit,
+                  "@value": total.numeratorValue,
+                  "@xsi:type": "PQ",
+                },
+                denominator,
+              },
+              "pharm:ingredient": {
+                "@classCode": "MMAT",
+                "@determinerCode": "KIND",
+                "pharm:code": pharmCode,
+              },
+            },
+          },
+        },
+      },
+    },
+  };
 }
 
 function buildSubstitutionRelationship(): XmlObject {

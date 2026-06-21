@@ -71,7 +71,26 @@ export interface PrescriptionAuthor {
   prefix?: string;
   /** YYYYMMDD; domyślnie data wystawienia. */
   time?: string;
-  organization: PrescriptionOrganization;
+  /** Organizacja (podmiot) — wymagana dla recepty zwykłej (ZW). */
+  organization?: PrescriptionOrganization;
+  /** Adres autora — wymagany dla recepty pro auctore / pro familiae. */
+  address?: { postalCode: string; city: string; street?: string; houseNumber: string };
+  /** Telefon autora — wymagany dla recepty pro auctore / pro familiae. */
+  phone?: string;
+}
+
+/** Rodzaj recepty elektronicznej: zwykła / pro auctore / pro familiae. */
+export type PrescriptionType = "ZW" | "PA" | "PF";
+
+/** Całkowita dawka substancji czynnej (wymagana dla leku Rpw). */
+export interface TotalActiveSubstanceDose {
+  /** Kod substancji czynnej (jak w pharm:code; w przykładach P1 GS1). */
+  code: string;
+  name?: string;
+  numeratorValue: string;
+  numeratorUnit: string;
+  denominatorValue: string;
+  denominatorUnit?: string;
 }
 
 export interface PrescriptionLegalAuthenticator {
@@ -107,6 +126,8 @@ export interface PrescriptionDrug {
   /** Moc/skład — tekst do narrative (np. „5 g / 50 ml + 20 mg"). */
   strengthText?: string;
   ingredients: PrescriptionIngredient[];
+  /** Całkowita dawka substancji czynnej — wymagana dla leku Rpw (kategoria Rpw). */
+  totalActiveSubstance?: TotalActiveSubstanceDose;
 }
 
 export interface PrescriptionDosage {
@@ -143,6 +164,8 @@ export interface DrugPrescriptionInput {
   /** Identyfikator zbioru wersji (setId). */
   versionSetId: { root: string; extension: string };
   versionNumber?: number;
+  /** Rodzaj recepty elektronicznej (domyślnie ZW). PA/PF → tryb pro auctore/familiae. */
+  prescriptionType?: PrescriptionType;
   /** Data wystawienia YYYYMMDD (domyślnie dziś). */
   effectiveDate?: string;
   now?: Date;

@@ -197,6 +197,9 @@ export function buildE2ePrescriptionInput(
           houseNumber: "44",
         },
       },
+      // dane autora dla recepty pro auctore / pro familiae
+      address: { postalCode: "01-797", city: "Warszawa", street: "Powązkowska", houseNumber: "44" },
+      phone: "+48570690376",
     },
     legalAuthenticator: { npwz: a.npwz },
     drug: {

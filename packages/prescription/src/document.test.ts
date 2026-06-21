@@ -174,4 +174,47 @@ describe("buildDrugPrescriptionCda", () => {
     expect(xml).toContain(">S, C</content>"); // narracja: kody łączone ", "
     expect((xml.match(/code="RLUD"/g) ?? []).length).toBe(2);
   });
+
+  it("recepta pro auctore: kwalifikator RRECE=PA i autor z adresem zamiast organizacji", () => {
+    const xml = buildDrugPrescriptionCda({
+      ...baseInput,
+      prescriptionType: "PA",
+      author: {
+        ...baseInput.author,
+        address: { postalCode: "00-001", city: "Warszawa", street: "Próżna", houseNumber: "1" },
+        phone: "22-1234567",
+      },
+    }).xml;
+    expect(xml).toContain('code="RRECE"');
+    expect(xml).toContain('code="PA" codeSystem="2.16.840.1.113883.3.4424.13.5.1"');
+    // autor pro auctore: brak representedOrganization, jest telecom autora
+    expect(xml).not.toContain("representedOrganization");
+  });
+
+  it("recepta pro auctore wymaga adresu i telefonu autora", () => {
+    expect(() => buildDrugPrescriptionCda({ ...baseInput, prescriptionType: "PA" })).toThrow();
+  });
+
+  it("Rpw: dodaje supply CDSC (.4.80) z całkowitą dawką i narrację SPLY_1", () => {
+    const xml = buildDrugPrescriptionCda({
+      ...baseInput,
+      drug: {
+        ...baseInput.drug,
+        availabilityCategory: "Rpw",
+        totalActiveSubstance: {
+          code: "05909990351718",
+          name: "Buprenorphinum",
+          numeratorValue: "0.2",
+          numeratorUnit: "mg",
+          denominatorValue: "1",
+        },
+      },
+    }).xml;
+    expect(xml).toContain('code="Rpw"');
+    expect(xml).toContain('root="2.16.840.1.113883.3.4424.13.10.4.80"');
+    expect(xml).toContain('code="CDSC"');
+    expect(xml).toContain('<reference value="#SPLY_1"/>');
+    expect(xml).toContain("Potwierdzono ilość substancji czynnej");
+    expect(xml).toContain(">0.2 mg</content>");
+  });
 });
