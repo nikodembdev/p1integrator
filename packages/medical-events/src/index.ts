@@ -3,3 +3,6 @@
  */
 
 export * from "./oauth.js";
+export * from "./fhir-client.js";
+export * from "./patient.js";
+export * from "./encounter.js";
