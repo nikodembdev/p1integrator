@@ -27,6 +27,11 @@ Kompletne zdarzenie to cztery zasoby FHIR utworzone po kolei:
    zasobami (`buildMedicalEventProvenance` + `buildProvenanceSignature`,
    profil PLMedicalEventProvenance).
 
+> **Dane lekarza muszą zgadzać się z CWPM.** Imię i nazwisko w `participant`
+> (Encounter) oraz `asserter` (Condition) są weryfikowane po NPWZ względem CWPM
+> (REG.WER.4059) - rozbieżność blokuje zdarzenie. W przykładzie `09` ustawia się je
+> przez `P1_DOCTOR_GIVEN`/`P1_DOCTOR_FAMILY` (domyślnie `Adam`/`Leczniczy`).
+
 ## Przepływ użycia
 
 ```ts
