@@ -18,6 +18,15 @@ export interface FhirClient {
     resourceType: string,
     query: Readonly<Record<string, string>>,
   ): Promise<Result<FhirSearch, P1Error>>;
+  /** GET /fhir/{resourceType}/{id} jako XML - surowe oktety + wersja (do podpisu). */
+  readXml(resourceType: string, id: string): Promise<Result<FhirResourceXml, P1Error>>;
+}
+
+export interface FhirResourceXml {
+  /** Surowe oktety zasobu (application/fhir+xml) - podstawa do liczenia digestu. */
+  readonly xml: string;
+  /** Wersja zasobu (meta.versionId). */
+  readonly versionId: string;
 }
 
 export interface FhirSearch {
@@ -97,6 +106,27 @@ export function createFhirClient(options: FhirClientOptions): FhirClient {
         return err(new P1BusinessError(operationOutcomeMessage(bundle, response.status)));
       }
       return ok({ ids: bundleResourceIds(bundle), bundle });
+    },
+
+    async readXml(resourceType, id) {
+      let response;
+      try {
+        response = await options.httpClient.send({
+          url: `${base}/${resourceType}/${id}`,
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${options.accessToken}`,
+            Accept: "application/fhir+xml",
+          },
+        });
+      } catch (cause) {
+        return err(new P1TransportError(`FHIR ${resourceType} read failed`, { cause }));
+      }
+      if (response.status >= 400) {
+        return err(new P1BusinessError(`FHIR ${resourceType}/${id} read: HTTP ${response.status}`));
+      }
+      const versionId = /<versionId value="([^"]+)"/.exec(response.body)?.[1] ?? "1";
+      return ok({ xml: response.body, versionId });
     },
   };
 }

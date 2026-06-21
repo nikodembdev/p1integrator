@@ -7,3 +7,4 @@ export * from "./fhir-client.js";
 export * from "./patient.js";
 export * from "./encounter.js";
 export * from "./condition.js";
+export * from "./provenance.js";

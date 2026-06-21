@@ -9,6 +9,8 @@ import {
   buildMedicalEventCondition,
   buildMedicalEventEncounter,
   buildMedicalEventPatient,
+  buildMedicalEventProvenance,
+  buildProvenanceSignature,
   createFhirClient,
   requestAccessToken,
   toFhirGender,
@@ -128,12 +130,52 @@ async function main(): Promise<void> {
     asserter: { npwz: a.npwz, display: "Adam713 Leczniczy", functionCode: "11" },
   });
   const condResult = await fhir.create("Condition", condition);
+  if (!condResult.ok) {
+    console.log("BŁĄD Condition:", condResult.error.message);
+    return;
+  }
+  const conditionId = condResult.value.id!;
+  console.log("Condition id:", conditionId);
 
-  console.log("\n=== WYNIK ===");
-  if (condResult.ok) {
-    console.log("OK Condition id:", condResult.value.id, "| location:", condResult.value.location);
+  // 4) Autentyczność: podpis XAdES-BES nad utworzonymi zasobami -> Provenance.
+  const refs: { type: string; id: string }[] = [
+    { type: "Patient", id: patientId! },
+    { type: "Encounter", id: encounterId! },
+    { type: "Condition", id: conditionId },
+  ];
+  const signedResources = [];
+  for (const r of refs) {
+    const read = await fhir.readXml(r.type, r.id);
+    if (!read.ok) {
+      console.log(`BŁĄD odczytu ${r.type}:`, read.error.message);
+      return;
+    }
+    signedResources.push({
+      url: `${fhirBaseUrl}/${r.type}/${r.id}/_history/${read.value.versionId}`,
+      xml: read.value.xml,
+    });
+  }
+
+  const when = new Date().toISOString();
+  const signatureData = buildProvenanceSignature({
+    resources: signedResources,
+    certificatePem: wss.certificatePem,
+    privateKeyPem: wss.privateKeyPem,
+    signingTime: new Date(when),
+  });
+  const provenance = buildMedicalEventProvenance({
+    targets: refs.map((r) => ({ reference: `${r.type}/${r.id}`, type: r.type })),
+    organization: { identifier: a.podmiotExt },
+    when,
+    signatureData,
+  });
+  const provResult = await fhir.create("Provenance", provenance);
+
+  console.log("\n=== WYNIK (autentyczność) ===");
+  if (provResult.ok) {
+    console.log("OK Provenance id:", provResult.value.id, "| ZDARZENIE KOMPLETNE");
   } else {
-    console.log("BŁĄD Condition:", condResult.error.kind, "-", condResult.error.message);
+    console.log("BŁĄD Provenance:", provResult.error.kind, "-", provResult.error.message);
   }
 }
 
