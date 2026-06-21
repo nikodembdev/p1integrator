@@ -338,9 +338,13 @@ function buildPrescriptionSection(
   const strength = drug.strengthText ?? computeStrengthNarrative(drug.ingredients);
   const dosageText = computeDosageNarrative(dosage, effectiveDate);
 
+  // Kolejność węzłów MUSI odpowiadać transformacie narracyjnej P1 (REG.WER.3251):
+  // nazwa, moc, (puste pola edycyjne), ewentualnie „NZ".
   const sbadmContent: XmlObject[] = [
     content("p1_nazwaLeku", drug.name, "xPLbig"),
     content("p1_mocSkladnikowLeku", strength),
+    content("p1_edytuj_mocLeku"),
+    content("p1_edytuj_postacLeku"),
   ];
   if (!substitutionAllowed) sbadmContent.push(content("p1_nieZamieniac", "NZ", "xPLbig"));
 
@@ -358,6 +362,7 @@ function buildPrescriptionSection(
       content: [
         content("p1_stosowanie_opis_1", "D.S."),
         ...(dosageText ? [content("p1_stosowanie_wartosc_1", dosageText, "Bold")] : []),
+        content("p1_edytuj_stosowanie_wartosc_1", undefined, "Bold"),
       ],
     },
     {
@@ -390,7 +395,8 @@ function buildPrescriptionSection(
       "@ID": "TEXT1",
       content: [
         content("p1_infoDlaWydajacego_opis_1", "Informacja dla osoby wydającej lek:"),
-        content("p1_infoDlaWydajacego_wartosc_1", input.dispenserInfo),
+        // Transformata P1 1.3.2 zostawia tu puste pole edycyjne (treść nie jest renderowana).
+        content("p1_edytuj_infoDlaWydajacego_wartosc_1"),
       ],
     });
   }

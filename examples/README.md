@@ -32,14 +32,27 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 
 ## Lista przykładów
 
-| Plik                                                                 | Co pokazuje                                                           |
-| -------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [`01-skierowanie-ogolne.ts`](./01-skierowanie-ogolne.ts)             | skierowanie do poradni/szpitala (rozpoznania + procedury)             |
-| [`02-skierowanie-uzdrowiskowe.ts`](./02-skierowanie-uzdrowiskowe.ts) | skierowanie na leczenie uzdrowiskowe (wywiad, badanie, wyniki, TERYT) |
-| [`03-recepta.ts`](./03-recepta.ts)                                   | recepta na jeden lek (odpłatność, dawkowanie)                         |
+| Plik                                                                           | Co pokazuje                                                           |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| [`01-skierowanie-ogolne.ts`](./01-skierowanie-ogolne.ts)                       | skierowanie do poradni/szpitala (rozpoznania + procedury)             |
+| [`02-skierowanie-uzdrowiskowe.ts`](./02-skierowanie-uzdrowiskowe.ts)           | skierowanie na leczenie uzdrowiskowe (wywiad, badanie, wyniki, TERYT) |
+| [`03-recepta.ts`](./03-recepta.ts)                                             | recepta na jeden lek — pełny, rozpisany przykład (referencja)         |
+| [`04-recepta-uprawnienia-dodatkowe.ts`](./04-recepta-uprawnienia-dodatkowe.ts) | recepta z uprawnieniem dodatkowym pacjenta (sekcja .3.69)             |
+| [`05-recepta-nie-zamieniac.ts`](./05-recepta-nie-zamieniac.ts)                 | „NZ" + info dla wydającego + lek wieloskładnikowy                     |
+| [`06-recepta-pro-auctore.ts`](./06-recepta-pro-auctore.ts)                     | recepta pro auctore / pro familiae (RRECE)\*                          |
+| [`07-pakiet-wielu-recept.ts`](./07-pakiet-wielu-recept.ts)                     | wiele recept w jednym pakiecie (`submitPrescriptionPackage`)          |
+| [`08-anulowanie-recepty.ts`](./08-anulowanie-recepty.ts)                       | wystawienie, a następnie anulowanie recepty                           |
 
-Lista będzie rozbudowywana (kolejne typy skierowań, recepta z uprawnieniami /
-pro auctore / Rpw, anulowanie itd.).
+Recepty `03`–`05`, `07`–`08` potwierdzone e2e (Sukces). \* `06` pro auctore buduje
+poprawny dokument, ale pełny e2e wymaga osobnej puli numerów recept (`…2.10.*`)
+przydzielonej do konta.
+
+### Wymagają rozszerzenia biblioteki (osobny temat)
+
+Część wariantów z przykładowych SOAP-ów P1 potrzebuje funkcji buildera, których jeszcze
+nie ma: **dawkowanie zmienne / czas trwania kuracji** (recepty 365-dniowe, sekwencje,
+alternatywy, krotność dobowa), **recepta recepturowa**, **wyrób medyczny**,
+**import docelowy** oraz **leki narkotyczne (Rpw)**.
 
 ## Powiązana dokumentacja
 
