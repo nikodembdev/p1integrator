@@ -5,7 +5,18 @@ export default {
     "scope-enum": [
       1,
       "always",
-      ["core", "cda", "signing", "transport", "prescription", "referral", "repo", "ci", "deps"],
+      [
+        "core",
+        "cda",
+        "signing",
+        "transport",
+        "prescription",
+        "referral",
+        "medical-events",
+        "repo",
+        "ci",
+        "deps",
+      ],
     ],
   },
 };

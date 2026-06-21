@@ -83,6 +83,12 @@ importers:
 
   packages/core: {}
 
+  packages/medical-events:
+    dependencies:
+      '@p1/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/prescription:
     dependencies:
       '@p1/cda':
