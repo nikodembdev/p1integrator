@@ -83,6 +83,25 @@ importers:
 
   packages/core: {}
 
+  packages/medical-events:
+    dependencies:
+      '@p1/core':
+        specifier: workspace:*
+        version: link:../core
+      '@xmldom/xmldom':
+        specifier: ^0.9.10
+        version: 0.9.10
+      node-forge:
+        specifier: ^1.4.0
+        version: 1.4.0
+      xml-crypto:
+        specifier: ^6.1.2
+        version: 6.1.2
+    devDependencies:
+      '@types/node-forge':
+        specifier: ^1.3.14
+        version: 1.3.14
+
   packages/prescription:
     dependencies:
       '@p1/cda':
