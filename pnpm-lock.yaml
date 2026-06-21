@@ -97,6 +97,9 @@ importers:
       '@p1/transport':
         specifier: workspace:*
         version: link:../transport
+      xmlbuilder2:
+        specifier: ^3.1.1
+        version: 3.1.1
       zod:
         specifier: ^3.24.1
         version: 3.25.76

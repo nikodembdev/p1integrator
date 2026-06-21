@@ -10,6 +10,14 @@ export interface SoapEnvelopeOptions {
   readonly body: string;
   /** Dodatkowe deklaracje namespace na <Envelope> (prefiks → URI), np. dla operacji. */
   readonly namespaces?: Readonly<Record<string, string>>;
+  /**
+   * Namespace elementu `kontekstWywolania` (prefiks `kon:`). Domyślnie e-skierowanie
+   * (v20180509); e-recepta używa wersji v20170510. Musi być spójny z `contextNamespace`
+   * przekazanym do `signWsSecurity`.
+   */
+  readonly contextNamespace?: string;
+  /** Prefiks URN nazw atrybutów kontekstu (domyślnie e-skierowanie). */
+  readonly contextUrnPrefix?: string;
 }
 
 /**
@@ -20,22 +28,23 @@ export function buildSoapEnvelope(options: SoapEnvelopeOptions): string {
   const extraNamespaces = Object.entries(options.namespaces ?? {})
     .map(([prefix, uri]) => ` xmlns:${prefix}="${uri}"`)
     .join("");
+  const contextNamespace = options.contextNamespace ?? CONTEXT_NAMESPACE;
 
   return (
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<soapenv:Envelope xmlns:soapenv="${SOAPENV_NS}" xmlns:kon="${CONTEXT_NAMESPACE}"` +
+    `<soapenv:Envelope xmlns:soapenv="${SOAPENV_NS}" xmlns:kon="${contextNamespace}"` +
     ` xmlns:wsse="${WSSE_NS}" xmlns:wsu="${WSU_NS}"${extraNamespaces}>` +
     `<soapenv:Header>` +
     `<wsse:Security soapenv:mustUnderstand="1"></wsse:Security>` +
-    buildKontekstXml(options.context) +
+    buildKontekstXml(options.context, options.contextUrnPrefix) +
     `</soapenv:Header>` +
     `<soapenv:Body wsu:Id="${BODY_ID}">${options.body}</soapenv:Body>` +
     `</soapenv:Envelope>`
   );
 }
 
-function buildKontekstXml(context: CallContext): string {
-  const attributes = contextToAttributes(context)
+function buildKontekstXml(context: CallContext, urnPrefix?: string): string {
+  const attributes = contextToAttributes(context, urnPrefix)
     .map(
       (attribute) =>
         `<kon:atrybut nazwa="${escapeXml(attribute.name)}">` +

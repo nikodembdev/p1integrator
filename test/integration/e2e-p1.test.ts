@@ -6,14 +6,21 @@
  * Uruchom świadomie: `P1_E2E=1 pnpm test:e2e` (dane konta z `.local/p1.env`, certy z .local).
  * Żadnych danych konta w repo — wszystko z env (patrz p1-account.ts / .env.example).
  */
+import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { issueGeneralReferral, type ReferralTransport } from "@p1/referral";
+import {
+  cancelDrugPrescription,
+  issueDrugPrescription,
+  type PrescriptionTransport,
+} from "@p1/prescription";
 import { createXadesDocumentSigner } from "@p1/signing";
 import { createNodeHttpClient, parseP12 } from "@p1/transport";
 import { describe, expect, it } from "vitest";
 import {
   buildE2eGeneralInput,
+  buildE2ePrescriptionInput,
   e2eContext,
   p1Account as a,
   p1AccountComplete,
@@ -62,6 +69,146 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)(
         expect(result.value.referralCode).toBeTruthy();
         // eslint-disable-next-line no-console
         console.log("P1 OK — kodSkierowania:", result.value.referralCode);
+      }
+    });
+  },
+);
+
+describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)(
+  "e2e P1 integracja — wystawienie recepty (zapisPakietuRecept)",
+  () => {
+    it("zwraca Sukces, kod i klucz pakietu oraz klucz recepty", async () => {
+      const tls = parseP12(
+        readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-tls.p12")),
+        a.certPassword,
+      );
+      const transport: PrescriptionTransport = {
+        context: e2eContext,
+        documentSigner: createXadesDocumentSigner({
+          certificate: {
+            p12: readFileSync(resolve(a.certDir, "Adam713 Leczniczy.p12")),
+            password: a.certPassword,
+          },
+        }),
+        httpClient: createNodeHttpClient({
+          tls: {
+            key: tls.privateKeyPem,
+            cert: tls.certificatePem,
+            rejectUnauthorized: a.rejectUnauthorized,
+          },
+        }),
+        wsSecurityCertificate: parseP12(
+          readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-wss.p12")),
+          a.certPassword,
+        ),
+        endpoint: a.receptaEndpoint,
+      };
+
+      const result = await issueDrugPrescription(buildE2ePrescriptionInput(), transport);
+      expect(result.ok, JSON.stringify(result)).toBe(true);
+      if (result.ok) {
+        expect(result.value.outcome?.major).toBe("urn:csioz:p1:kod:major:Sukces");
+        expect(result.value.packageCode).toBeTruthy();
+        expect(result.value.packageKey).toBeTruthy();
+        expect(result.value.prescriptions[0]?.key).toBeTruthy();
+        // eslint-disable-next-line no-console
+        console.log("P1 OK — kodPakietu:", result.value.packageCode);
+      }
+    });
+
+    it("zwraca Sukces dla recepty z uprawnieniem dodatkowym (sekcja .3.69)", async () => {
+      const tls = parseP12(
+        readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-tls.p12")),
+        a.certPassword,
+      );
+      const transport: PrescriptionTransport = {
+        context: e2eContext,
+        documentSigner: createXadesDocumentSigner({
+          certificate: {
+            p12: readFileSync(resolve(a.certDir, "Adam713 Leczniczy.p12")),
+            password: a.certPassword,
+          },
+        }),
+        httpClient: createNodeHttpClient({
+          tls: {
+            key: tls.privateKeyPem,
+            cert: tls.certificatePem,
+            rejectUnauthorized: a.rejectUnauthorized,
+          },
+        }),
+        wsSecurityCertificate: parseP12(
+          readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-wss.p12")),
+          a.certPassword,
+        ),
+        endpoint: a.receptaEndpoint,
+      };
+
+      const input = buildE2ePrescriptionInput({
+        entitlements: [{ code: "IB", document: "Nr leg.: 234/1992" }],
+      });
+      const result = await issueDrugPrescription(input, transport);
+      expect(result.ok, JSON.stringify(result)).toBe(true);
+      if (result.ok) {
+        expect(result.value.outcome?.major).toBe("urn:csioz:p1:kod:major:Sukces");
+      }
+    });
+
+    it("wystawia, a następnie anuluje receptę (zapisDokumentuAnulowaniaRecepty)", async () => {
+      const tls = parseP12(
+        readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-tls.p12")),
+        a.certPassword,
+      );
+      const transport: PrescriptionTransport = {
+        context: e2eContext,
+        documentSigner: createXadesDocumentSigner({
+          certificate: {
+            p12: readFileSync(resolve(a.certDir, "Adam713 Leczniczy.p12")),
+            password: a.certPassword,
+          },
+        }),
+        httpClient: createNodeHttpClient({
+          tls: {
+            key: tls.privateKeyPem,
+            cert: tls.certificatePem,
+            rejectUnauthorized: a.rejectUnauthorized,
+          },
+        }),
+        wsSecurityCertificate: parseP12(
+          readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-wss.p12")),
+          a.certPassword,
+        ),
+        endpoint: a.receptaEndpoint,
+      };
+
+      const input = buildE2ePrescriptionInput();
+      const issued = await issueDrugPrescription(input, transport);
+      expect(issued.ok, JSON.stringify(issued)).toBe(true);
+      if (!issued.ok) return;
+      const kluczRecepty = issued.value.prescriptions[0]?.key;
+      expect(kluczRecepty).toBeTruthy();
+
+      const cancelled = await cancelDrugPrescription(
+        {
+          localRoot: input.localRoot,
+          cancellationNumber: randomUUID().replace(/-/g, "").toUpperCase().slice(0, 22),
+          cancelled: {
+            prescriptionNumber: input.prescriptionNumber,
+            versionSetId: input.versionSetId,
+            title: "Recepta",
+          },
+          patient: input.patient,
+          author: input.author,
+          authorSpecialtyCode: "0713",
+          authorSpecialtyName: "medycyna rodzinna",
+          legalAuthenticator: input.legalAuthenticator,
+          nfzBranch: input.payment.nfzBranch,
+        },
+        kluczRecepty ?? "",
+        transport,
+      );
+      expect(cancelled.ok, JSON.stringify(cancelled)).toBe(true);
+      if (cancelled.ok) {
+        expect(cancelled.value.outcome?.major).toBe("urn:csioz:p1:kod:major:Sukces");
       }
     });
   },

@@ -10,7 +10,7 @@ dziedzinowe API.
 
 - ✅ **e-skierowanie** — 7 typów dokumentów + anulowanie, każdy zwalidowany Schematronem P1 i XSD; **potwierdzone end-to-end na środowisku integracyjnym** (P1 zwraca `Sukces` + `kodSkierowania`). Zob. [docs/eskierowania.md](docs/eskierowania.md).
 - ✅ **podpisywarka XAdES in-process** — podpis dokumentu bez zewnętrznego serwisu. Zob. [docs/podpisywarka.md](docs/podpisywarka.md).
-- ⏳ **e-recepta** — planowane.
+- ✅ **e-recepta** — wystawianie (pakiet recept) + anulowanie, odpłatności i uprawnienia dodatkowe; zwalidowane Schematronem P1 i XSD; **potwierdzone end-to-end na integracji** (`Sukces`). Zob. [docs/erecepta.md](docs/erecepta.md).
 
 ## Co potrafi (w skrócie)
 
@@ -42,7 +42,7 @@ packages/
 ├── signing/       # podpisywarka XAdES-BES in-process (adapter portu DocumentSigner)
 ├── transport/     # HttpClient mTLS + koperty SOAP + WS-Security + parser odpowiedzi
 ├── referral/      # e-skierowanie: typy dokumentów + orkiestracja wysyłki
-└── prescription/  # e-recepta (planowane)
+└── prescription/  # e-recepta: recepta na lek + anulowanie, transport pakietu recept
 ```
 
 Wzorzec **porty + adaptery**: czyste buildery i orkiestracja zależą od portów
@@ -59,6 +59,7 @@ Wzorzec **porty + adaptery**: czyste buildery i orkiestracja zależą od portów
 
 - [Architektura](docs/architektura.md) — warstwy, porty/adaptery, przepływ żądania, kontekst.
 - [e-skierowania](docs/eskierowania.md) — typy dokumentów, budowa CDA, wystawianie, anulowanie.
+- [e-recepta](docs/erecepta.md) — recepta na lek, odpłatności, uprawnienia dodatkowe, warianty, anulowanie.
 - [Podpisywarka](docs/podpisywarka.md) — podpis XAdES-BES in-process.
 
 ## Materiały poufne

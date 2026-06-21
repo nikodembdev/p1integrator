@@ -1,5 +1,10 @@
 /**
- * @p1/prescription - czyste, dziedzinowe API e-recepty nad surowym P1
- * (CDA + XAdES + SOAP/WS-Security). Implementacja w toku.
+ * @p1/prescription — e-recepta. Builder dokumentu recepty na lek
+ * (CDA PL PRE / IHE Pharmacy 1.3.2) oraz typy wejściowe.
  */
-export {};
+
+export * from "./constants.js";
+export * from "./types.js";
+export * from "./document.js";
+export * from "./anulowanie.js";
+export * from "./submit.js";
