@@ -13,6 +13,7 @@ export default {
         "prescription",
         "referral",
         "medical-events",
+        "edm",
         "repo",
         "ci",
         "deps",
