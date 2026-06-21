@@ -23,7 +23,9 @@ import {
 } from "../../packages/referral/src/index.js";
 import {
   buildDrugPrescriptionCda,
+  buildPrescriptionCancellationCda,
   type DrugPrescriptionInput,
+  type PrescriptionCancellationInput,
 } from "../../packages/prescription/src/index.js";
 
 const patient = {
@@ -334,10 +336,33 @@ const drugPrescriptionInput: DrugPrescriptionInput = {
   dispenserInfo: "Brak",
 };
 
+const prescriptionCancellationInput: PrescriptionCancellationInput = {
+  localRoot: "2.16.840.1.113883.3.4424.2.7.1491",
+  cancellationNumber: "AA11BB22CC33DD44EE55FF",
+  effectiveDate: "20260619120000",
+  cancelled: {
+    prescriptionNumber: "00000000000000000001",
+    versionSetId: { root: "2.16.840.1.113883.3.4424.2.7.1491.2.2", extension: "ZBIOR1" },
+    title: "Recepta",
+    issuedDate: "19.06.2026",
+  },
+  patient: drugPrescriptionInput.patient,
+  author: drugPrescriptionInput.author,
+  authorSpecialtyCode: "0718",
+  authorSpecialtyName: "neurologia",
+  legalAuthenticator: { npwz: "4727124" },
+  nfzBranch: "07",
+};
+
 export const prescriptionCases: readonly ReferralCase[] = [
   {
     name: "drug-prescription",
     sef: "p1-docs/recepta/specyfikacje/schematron/schematron/1.3.2/plcda-schematron-DrugPrescription/plcda-plCdaDrugPrescription.sef.json",
     build: () => buildDrugPrescriptionCda(drugPrescriptionInput).xml,
+  },
+  {
+    name: "drug-cancellation",
+    sef: "p1-docs/recepta/specyfikacje/schematron/schematron/1.3.2/plcda-schematron-Nullification/plcda-plCdaNullification.sef.json",
+    build: () => buildPrescriptionCancellationCda(prescriptionCancellationInput).xml,
   },
 ];

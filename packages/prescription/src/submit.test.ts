@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   PRESCRIPTION_CONTEXT_NAMESPACE,
   type PrescriptionTransport,
+  submitPrescriptionCancellation,
   submitPrescriptionPackage,
 } from "./submit.js";
 
@@ -134,6 +135,49 @@ describe("submitPrescriptionPackage", () => {
       [{ id: 1, cdaXml: "<a/>" }],
       transportWith(client),
     );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.kind).toBe("transport");
+  });
+});
+
+const cancelResponse =
+  `<soap:Envelope ${SOAP_NS}><soap:Body><ZapisDokumentuAnulowaniaReceptyResponse>` +
+  `<wynik><major>urn:csioz:p1:kod:major:Sukces</major><komunikat>OK</komunikat></wynik>` +
+  `</ZapisDokumentuAnulowaniaReceptyResponse></soap:Body></soap:Envelope>`;
+
+describe("submitPrescriptionCancellation", () => {
+  it("buduje kopertę zapisDokumentuAnulowaniaRecepty z kluczem recepty i podpisanym CDA", async () => {
+    let captured: HttpRequest | undefined;
+    const client: HttpClient = {
+      send: (request) => {
+        captured = request;
+        return Promise.resolve({ status: 200, headers: {}, body: cancelResponse });
+      },
+    };
+
+    const result = await submitPrescriptionCancellation(
+      "<ClinicalDocument/>",
+      "RX-KEY-1",
+      transportWith(client),
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.outcome?.major).toBe("urn:csioz:p1:kod:major:Sukces");
+
+    expect(captured?.headers.SOAPAction).toBe("urn:zapisDokumentuAnulowaniaRecepty");
+    expect(captured?.body).toContain("ZapisDokumentuAnulowaniaReceptyRequest");
+    expect(captured?.body).toContain(
+      "<kluczRecepty><r:kluczRecepty>RX-KEY-1</r:kluczRecepty></kluczRecepty>",
+    );
+    expect(captured?.body).toContain("<dokumentAnulowaniaRecepty><r:tresc>");
+    expect(captured?.body).toContain("<ds:Signature");
+    const base64 = Buffer.from("<signed><ClinicalDocument/></signed>", "utf8").toString("base64");
+    expect(captured?.body).toContain(base64);
+  });
+
+  it("mapuje błąd sieci na błąd transportu", async () => {
+    const client: HttpClient = { send: () => Promise.reject(new Error("ECONNREFUSED")) };
+    const result = await submitPrescriptionCancellation("<a/>", "K", transportWith(client));
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.kind).toBe("transport");
   });
