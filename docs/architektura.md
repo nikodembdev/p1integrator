@@ -35,10 +35,12 @@ cda/         generyczny buildClinicalDocument (CDA PL IG 1.3.2) + stałe OID/sza
 signing/     podpisywarka XAdES-BES in-process
 transport/   buildSoapEnvelope, signWsSecurity, parseSoapResponse, createNodeHttpClient, parseP12
 referral/    typy skierowań (per katalog) + wspólne sekcje + submitReferralDocument
-prescription/ e-recepta (planowane)
+prescription/ e-recepta: buildDrugPrescriptionCda + pakiet recept + anulowanie
 ```
 
-Kolejność budowy/zależności: `core → cda → signing/transport → referral`.
+Kolejność budowy/zależności: `core → cda → signing/transport → referral, prescription`.
+Dialekt transportu e-recepty (namespace v20170510, prefiks kontekstu `erecepta:`) jest
+parametrem `buildSoapEnvelope`/`signWsSecurity`/`contextToAttributes` — domyślnie e-skierowanie.
 
 ## Przepływ żądania (wystawienie skierowania)
 
