@@ -12,9 +12,10 @@ pnpm -r build                       # przykłady importują zbudowane paczki @p1
 pnpm tsx examples/01-skierowanie-ogolne.ts
 ```
 
-Każdy przykład **najpierw buduje dokument CDA i wypisuje jego podgląd** (działa bez
-sieci), a następnie - jeśli dostępna jest konfiguracja P1 - wysyła go na środowisko
-integracyjne i pokazuje wynik. Bez konfiguracji wysyłka jest pomijana.
+Przykłady skierowań i recept **najpierw budują dokument CDA i wypisują jego podgląd**
+(działa bez sieci), a następnie - jeśli dostępna jest konfiguracja P1 - wysyłają go na
+środowisko integracyjne i pokazują wynik. Bez konfiguracji wysyłka jest pomijana.
+Zdarzenie medyczne (`09`) działa wyłącznie online (REST/FHIR), więc bez certów jest pomijane.
 
 ## Konfiguracja (do realnej wysyłki)
 
@@ -42,10 +43,16 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | [`06-recepta-pro-auctore.ts`](./06-recepta-pro-auctore.ts)                     | recepta pro auctore / pro familiae (RRECE)\*                          |
 | [`07-pakiet-wielu-recept.ts`](./07-pakiet-wielu-recept.ts)                     | wiele recept w jednym pakiecie (`submitPrescriptionPackage`)          |
 | [`08-anulowanie-recepty.ts`](./08-anulowanie-recepty.ts)                       | wystawienie, a następnie anulowanie recepty                           |
+| [`09-zdarzenie-porada.ts`](./09-zdarzenie-porada.ts)                           | zdarzenie medyczne: porada (FHIR + OAuth2 + autentyczność)            |
 
-Recepty `03`-`05`, `07`-`08` potwierdzone e2e (Sukces). \* `06` pro auctore buduje
-poprawny dokument, ale pełny e2e wymaga osobnej puli numerów recept (`...2.10.*`)
-przydzielonej do konta.
+Recepty `03`-`05`, `07`-`08` oraz zdarzenie `09` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
+numerów recept (`...2.10.*`) przydzielonej do konta.
+
+> **Zdarzenia medyczne (`09`)** używają innego stacku niż reszta: REST/FHIR R4 + OAuth2
+> (bez SOAP/CDA), host `isus.ezdrowie.gov.pl/{token,fhir}`. Wspierany jest tylko typ
+> **porada**. `signature.who`/`agent.who` to podmiot, a dane lekarza w zdarzeniu muszą
+> zgadzać się z CWPM po NPWZ (`P1_DOCTOR_GIVEN`/`P1_DOCTOR_FAMILY`). Szczegóły:
+> [docs/zdarzenia.md](../docs/zdarzenia.md).
 
 ### Wymagają rozszerzenia biblioteki (osobny temat)
 
@@ -58,4 +65,5 @@ alternatywy, krotność dobowa), **recepta recepturowa**, **wyrób medyczny**,
 
 - [docs/eskierowania.md](../docs/eskierowania.md)
 - [docs/erecepta.md](../docs/erecepta.md)
+- [docs/zdarzenia.md](../docs/zdarzenia.md)
 - [docs/podpisywarka.md](../docs/podpisywarka.md)

@@ -41,10 +41,18 @@ function sha256Base64(data: string | Buffer): string {
   return createHash("sha256").update(data).digest("base64");
 }
 
+type C14nNode = Parameters<C14nCanonicalization["process"]>[0];
+
 function canonicalize(xmlFragment: string): string {
   const doc = new DOMParser().parseFromString(xmlFragment, "text/xml");
+  if (!doc.documentElement) {
+    throw new Error("Nie udało się sparsować fragmentu XML do kanonikalizacji");
+  }
   const canon = new C14nCanonicalization();
-  return canon.process(doc.documentElement, {});
+  // Rzutowanie wymagane, gdy w zasięgu jest DOM lib (np. typecheck examples) - typ Node
+  // xml-crypto rozjeżdża się wtedy z Element z @xmldom/xmldom.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  return canon.process(doc.documentElement as unknown as C14nNode, {});
 }
 
 /** Dane certyfikatu potrzebne w KeyInfo / SigningCertificate. */

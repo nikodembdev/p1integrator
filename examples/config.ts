@@ -39,7 +39,12 @@ export const account = {
   orgUnitExt: e.P1_ORG_UNIT_EXT ?? "000000000000-001",
   musRoot: e.P1_MUS_ROOT ?? OID.MUS,
   musExt: e.P1_MUS_EXT ?? "001",
-  doctor: { givenNames: ["Adam"], familyName: "Leczniczy" },
+  // Imię/nazwisko lekarza. Dla zdarzeń medycznych musi zgadzać się z CWPM po NPWZ
+  // (REG.WER.4059) - jeśli konto testowe ma inną nazwę, ustaw P1_DOCTOR_GIVEN/FAMILY.
+  doctor: {
+    givenNames: [e.P1_DOCTOR_GIVEN ?? "Adam"],
+    familyName: e.P1_DOCTOR_FAMILY ?? "Leczniczy",
+  },
   organizationName: "Poradnia (gabinet) lekarza POZ",
   organizationPhone: "+48221234567",
   organizationAddress: {
@@ -77,6 +82,9 @@ export const context: CallContext = {
 export const endpoints = {
   referral: e.P1_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaSkierowaniaWS",
   prescription: e.P1_RECEPTA_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaReceptyWS",
+  // Zdarzenia medyczne: REST/FHIR + OAuth2 (inny host i stack niż SOAP wyżej).
+  zmToken: e.P1_ZM_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
+  zmFhir: e.P1_ZM_FHIR_URL ?? "https://isus.ezdrowie.gov.pl/fhir",
 } as const;
 
 const certDir =
@@ -125,6 +133,39 @@ export function referralTransport(): (TransportDeps & { endpoint: string }) | un
 export function prescriptionTransport(): (TransportDeps & { endpoint: string }) | undefined {
   const t = tryBuildTransport();
   return t ? { ...t, endpoint: endpoints.prescription } : undefined;
+}
+
+/** Zależności zdarzeń medycznych (FHIR/OAuth2): cert WSS do JWT/podpisu + klient mTLS. */
+export interface ZmDeps {
+  /** Klucz prywatny certu WSS - do podpisu assertion JWT i podpisu XAdES autentyczności. */
+  readonly privateKeyPem: string;
+  /** Certyfikat WSS (PEM) - do KeyInfo/SigningCertificate w podpisie autentyczności. */
+  readonly certificatePem: string;
+  /** Klient HTTP z mTLS (cert TLS). */
+  readonly httpClient: HttpClient;
+  readonly tokenEndpoint: string;
+  readonly fhirBaseUrl: string;
+}
+
+/**
+ * Składa zależności dla zdarzeń medycznych z certyfikatów w `.local/certs`.
+ * Zwraca `undefined`, gdy brak certów/hasła (zdarzenie wymaga sieci - bez certów pomijamy).
+ */
+export function zmTransport(): ZmDeps | undefined {
+  const tlsP12 = resolve(certDir, "Podmiot_leczniczy_713-tls.p12");
+  const wssP12 = resolve(certDir, "Podmiot_leczniczy_713-wss.p12");
+  if (!certPassword || !existsSync(tlsP12) || !existsSync(wssP12)) {
+    return undefined;
+  }
+  const tls = parseP12(readFileSync(tlsP12), certPassword);
+  const wss = parseP12(readFileSync(wssP12), certPassword);
+  return {
+    privateKeyPem: wss.privateKeyPem,
+    certificatePem: wss.certificatePem,
+    httpClient: createNodeHttpClient({ tls: { key: tls.privateKeyPem, cert: tls.certificatePem } }),
+    tokenEndpoint: endpoints.zmToken,
+    fhirBaseUrl: endpoints.zmFhir,
+  };
 }
 
 /** Wypisuje fragment zbudowanego dokumentu (do podglądu w przykładach offline). */
