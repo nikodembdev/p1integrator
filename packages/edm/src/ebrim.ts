@@ -16,6 +16,7 @@ export const XDS = {
     "urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification",
   OBJECT_TYPE_EXTERNAL_ID:
     "urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier",
+  OBJECT_TYPE_ASSOCIATION: "urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Association",
   STATUS_APPROVED: "urn:oasis:names:tc:ebxml-regrep:StatusType:Approved",
   ASSOCIATION_HAS_MEMBER: "urn:oasis:names:tc:ebxml-regrep:AssociationType:HasMember",
   // SubmissionSet (RegistryPackage)
@@ -299,7 +300,7 @@ function buildDocumentEntry(d: DocumentEntryInput): string {
 }
 
 /** Buduje element RegistryPackage (SubmissionSet) + jego klasyfikację typu. */
-function buildSubmissionSet(s: SubmissionSetInput): string {
+export function buildSubmissionSet(s: SubmissionSetInput): string {
   const obj = s.submissionUuid;
   return (
     `<rim:RegistryPackage xmlns:rim="${RIM_NS}" id="${obj}"` +
