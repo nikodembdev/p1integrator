@@ -64,6 +64,69 @@ export const DOSAGE_INSTRUCTION_ACT_TEMPLATE = [
   "1.3.6.1.4.1.19376.1.5.3.1.4.3",
 ] as const;
 
+/** Sekcja „Dane o ubezpieczeniu i uprawnieniach" (.3.69, plCdaPayersSection). */
+export const PAYERS_SECTION_TEMPLATE = [
+  "2.16.840.1.113883.10.20.1.9",
+  "1.3.6.1.4.1.19376.1.5.3.1.1.5.3.7",
+  "2.16.840.1.113883.3.4424.13.10.3.69",
+] as const;
+
+/** Akt autoryzacji płatności (.4.51, plCdaAuthorizationActivityEntry). */
+export const AUTHORIZATION_ACT_TEMPLATE = [
+  "2.16.840.1.113883.10.20.1.20",
+  "2.16.840.1.113883.3.4424.13.10.4.51",
+] as const;
+
+/** Uprawnienie dodatkowe (.4.61, plCdaSpecialEntitlementPolicyEntry). */
+export const SPECIAL_ENTITLEMENT_TEMPLATE = [
+  "2.16.840.1.113883.10.20.1.26",
+  "2.16.840.1.113883.3.4424.13.10.4.61",
+] as const;
+
+/** Akt autoryzacji odnoszący uprawnienie do pozycji recepty (.4.69). */
+export const ENTITLEMENT_AUTHORIZATION_TEMPLATE = [
+  "2.16.840.1.113883.10.20.1.19",
+  "2.16.840.1.113883.3.4424.13.10.4.69",
+] as const;
+
+/** Dokument uprawnienia (.4.59, plCdaEntitlementDocument). */
+export const ENTITLEMENT_DOCUMENT_TEMPLATE = "2.16.840.1.113883.3.4424.13.10.4.59";
+
+/** Poziomy odpłatności za leki (PoziomOdplatnosciZaLeki, codeSystem .11.1.1). */
+export const PAYMENT_LEVELS = {
+  B: "bezpłatne",
+  R: "ryczałt",
+  "30%": "30% limitu",
+  "50%": "50% limitu",
+  "100%": "pełnopłatne",
+} as const;
+
+/** Kategorie dostępności leku (KDLEK, codeSystem .11.1.25). */
+export const DRUG_AVAILABILITY_CATEGORIES = {
+  Rp: "Rp",
+  Rpw: "Rpw",
+  Rpz: "Rpz",
+  OTC: "OTC",
+} as const;
+
+/** Uprawnienia dodatkowe publicznego ubezpieczenia (RLUD, codeSystem .11.3.1). */
+export const ADDITIONAL_ENTITLEMENTS = {
+  AZ: "AZ",
+  BW: "BW",
+  CN: "CN",
+  DN: "DN",
+  IB: "IB",
+  IN: "IN",
+  IW: "IW",
+  PO: "PO",
+  WP: "WP",
+  ZK: "ZK",
+  S: "S",
+  C: "C",
+  WE: "WE",
+  DZ: "DZ",
+} as const;
+
 /** Kody i systemy kodowania recepty. */
 export const PRESCRIPTION_CODE = {
   DOC_LOINC: "57833-6",
@@ -79,6 +142,7 @@ export const PRESCRIPTION_CODE = {
 export const PRESCRIPTION_OID = {
   POLISH_CLASSIFIERS: "2.16.840.1.113883.3.4424.13.5.1",
   DRUG_AVAILABILITY: "2.16.840.1.113883.3.4424.11.1.25", // KDLEK value (Rp/OTC/...)
+  ENTITLEMENT_VALUE: "2.16.840.1.113883.3.4424.11.3.1", // RLUD value (uprawnienia dodatkowe)
   DRUG_ID: "2.16.840.1.113883.3.4424.6.1", // kod leku (manufacturedMaterial)
   SUBSTANCE_ID: "2.16.840.1.113883.3.4424.6.3", // substancja czynna
   GS1: "1.3.160", // EAN opakowania

@@ -110,5 +110,42 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)(
         console.log("P1 OK — kodPakietu:", result.value.packageCode);
       }
     });
+
+    it("zwraca Sukces dla recepty z uprawnieniem dodatkowym (sekcja .3.69)", async () => {
+      const tls = parseP12(
+        readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-tls.p12")),
+        a.certPassword,
+      );
+      const transport: PrescriptionTransport = {
+        context: e2eContext,
+        documentSigner: createXadesDocumentSigner({
+          certificate: {
+            p12: readFileSync(resolve(a.certDir, "Adam713 Leczniczy.p12")),
+            password: a.certPassword,
+          },
+        }),
+        httpClient: createNodeHttpClient({
+          tls: {
+            key: tls.privateKeyPem,
+            cert: tls.certificatePem,
+            rejectUnauthorized: a.rejectUnauthorized,
+          },
+        }),
+        wsSecurityCertificate: parseP12(
+          readFileSync(resolve(a.certDir, "Podmiot_leczniczy_713-wss.p12")),
+          a.certPassword,
+        ),
+        endpoint: a.receptaEndpoint,
+      };
+
+      const input = buildE2ePrescriptionInput({
+        entitlements: [{ code: "IB", document: "Nr leg.: 234/1992" }],
+      });
+      const result = await issueDrugPrescription(input, transport);
+      expect(result.ok, JSON.stringify(result)).toBe(true);
+      if (result.ok) {
+        expect(result.value.outcome?.major).toBe("urn:csioz:p1:kod:major:Sukces");
+      }
+    });
   },
 );

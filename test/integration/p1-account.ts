@@ -158,10 +158,12 @@ function today(): string {
 }
 
 export function buildE2ePrescriptionInput(
-  // Numer recepty: 22 znaki UUID hex (uppercase, bez myślników) — format wymagany przez REG.WER.213.
-  prescriptionNumber: string = randomUUID().replace(/-/g, "").toUpperCase().slice(0, 22),
+  overrides: Partial<DrugPrescriptionInput> = {},
 ): DrugPrescriptionInput {
   const a = p1Account;
+  // Numer recepty: 22 znaki UUID hex (uppercase, bez myślników) — format wymagany przez REG.WER.213.
+  const prescriptionNumber =
+    overrides.prescriptionNumber ?? randomUUID().replace(/-/g, "").toUpperCase().slice(0, 22);
   return {
     localRoot: a.receptaLocalRoot,
     prescriptionNumber,
@@ -225,6 +227,8 @@ export function buildE2ePrescriptionInput(
       doseQuantity: "1",
       startDate: today(),
     },
-    payment: { nfzBranch: a.nfzBranch, level: "100%", levelDisplay: "100%", packageCount: "1" },
+    payment: { nfzBranch: a.nfzBranch, level: "100%", packageCount: "1" },
+    ...overrides,
+    prescriptionNumber,
   };
 }

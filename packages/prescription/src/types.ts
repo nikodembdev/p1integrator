@@ -1,5 +1,35 @@
 /** Typy wejściowe recepty na lek (e-recepta). */
 
+/** Poziom odpłatności za lek (PoziomOdplatnosciZaLeki). */
+export type PaymentLevel = "B" | "R" | "30%" | "50%" | "100%";
+
+/** Kategoria dostępności leku (KDLEK). */
+export type DrugAvailability = "Rp" | "Rpw" | "Rpz" | "OTC";
+
+/** Uprawnienie dodatkowe publicznego ubezpieczenia zdrowotnego (RLUD). */
+export type AdditionalEntitlement =
+  | "AZ"
+  | "BW"
+  | "CN"
+  | "DN"
+  | "IB"
+  | "IN"
+  | "IW"
+  | "PO"
+  | "WP"
+  | "ZK"
+  | "S"
+  | "C"
+  | "WE"
+  | "DZ";
+
+/** Uprawnienie dodatkowe pacjenta (sekcja „Dane o ubezpieczeniu i uprawnieniach"). */
+export interface PrescriptionEntitlement {
+  code: AdditionalEntitlement;
+  /** Dokument potwierdzający uprawnienie (np. „Nr leg.: 234/1992"). */
+  document?: string;
+}
+
 export interface PrescriptionAddress {
   country?: string;
   postalCode: string;
@@ -64,8 +94,8 @@ export interface PrescriptionDrug {
   /** Kod leku (manufacturedMaterial, codeSystem .6.1). */
   code: string;
   name: string;
-  /** Kategoria dostępności (KDLEK): Rp/Rpw/Rpz/OTC… (domyślnie Rp). */
-  availabilityCategory?: string;
+  /** Kategoria dostępności (KDLEK): Rp/Rpw/Rpz/OTC (domyślnie Rp). */
+  availabilityCategory?: DrugAvailability;
   /** EAN opakowania (GS1). */
   packageEan: string;
   packageName: string;
@@ -99,9 +129,8 @@ export interface PrescriptionDosage {
 export interface PrescriptionPayment {
   /** Oddział NFZ (id, root .3.1). */
   nfzBranch: string;
-  /** Poziom odpłatności (value, np. „100%"/"50%"/"R"/"B"). */
-  level: string;
-  levelDisplay?: string;
+  /** Poziom odpłatności (B/R/30%/50%/100%); displayName uzupełniany automatycznie. */
+  level: PaymentLevel;
   /** Ilość opakowań (supply/quantity). */
   packageCount: string;
 }
@@ -124,7 +153,16 @@ export interface DrugPrescriptionInput {
   legalAuthenticator: PrescriptionLegalAuthenticator;
   drug: PrescriptionDrug;
   dosage: PrescriptionDosage;
+  /**
+   * Odpłatność (zawsze wymagana przez P1). Lek pełnopłatny = `level: "100%"`
+   * (REG.WER.3222: dokument musi mieć poziom odpłatności).
+   */
   payment: PrescriptionPayment;
+  /**
+   * Uprawnienia dodatkowe pacjenta (sekcja .3.69) — np. S (senior), C (ciąża),
+   * IB (inwalida wojenny). Generują dodatkową sekcję „Dane o ubezpieczeniu i uprawnieniach".
+   */
+  entitlements?: readonly PrescriptionEntitlement[];
   /** Czy zamiana dozwolona (domyślnie true). false → „NZ" + akt zakazu zamiany. */
   substitution?: boolean;
   /** Informacja dla osoby wydającej lek (narrative). */

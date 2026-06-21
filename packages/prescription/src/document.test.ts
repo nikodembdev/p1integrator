@@ -59,7 +59,7 @@ const baseInput: DrugPrescriptionInput = {
     repeatNumber: "1",
     doseQuantity: "1",
   },
-  payment: { nfzBranch: "07", level: "100%", levelDisplay: "ryczałt", packageCount: "4" },
+  payment: { nfzBranch: "07", level: "100%", packageCount: "4" },
 };
 
 describe("buildDrugPrescriptionCda", () => {
@@ -130,5 +130,48 @@ describe("buildDrugPrescriptionCda", () => {
 
     const withInfo = buildDrugPrescriptionCda({ ...baseInput, dispenserInfo: "Uwaga" }).xml;
     expect(withInfo).toContain('code="FINSTRUCT"');
+  });
+
+  it("uzupełnia displayName poziomu odpłatności ze słownika", () => {
+    const xml = buildDrugPrescriptionCda({
+      ...baseInput,
+      payment: { ...baseInput.payment, level: "R" },
+    }).xml;
+    // narracja = KOD; strukturalny value = KOD + displayName ze słownika
+    expect(xml).toContain('<content ID="p1_odplatnosc_wartosc" styleCode="Bold">R</content>');
+    expect(xml).toContain('displayName="ryczałt"');
+  });
+
+  it("nie buduje sekcji uprawnień gdy brak entitlements", () => {
+    const xml = buildDrugPrescriptionCda(baseInput).xml;
+    expect(xml).not.toContain('root="2.16.840.1.113883.3.4424.13.10.3.69"');
+    expect(xml).not.toContain('code="RLUD"');
+  });
+
+  it("buduje sekcję .3.69 z uprawnieniem dodatkowym (RLUD), powiązaniem pozycji i dokumentem", () => {
+    const xml = buildDrugPrescriptionCda({
+      ...baseInput,
+      entitlements: [{ code: "IB", document: "Nr leg.: 234/1992" }],
+    }).xml;
+    // sekcja płatników/uprawnień
+    expect(xml).toContain('root="2.16.840.1.113883.3.4424.13.10.3.69"');
+    expect(xml).toContain("<title>Dane o ubezpieczeniu i uprawnieniach</title>");
+    // uprawnienie dodatkowe RLUD = IB
+    expect(xml).toContain('code="RLUD"');
+    expect(xml).toContain('code="IB" codeSystem="2.16.840.1.113883.3.4424.11.3.1"');
+    // narracja uprawnień + dokument
+    expect(xml).toContain(">IB</content>");
+    expect(xml).toContain("Nr leg.: 234/1992");
+    // powiązanie z pozycją recepty (.4.69) wymagane przez Schematron
+    expect(xml).toContain('root="2.16.840.1.113883.3.4424.13.10.4.69"');
+  });
+
+  it("obsługuje wiele uprawnień (lista kodów w narracji, po jednym akcie)", () => {
+    const xml = buildDrugPrescriptionCda({
+      ...baseInput,
+      entitlements: [{ code: "S" }, { code: "C" }],
+    }).xml;
+    expect(xml).toContain(">S, C</content>"); // narracja: kody łączone ", "
+    expect((xml.match(/code="RLUD"/g) ?? []).length).toBe(2);
   });
 });

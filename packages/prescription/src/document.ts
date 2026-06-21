@@ -1,14 +1,21 @@
 import { create } from "xmlbuilder2";
 import { CDA_OID, formatCdaDateTime, type XmlObject } from "@p1/cda";
 import {
+  ADDITIONAL_ENTITLEMENTS,
+  AUTHORIZATION_ACT_TEMPLATE,
   DOSAGE_INSTRUCTION_ACT_TEMPLATE,
+  ENTITLEMENT_AUTHORIZATION_TEMPLATE,
+  ENTITLEMENT_DOCUMENT_TEMPLATE,
   MANUFACTURED_MATERIAL_TEMPLATE,
   MANUFACTURED_PRODUCT_TEMPLATE,
+  PAYERS_SECTION_TEMPLATE,
+  PAYMENT_LEVELS,
   PRESCRIPTION_CODE,
   PRESCRIPTION_DOC_TEMPLATE,
   PRESCRIPTION_HEADER_TEMPLATE,
   PRESCRIPTION_OID,
   PRESCRIPTION_SECTION_TEMPLATE,
+  SPECIAL_ENTITLEMENT_TEMPLATE,
   SUBSTANCE_ADMINISTRATION_TEMPLATE,
   SUBSTITUTION_ACT_TEMPLATE,
   SUPPLY_TEMPLATE,
@@ -54,6 +61,12 @@ export function buildDrugPrescriptionCda(input: DrugPrescriptionInput): DrugPres
       section: buildPrescriptionSection(input, effectiveDate, substitutionAllowed),
     },
   });
+  // Sekcja „Dane o ubezpieczeniu i uprawnieniach" tylko gdy podano uprawnienia dodatkowe.
+  if (input.entitlements && input.entitlements.length > 0) {
+    structuredBody.ele({
+      component: { "@typeCode": "COMP", section: buildPayersSection(input) },
+    });
+  }
 
   return {
     xml: root.end({ prettyPrint: true }),
@@ -303,6 +316,7 @@ function buildPrescriptionSection(
       "@ID": "ACT_1",
       content: [
         content("p1_odplatnosc_opis", "Odpłatność"),
+        // XSL renderuje KOD poziomu (nie displayName) — „powszechnie rozumiany code".
         content("p1_odplatnosc_wartosc", payment.level, "Bold"),
       ],
     },
@@ -342,6 +356,154 @@ function buildPrescriptionSection(
       ),
     },
   };
+}
+
+/**
+ * Sekcja „Dane o ubezpieczeniu i uprawnieniach" (.3.69) — uprawnienia dodatkowe
+ * pacjenta (RLUD: S/C/IB/…). Narracja liczona ze struktury (REG.WER.3252):
+ * oddział NFZ, lista kodów uprawnień, dokumenty uprawnień.
+ */
+function buildPayersSection(input: DrugPrescriptionInput): XmlObject {
+  const entitlements = input.entitlements ?? [];
+  const nfz = input.payment.nfzBranch;
+  const content = (id: string, text?: string, styleCode?: string): XmlObject => {
+    const c: XmlObject = { "@ID": id };
+    if (styleCode) c["@styleCode"] = styleCode;
+    if (text !== undefined) c["#"] = text;
+    return c;
+  };
+
+  const paragraphs: XmlObject[] = [
+    {
+      "@ID": "ACT_2",
+      content: [
+        content("p1_platnik_opis_1", "Oddział NFZ"),
+        content("p1_platnik_wartosc_1", nfz, "Bold"),
+      ],
+    },
+    {
+      content: [
+        content("p1_uprawnieniaDodatkowe_opis_1", "Uprawnienia dodatkowe"),
+        // XSL: wartość = kod(y) uprawnień (displayName = code), łączone ", ".
+        content(
+          "p1_uprawnieniaDodatkowe_wartosc_1",
+          entitlements.map((e) => e.code).join(", "),
+          "Bold",
+        ),
+      ],
+    },
+  ];
+  const documents = entitlements.map((e) => e.document).filter((d): d is string => Boolean(d));
+  if (documents.length === 1) {
+    paragraphs.push({
+      content: [
+        content("p1_dokumentyUprawnien_opis_1", "Dokument uprawnień:"),
+        content("p1_dokumentUprawnien_wartosc_1", documents[0]),
+      ],
+    });
+  }
+
+  return {
+    templateId: PAYERS_SECTION_TEMPLATE.map((root) => ({ "@root": root })),
+    code: { "@code": PRESCRIPTION_CODE.PAYMENT_LOINC, "@codeSystem": CDA_OID.LOINC },
+    title: "Dane o ubezpieczeniu i uprawnieniach",
+    text: { paragraph: paragraphs },
+    entry: {
+      act: {
+        "@classCode": "ACT",
+        "@moodCode": "DEF",
+        templateId: AUTHORIZATION_ACT_TEMPLATE.map((root) => ({ "@root": root })),
+        id: { "@nullFlavor": "NA" },
+        code: {
+          "@code": PRESCRIPTION_CODE.PAYMENT_LOINC,
+          "@codeSystem": CDA_OID.LOINC,
+          "@displayName": "Payment source",
+        },
+        text: { reference: { "@value": "#ACT_2" } },
+        statusCode: { "@code": "completed" },
+        entryRelationship: entitlements.map((e) => buildEntitlementPolicy(e, input)),
+      },
+    },
+  };
+}
+
+function buildEntitlementPolicy(
+  entitlement: NonNullable<DrugPrescriptionInput["entitlements"]>[number],
+  input: DrugPrescriptionInput,
+): XmlObject {
+  const nfzBranch = input.payment.nfzBranch;
+  const act: XmlObject = {
+    "@classCode": "ACT",
+    "@moodCode": "EVN",
+    templateId: SPECIAL_ENTITLEMENT_TEMPLATE.map((root) => ({ "@root": root })),
+    id: { "@nullFlavor": "NA" },
+    code: {
+      "@code": "PUBLICPOL",
+      "@codeSystem": PRESCRIPTION_OID.HL7_ACT,
+      qualifier: {
+        name: {
+          "@code": "RLUD",
+          "@codeSystem": CDA_OID.POLISH_CLASSIFIERS,
+          "@codeSystemName": "PolskieKlasyfikatoryHL7v3",
+          "@displayName": "Refundacja leków wynikająca z uprawnień dodatkowych",
+        },
+        value: {
+          "@code": ADDITIONAL_ENTITLEMENTS[entitlement.code],
+          "@codeSystem": PRESCRIPTION_OID.ENTITLEMENT_VALUE,
+          "@displayName": ADDITIONAL_ENTITLEMENTS[entitlement.code],
+        },
+      },
+    },
+    text: { reference: { "@value": "#ACT_2" } },
+    statusCode: { "@code": "completed" },
+    performer: {
+      "@typeCode": "PRF",
+      assignedEntity: {
+        id: {
+          "@extension": nfzBranch,
+          "@root": PRESCRIPTION_OID.NFZ_BRANCH,
+          "@displayable": "true",
+        },
+      },
+    },
+    // Powiązanie uprawnienia z pozycją recepty (wymagane przez plCdaSpecialEntitlementPolicyEntry).
+    entryRelationship: {
+      "@typeCode": "REFR",
+      act: {
+        "@classCode": "ACT",
+        "@moodCode": "EVN",
+        templateId: ENTITLEMENT_AUTHORIZATION_TEMPLATE.map((root) => ({ "@root": root })),
+        id: { "@nullFlavor": "NA" },
+        code: { "@nullFlavor": "NA" },
+        entryRelationship: {
+          "@typeCode": "SUBJ",
+          substanceAdministration: {
+            "@classCode": "SBADM",
+            "@moodCode": "PRMS",
+            id: {
+              "@extension": `${input.prescriptionNumber}-1`,
+              "@root": `${input.localRoot}.2.3`,
+            },
+            consumable: {
+              manufacturedProduct: { manufacturedMaterial: { "@nullFlavor": "NA" } },
+            },
+          },
+        },
+      },
+    },
+  };
+  if (entitlement.document) {
+    act.reference = {
+      "@typeCode": "REFR",
+      externalDocument: {
+        "@classCode": "DOC",
+        "@moodCode": "EVN",
+        templateId: { "@root": ENTITLEMENT_DOCUMENT_TEMPLATE },
+        text: entitlement.document,
+      },
+    };
+  }
+  return { "@typeCode": "COMP", act };
 }
 
 function buildSubstanceAdministration(
@@ -465,72 +627,71 @@ function buildSubstanceAdministration(
 
 function buildSupplyRelationship(input: DrugPrescriptionInput, effectiveDate: string): XmlObject {
   const { drug, payment } = input;
-  return {
-    "@typeCode": "COMP",
-    supply: {
-      "@classCode": "SPLY",
-      "@moodCode": "RQO",
-      templateId: SUPPLY_TEMPLATE.map((root) => ({ "@root": root })),
-      effectiveTime: { "@value": effectiveDate },
-      independentInd: { "@value": "false" },
-      quantity: { "@value": payment.packageCount },
-      product: {
-        manufacturedProduct: {
-          manufacturedLabeledDrug: {
-            code: {
-              "@code": drug.packageEan,
-              "@codeSystem": PRESCRIPTION_OID.GS1,
-              "@codeSystemName": "GS1",
-              "@displayName": drug.packageName,
-            },
+  const supply: XmlObject = {
+    "@classCode": "SPLY",
+    "@moodCode": "RQO",
+    templateId: SUPPLY_TEMPLATE.map((root) => ({ "@root": root })),
+    effectiveTime: { "@value": effectiveDate },
+    independentInd: { "@value": "false" },
+    quantity: { "@value": payment.packageCount },
+    product: {
+      manufacturedProduct: {
+        manufacturedLabeledDrug: {
+          code: {
+            "@code": drug.packageEan,
+            "@codeSystem": PRESCRIPTION_OID.GS1,
+            "@codeSystemName": "GS1",
+            "@displayName": drug.packageName,
           },
         },
       },
+    },
+  };
+
+  // Akt refundacji (poziom odpłatności + oddział NFZ) — zawsze wymagany przez P1 (REG.WER.3222).
+  supply.entryRelationship = {
+    "@typeCode": "COMP",
+    act: {
+      "@classCode": "ACT",
+      "@moodCode": "DEF",
+      templateId: { "@root": "2.16.840.1.113883.3.4424.13.10.4.57" },
+      code: {
+        "@code": PRESCRIPTION_CODE.PAYMENT_LOINC,
+        "@codeSystem": CDA_OID.LOINC,
+        "@displayName": "Payment source",
+      },
+      text: { reference: { "@value": "#ACT_1" } },
+      statusCode: { "@code": "completed" },
       entryRelationship: {
         "@typeCode": "COMP",
         act: {
           "@classCode": "ACT",
-          "@moodCode": "DEF",
-          templateId: { "@root": "2.16.840.1.113883.3.4424.13.10.4.57" },
+          "@moodCode": "EVN",
           code: {
-            "@code": PRESCRIPTION_CODE.PAYMENT_LOINC,
-            "@codeSystem": CDA_OID.LOINC,
-            "@displayName": "Payment source",
-          },
-          text: { reference: { "@value": "#ACT_1" } },
-          statusCode: { "@code": "completed" },
-          entryRelationship: {
-            "@typeCode": "COMP",
-            act: {
-              "@classCode": "ACT",
-              "@moodCode": "EVN",
-              code: {
-                "@code": "PUBLICPOL",
-                "@codeSystem": PRESCRIPTION_OID.HL7_ACT,
-                qualifier: {
-                  name: {
-                    "@code": "RLPO",
-                    "@codeSystem": CDA_OID.POLISH_CLASSIFIERS,
-                    "@codeSystemName": "PolskieKlasyfikatoryHL7v3",
-                    "@displayName": "Poziomy odpłatności leków refundowanych",
-                  },
-                  value: {
-                    "@code": payment.level,
-                    "@codeSystem": PRESCRIPTION_OID.PAYMENT_LEVEL,
-                    "@displayName": payment.levelDisplay ?? payment.level,
-                  },
-                },
+            "@code": "PUBLICPOL",
+            "@codeSystem": PRESCRIPTION_OID.HL7_ACT,
+            qualifier: {
+              name: {
+                "@code": "RLPO",
+                "@codeSystem": CDA_OID.POLISH_CLASSIFIERS,
+                "@codeSystemName": "PolskieKlasyfikatoryHL7v3",
+                "@displayName": "Poziomy odpłatności leków refundowanych",
               },
-              statusCode: { "@code": "completed" },
-              performer: {
-                "@typeCode": "PRF",
-                assignedEntity: {
-                  id: {
-                    "@extension": payment.nfzBranch,
-                    "@root": PRESCRIPTION_OID.NFZ_BRANCH,
-                    "@displayable": "true",
-                  },
-                },
+              value: {
+                "@code": payment.level,
+                "@codeSystem": PRESCRIPTION_OID.PAYMENT_LEVEL,
+                "@displayName": PAYMENT_LEVELS[payment.level],
+              },
+            },
+          },
+          statusCode: { "@code": "completed" },
+          performer: {
+            "@typeCode": "PRF",
+            assignedEntity: {
+              id: {
+                "@extension": payment.nfzBranch,
+                "@root": PRESCRIPTION_OID.NFZ_BRANCH,
+                "@displayable": "true",
               },
             },
           },
@@ -538,6 +699,8 @@ function buildSupplyRelationship(input: DrugPrescriptionInput, effectiveDate: st
       },
     },
   };
+
+  return { "@typeCode": "COMP", supply };
 }
 
 function buildSubstitutionRelationship(): XmlObject {

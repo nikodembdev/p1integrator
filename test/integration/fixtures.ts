@@ -329,7 +329,7 @@ const drugPrescriptionInput: DrugPrescriptionInput = {
     rateUnit: "1",
     rateValue: "2",
   },
-  payment: { nfzBranch: "07", level: "100%", levelDisplay: "ryczałt", packageCount: "4" },
+  payment: { nfzBranch: "07", level: "100%", packageCount: "4" },
   substitution: false,
   dispenserInfo: "Brak",
 };

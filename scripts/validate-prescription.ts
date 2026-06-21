@@ -95,11 +95,11 @@ export const prescriptionSample: DrugPrescriptionInput = {
   payment: {
     nfzBranch: "07",
     level: "100%",
-    levelDisplay: "ryczałt",
     packageCount: "4",
   },
   substitution: false,
   dispenserInfo: "Brak",
+  entitlements: [{ code: "IB", document: "Nr leg.: 234/1992" }],
 };
 
 const SEF = resolve(
