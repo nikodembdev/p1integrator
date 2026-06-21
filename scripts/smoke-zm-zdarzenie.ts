@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  buildMedicalEventCondition,
   buildMedicalEventEncounter,
   buildMedicalEventPatient,
   createFhirClient,
@@ -109,18 +110,30 @@ async function main(): Promise<void> {
     period: { start: "2026-06-21T10:00:00+02:00", end: "2026-06-21T10:30:00+02:00" },
   });
 
-  const result = await fhir.create("Encounter", encounter);
+  const encResult = await fhir.create("Encounter", encounter);
+  if (!encResult.ok) {
+    console.log("BŁĄD Encounter:", encResult.error.message);
+    return;
+  }
+  const encounterId = encResult.value.id;
+  console.log("Encounter id:", encounterId, "| location:", encResult.value.location);
+
+  // 3) Rozpoznanie (Condition) - wymagane w zdarzeniu (REG.WER.10857).
+  const condition = buildMedicalEventCondition({
+    patient: { reference: `Patient/${patientId}`, pesel: a.patient.pesel },
+    encounter: { reference: `Encounter/${encounterId}` },
+    location: { identifier: `${a.podmiotExt}-${a.musExt}` },
+    diagnosis: { code: "J04.0", display: "Ostre zapalenie krtani" },
+    recordedDate: "2026-06-21",
+    asserter: { npwz: a.npwz, display: "Adam713 Leczniczy", functionCode: "11" },
+  });
+  const condResult = await fhir.create("Condition", condition);
 
   console.log("\n=== WYNIK ===");
-  if (result.ok) {
-    console.log(
-      "OK utworzono Encounter, id:",
-      result.value.id,
-      "| location:",
-      result.value.location,
-    );
+  if (condResult.ok) {
+    console.log("OK Condition id:", condResult.value.id, "| location:", condResult.value.location);
   } else {
-    console.log("BŁĄD:", result.error.kind, "-", result.error.message);
+    console.log("BŁĄD Condition:", condResult.error.kind, "-", condResult.error.message);
   }
 }
 
