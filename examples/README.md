@@ -44,8 +44,9 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | [`07-pakiet-wielu-recept.ts`](./07-pakiet-wielu-recept.ts)                     | wiele recept w jednym pakiecie (`submitPrescriptionPackage`)          |
 | [`08-anulowanie-recepty.ts`](./08-anulowanie-recepty.ts)                       | wystawienie, a następnie anulowanie recepty                           |
 | [`09-zdarzenie-porada.ts`](./09-zdarzenie-porada.ts)                           | zdarzenie medyczne: porada (FHIR + OAuth2 + autentyczność)            |
+| [`10-pobieranie-recept.ts`](./10-pobieranie-recept.ts)                         | wyszukanie recept pacjenta po PESEL + odczyt treści CDA               |
 
-Recepty `03`-`05`, `07`-`08` oraz zdarzenie `09` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
+Recepty `03`-`05`, `07`-`08`, `10` oraz zdarzenie `09` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
 numerów recept (`...2.10.*`) przydzielonej do konta.
 
 > **Zdarzenia medyczne (`09`)** używają innego stacku niż reszta: REST/FHIR R4 + OAuth2

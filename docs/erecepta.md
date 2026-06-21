@@ -168,6 +168,41 @@ const result = await cancelDrugPrescription(
 Dokument anulujący zastępuje oryginał (`relatedDocument` RPLC - dzieli `setId`,
 `versionNumber` = oryginał + 1).
 
+## Pobieranie recept pacjenta
+
+Dwie operacje odczytowe (nie podpisują dokumentu, więc transport może być węższy -
+`PrescriptionQueryTransport` to `PrescriptionTransport` bez `documentSigner`):
+
+```ts
+import { searchPatientPrescriptions, readPrescription } from "@p1/prescription";
+
+// 1) Lista recept pacjenta (operacja wyszukanieReceptUslugobiorcy).
+const search = await searchPatientPrescriptions(
+  {
+    pesel, // wymagane - PESEL usługobiorcy
+    status: "WYSTAWIONA", // opcjonalnie: WYSTAWIONA|ZABLOKOWANA|ZREALIZOWANA|CZESCIOWO_ZREALIZOWANA|ANULOWANA
+    issuedFrom, // opcjonalnie Date - dolne ograniczenie daty wystawienia
+    issuedTo, // opcjonalnie Date - górne ograniczenie
+    practitionerNpwz, // opcjonalnie - filtr po wystawiającym
+  },
+  transport,
+);
+if (search.ok) {
+  for (const p of search.value.prescriptions) {
+    console.log(p.status, p.issuedAt, p.prescriptionKey); // klucz do odczytu
+  }
+}
+
+// 2) Treść jednej recepty (operacja odczytRecepty) - dokument CDA z base64.
+const content = await readPrescription(prescriptionKey, transport);
+if (content.ok) console.log(content.value.cdaXml);
+```
+
+> **Limit wyników:** P1 odrzuca zbyt szerokie wyszukiwanie biznesowym błędem
+> `PrzekroczonaLiczbaWynikow` (HTTP 200, `wynik.major = ...:Blad`). Operacja zwraca
+> wtedy `ok` z pustą listą i wypełnionym `outcome` - sprawdzaj `outcome.major` i
+> zawężaj kryteria (zakres dat, status). Pełny przykład: `examples/10-pobieranie-recept.ts`.
+
 ## Walidacja
 
 - `pnpm tsx scripts/validate-prescription.ts` - recepta przez Schematron P1.
