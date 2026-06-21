@@ -10,3 +10,4 @@
 
 export * from "./types.js";
 export * from "./document-store.js";
+export * from "./saml-token.js";
