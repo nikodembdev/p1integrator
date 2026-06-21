@@ -132,6 +132,12 @@ function buildPatientAddress(address: CdaPatientAddress): XmlObject {
   addr.streetName = address.street ?? { "@nullFlavor": "NA" };
   addr.houseNumber = address.houseNumber;
   if (address.unitId) addr.unitID = address.unitId;
+  // Kody TERYT (censusTract) — wymagane m.in. przez skierowanie uzdrowiskowe dla Polski.
+  const teryt: string[] = [];
+  if (address.terytTerc) teryt.push(`TERYT TERC: ${address.terytTerc}`);
+  if (address.terytSimc) teryt.push(`TERYT SIMC: ${address.terytSimc}`);
+  if (address.terytUlic) teryt.push(`TERYT ULIC: ${address.terytUlic}`);
+  if (teryt.length > 0) addr.censusTract = teryt;
   return addr;
 }
 

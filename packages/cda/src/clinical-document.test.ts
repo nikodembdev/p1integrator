@@ -80,6 +80,26 @@ describe("buildClinicalDocument", () => {
     expect(result.xml).toContain('value="mailto:jan@example.pl"');
   });
 
+  it("emits TERYT codes (censusTract) when provided on the address", () => {
+    const withTeryt = buildClinicalDocument({
+      ...input,
+      patient: {
+        ...input.patient,
+        address: {
+          ...input.patient.address,
+          terytTerc: "1465011",
+          terytSimc: "0918123",
+          terytUlic: "18650",
+        },
+      },
+    });
+    expect(withTeryt.xml).toContain("<censusTract>TERYT TERC: 1465011</censusTract>");
+    expect(withTeryt.xml).toContain("<censusTract>TERYT SIMC: 0918123</censusTract>");
+    expect(withTeryt.xml).toContain("<censusTract>TERYT ULIC: 18650</censusTract>");
+    // bez pól TERYT nie ma censusTract
+    expect(result.xml).not.toContain("censusTract");
+  });
+
   it("builds author org hierarchy, custodian, legal authenticator and participant", () => {
     expect(result.xml).toContain("<family>Nowak</family>");
     expect(result.xml).toContain(

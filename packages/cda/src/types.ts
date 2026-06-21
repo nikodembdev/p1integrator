@@ -16,6 +16,12 @@ export interface CdaPatientAddress {
   readonly country?: string;
   /** Kod użycia adresu, np. "PST", "HP". */
   readonly use?: string;
+  /** TERYT TERC (gmina) — wymagany m.in. w skierowaniu uzdrowiskowym dla kraju Polska. */
+  readonly terytTerc?: string;
+  /** TERYT SIMC (miejscowość) — j.w. */
+  readonly terytSimc?: string;
+  /** TERYT ULIC (ulica) — wymagany, gdy podano ulicę (skierowanie uzdrowiskowe). */
+  readonly terytUlic?: string;
 }
 
 /** Miejsce urodzenia pacjenta (recordTarget/birthplace) — wymagane przez część typów (np. psychiatryczny). */

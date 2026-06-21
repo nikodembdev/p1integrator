@@ -131,8 +131,11 @@ export interface PrescriptionDrug {
 }
 
 export interface PrescriptionDosage {
-  /** Treść D.S. (sposób stosowania). */
-  text: string;
+  /**
+   * Treść D.S. (sposób stosowania) — opcjonalna. Narrację dawkowania builder wylicza
+   * ze struktury (period/dawka/daty), więc zwykle nie trzeba jej podawać.
+   */
+  text?: string;
   /** YYYYMMDD — początek/koniec stosowania (effectiveTime IVL_TS). */
   startDate?: string;
   endDate?: string;
