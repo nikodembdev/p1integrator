@@ -7,6 +7,7 @@ import { signWsSecurity, type WsSecurityCertificate } from "@p1/transport";
  */
 
 const SOAP12_NS = "http://www.w3.org/2003/05/soap-envelope";
+export const SOAP11_NS = "http://schemas.xmlsoap.org/soap/envelope/";
 const WSA_NS = "http://www.w3.org/2005/08/addressing";
 const WSU_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
 const WSSE_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
@@ -24,6 +25,10 @@ export interface EdmEnvelopeOptions {
   readonly certificate: WsSecurityCertificate;
   /** Dodatkowe deklaracje namespace na <Envelope> (prefiks → URI). */
   readonly namespaces?: Readonly<Record<string, string>>;
+  /** Namespace koperty SOAP (domyślnie 1.2; SOZ używa 1.1). */
+  readonly soapNamespace?: string;
+  /** Czy dodać nagłówki WS-Addressing (domyślnie true; SOZ: false). */
+  readonly withWsAddressing?: boolean;
   readonly now?: Date;
   readonly ttlSeconds?: number;
   readonly idSuffix?: string;
@@ -36,17 +41,22 @@ const escapeXml = (v: string): string =>
 /** Buduje podpisaną kopertę SOAP 1.2 EDM z osadzoną asercją SAML. */
 export function buildSignedEdmEnvelope(options: EdmEnvelopeOptions): string {
   const messageId = options.messageId ?? `urn:uuid:${options.idSuffix ?? "message"}`;
+  const soapNs = options.soapNamespace ?? SOAP12_NS;
   const extraNs = Object.entries(options.namespaces ?? {})
     .map(([prefix, uri]) => ` xmlns:${prefix}="${uri}"`)
     .join("");
+  const wsAddressing =
+    options.withWsAddressing === false
+      ? ""
+      : `<wsa:Action xmlns:wsa="${WSA_NS}">${options.action}</wsa:Action>` +
+        `<wsa:To xmlns:wsa="${WSA_NS}">${escapeXml(options.endpoint)}</wsa:To>` +
+        `<wsa:MessageID xmlns:wsa="${WSA_NS}">${escapeXml(messageId)}</wsa:MessageID>`;
 
   const envelope =
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<soapenv:Envelope xmlns:soapenv="${SOAP12_NS}" xmlns:wsu="${WSU_NS}"${extraNs}>` +
+    `<soapenv:Envelope xmlns:soapenv="${soapNs}" xmlns:wsu="${WSU_NS}"${extraNs}>` +
     `<soapenv:Header>` +
-    `<wsa:Action xmlns:wsa="${WSA_NS}">${options.action}</wsa:Action>` +
-    `<wsa:To xmlns:wsa="${WSA_NS}">${escapeXml(options.endpoint)}</wsa:To>` +
-    `<wsa:MessageID xmlns:wsa="${WSA_NS}">${escapeXml(messageId)}</wsa:MessageID>` +
+    wsAddressing +
     `<wsse:Security xmlns:wsse="${WSSE_NS}"></wsse:Security>` +
     `</soapenv:Header>` +
     `<soapenv:Body wsu:Id="Body">${options.bodyXml}</soapenv:Body>` +

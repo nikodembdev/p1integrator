@@ -19,3 +19,5 @@ export * from "./iti43.js";
 export * from "./repository.js";
 export * from "./szar.js";
 export * from "./iti57.js";
+export * from "./atna.js";
+export * from "./soz.js";
