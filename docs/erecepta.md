@@ -136,6 +136,15 @@ potwierdzający.
   `drug.totalActiveSubstance` (całkowita dawka substancji czynnej) - builder dodaje supply
   CDSC (.4.80). _Uwaga: lek musi być Rpw w Rejestrze Leków, a wystawiający musi mieć
   uprawnienie do leków narkotycznych._
+- **recepta365 (recepta roczna):** dodaj `dosage.treatmentDuration` (czas trwania kuracji,
+  np. `{ value: "120", unit: "d" }` → element `width`) + `realizationEndDate` (okno realizacji
+  supply, do 365 dni od wystawienia) + `drug.outerPackage` (opakowanie zbiorcze, wymagane
+  `pharm:asSuperContent`). Builder generuje też narrację recepta365 (Okres dawkowania, Data
+  realizacji do, „raz dziennie/N razy dziennie po" liczone jak transformata P1) oraz
+  `institutionSpecified` na dawkowaniu (wymaga jednostki okresu `h`). Przykład:
+  `examples/15-recepta365.ts`. _Uwaga: P1 weryfikuje dane opakowania (GTIN + pojemność,
+  w tym opakowania zbiorczego) z Rejestrem Produktów Leczniczych (REG.WER.13453), a czas
+  trwania kuracji musi mieścić się w limicie (REG.WER.13557) i odpowiadać zapasowi leku._
 
 ## Anulowanie
 

@@ -217,4 +217,42 @@ describe("buildDrugPrescriptionCda", () => {
     expect(xml).toContain("Potwierdzono ilość substancji czynnej");
     expect(xml).toContain(">0.2 mg</content>");
   });
+
+  it("recepta365: czas trwania kuracji, okno realizacji, opakowanie zbiorcze i narracja", () => {
+    const xml = buildDrugPrescriptionCda({
+      ...baseInput,
+      dosage: {
+        periodUnit: "h",
+        periodValue: "24",
+        doseQuantity: "1",
+        treatmentDuration: { value: "120", unit: "d" },
+      },
+      realizationEndDate: "20270619",
+      drug: {
+        ...baseInput.drug,
+        capacityUnit: "tabl.",
+        capacityValue: "10",
+        outerPackage: {
+          formCode: "30009000",
+          formName: "Pudełko",
+          capacityUnit: "op.",
+          capacityValue: "12",
+        },
+      },
+    }).xml;
+    // struktura: width (czas trwania kuracji) + institutionSpecified na PIVL
+    expect(xml).toContain('<width value="120" unit="d"/>');
+    expect(xml).toContain('institutionSpecified="true"');
+    // supply: okno realizacji IVL_TS (low/high)
+    expect(xml).toContain('<low value="20260619"/>');
+    expect(xml).toContain('<high value="20270619"/>');
+    // opakowanie zbiorcze
+    expect(xml).toContain("<pharm:asSuperContent");
+    // narracja recepta365
+    expect(xml).toContain(">Okres dawkowania:</content>");
+    expect(xml).toContain(">120 dni</content>");
+    expect(xml).toContain(">Data realizacji do</content>");
+    expect(xml).toContain(">12 op. 10 tabl.</content>"); // wielkość: zbiorcze + jednostkowe
+    expect(xml).toContain(">raz dziennie 1 szt.,</content>"); // D.S. liczone jak administrationValue
+  });
 });
