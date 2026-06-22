@@ -92,6 +92,27 @@ importers:
         specifier: workspace:*
         version: link:../transport
 
+  packages/ipom:
+    dependencies:
+      '@p1/cda':
+        specifier: workspace:*
+        version: link:../cda
+      '@p1/core':
+        specifier: workspace:*
+        version: link:../core
+      '@p1/signing':
+        specifier: workspace:*
+        version: link:../signing
+      '@p1/transport':
+        specifier: workspace:*
+        version: link:../transport
+      xmlbuilder2:
+        specifier: ^3.1.1
+        version: 3.1.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+
   packages/medical-events:
     dependencies:
       '@p1/core':

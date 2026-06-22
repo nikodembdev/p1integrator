@@ -12,6 +12,7 @@ export default {
         "transport",
         "prescription",
         "referral",
+        "ipom",
         "medical-events",
         "edm",
         "repo",

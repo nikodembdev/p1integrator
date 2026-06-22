@@ -82,6 +82,8 @@ export const context: CallContext = {
 export const endpoints = {
   referral: e.P1_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaSkierowaniaWS",
   prescription: e.P1_RECEPTA_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaReceptyWS",
+  ipom:
+    e.P1_IPOM_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaPlanowOpiekiMedycznejWS",
   // Zdarzenia medyczne: REST/FHIR + OAuth2 (inny host i stack niż SOAP wyżej).
   zmToken: e.P1_ZM_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
   zmFhir: e.P1_ZM_FHIR_URL ?? "https://isus.ezdrowie.gov.pl/fhir",
@@ -153,6 +155,12 @@ export function referralTransport(): (TransportDeps & { endpoint: string }) | un
 export function prescriptionTransport(): (TransportDeps & { endpoint: string }) | undefined {
   const t = tryBuildTransport();
   return t ? { ...t, endpoint: endpoints.prescription } : undefined;
+}
+
+/** Transport dla usługi planów opieki medycznej / IPOM (lub `undefined`, gdy brak certów). */
+export function ipomTransport(): (TransportDeps & { endpoint: string }) | undefined {
+  const t = tryBuildTransport();
+  return t ? { ...t, endpoint: endpoints.ipom } : undefined;
 }
 
 /** Zależności zdarzeń medycznych (FHIR/OAuth2): cert WSS do JWT/podpisu + klient mTLS. */
