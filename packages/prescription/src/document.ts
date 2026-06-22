@@ -336,7 +336,15 @@ function buildPrescriptionSection(
   // Narracja MUSI odzwierciedlać blok strukturalny (REG.WER.3252) - wyliczamy ją
   // z danych, replikując oficjalną transformatę narracyjną P1 (1.3.2).
   const strength = drug.strengthText ?? computeStrengthNarrative(drug.ingredients);
-  const dosageText = computeDosageNarrative(dosage, effectiveDate);
+  // recepta365: P1 liczy D.S. ze struktury (administrationValue); zwykła recepta - nasza narracja.
+  const dosageText = dosage.treatmentDuration
+    ? computeAdministrationValue(dosage)
+    : computeDosageNarrative(dosage, effectiveDate);
+  // Wielkość opakowania: dla recepta365 z opakowaniem zbiorczym = „{zbiorcze} {jednostkowe}".
+  const packageSize =
+    drug.outerPackage && (drug.outerPackage.capacityValue !== "1" || drug.outerPackage.capacityUnit)
+      ? `${qtyOrSzt(drug.outerPackage.capacityValue, drug.outerPackage.capacityUnit)} ${qtyOrSzt(drug.capacityValue, drug.capacityUnit)}`
+      : `${drug.capacityValue} ${drug.capacityUnit}`;
 
   // Kolejność węzłów MUSI odpowiadać transformacie narracyjnej P1 (REG.WER.3251):
   // nazwa, moc, (puste pola edycyjne), ewentualnie „NZ".
@@ -348,32 +356,73 @@ function buildPrescriptionSection(
   ];
   if (!substitutionAllowed) sbadmContent.push(content("p1_nieZamieniac", "NZ", "xPLbig"));
 
+  const repeat = Number(dosage.repeatNumber ?? "0");
   const paragraphs: XmlObject[] = [
     { "@ID": "SBADM_1", content: sbadmContent },
     {
       content: [
         content("p1_iloscLeku", payment.packageCount),
         content("p1_krotnosc_opis", `x ${drug.formName} po`),
-        content("p1_wielkoscOpakowania", `${drug.capacityValue} ${drug.capacityUnit}`),
-      ],
-    },
-    {
-      "@ID": "DS_1",
-      content: [
-        content("p1_stosowanie_opis_1", "D.S."),
-        ...(dosageText ? [content("p1_stosowanie_wartosc_1", dosageText, "Bold")] : []),
-        content("p1_edytuj_stosowanie_wartosc_1", undefined, "Bold"),
-      ],
-    },
-    {
-      "@ID": "ACT_1",
-      content: [
-        content("p1_odplatnosc_opis", "Odpłatność"),
-        // XSL renderuje KOD poziomu (nie displayName) - „powszechnie rozumiany code".
-        content("p1_odplatnosc_wartosc", payment.level, "Bold"),
+        content("p1_wielkoscOpakowania", packageSize),
       ],
     },
   ];
+  // recepta365: czas trwania kuracji (Okres dawkowania) - PRZED blokiem D.S.
+  // (XSL: width renderowane przed stosowaniem, REG.WER.13416).
+  if (dosage.treatmentDuration) {
+    const total = Number(dosage.treatmentDuration.value) * (1 + repeat);
+    paragraphs.push({
+      content: [
+        content("p1_kuracja_opis", "Okres dawkowania:"),
+        content(
+          "p1_kuracja_wartosc",
+          durationNarrative(total, dosage.treatmentDuration.unit ?? "d"),
+        ),
+      ],
+    });
+  }
+  paragraphs.push({
+    "@ID": "DS_1",
+    content: [
+      content("p1_stosowanie_opis_1", "D.S."),
+      ...(dosageText ? [content("p1_stosowanie_wartosc_1", dosageText, "Bold")] : []),
+      content("p1_edytuj_stosowanie_wartosc_1", undefined, "Bold"),
+    ],
+  });
+  // recepta365: powtórzenia cyklu - część stosowania (po wartości D.S.).
+  if (dosage.treatmentDuration && repeat > 0) {
+    paragraphs.push({
+      content: [
+        content(
+          "p1_stosowanie_powtorzenia_cyklu_1",
+          `Powyższy cykl należy wykonać ${repeat + 1} razy`,
+          "Bold",
+        ),
+      ],
+    });
+  }
+  // Odpłatność - PRZED datą realizacji do (XSL: odpłatność przed supply/effectiveTime).
+  paragraphs.push({
+    "@ID": "ACT_1",
+    content: [
+      content("p1_odplatnosc_opis", "Odpłatność"),
+      // XSL renderuje KOD poziomu (nie displayName) - „powszechnie rozumiany code".
+      content("p1_odplatnosc_wartosc", payment.level, "Bold"),
+    ],
+  });
+  // recepta365: data realizacji do (z okna realizacji supply) - PO odpłatności.
+  if (input.realizationEndDate) {
+    paragraphs.push({
+      content: [
+        content("p1_dataRealizacjiDo_opis", "Data realizacji do"),
+        content(
+          "p1_dataRealizacjiDo_wartosc",
+          formatPolishDate(input.realizationEndDate),
+          "xPLred Bold",
+        ),
+      ],
+    });
+  }
   // Akapit całkowitej dawki substancji czynnej (Rpw).
   if (drug.totalActiveSubstance) {
     const t = drug.totalActiveSubstance;
@@ -575,6 +624,47 @@ function buildEntitlementPolicy(
   return { "@typeCode": "COMP", act };
 }
 
+/** Opakowanie leku (pharm:containerPackagedMedicine) + opcjonalne opakowanie zbiorcze (recepta365). */
+function buildContainerPackagedMedicine(drug: DrugPrescriptionInput["drug"]): XmlObject {
+  const container: XmlObject = {
+    "@classCode": "CONT",
+    "@determinerCode": "INSTANCE",
+    "pharm:code": {
+      "@code": drug.packageEan,
+      "@codeSystem": PRESCRIPTION_OID.GS1,
+      "@codeSystemName": "GS1",
+    },
+    "pharm:name": drug.packageName,
+    "pharm:formCode": {
+      "@code": drug.formCode,
+      "@codeSystem": PRESCRIPTION_OID.FORM_CODE,
+      "@displayName": drug.formName,
+    },
+    "pharm:capacityQuantity": { "@unit": drug.capacityUnit, "@value": drug.capacityValue },
+  };
+  // recepta365: opakowanie zbiorcze (wymagane przy czasie trwania kuracji).
+  if (drug.outerPackage) {
+    const outer = drug.outerPackage;
+    container["pharm:asSuperContent"] = {
+      "@classCode": "CONT",
+      "pharm:containerPackagedMedicine": {
+        "@classCode": "CONT",
+        "@determinerCode": "INSTANCE",
+        "pharm:name": outer.name ?? drug.packageName,
+        "pharm:formCode": {
+          "@code": outer.formCode,
+          "@codeSystem": PRESCRIPTION_OID.FORM_CODE,
+          "@displayName": outer.formName ?? outer.formCode,
+        },
+        "pharm:capacityQuantity": outer.capacityUnit
+          ? { "@unit": outer.capacityUnit, "@value": outer.capacityValue }
+          : { "@value": outer.capacityValue },
+      },
+    };
+  }
+  return container;
+}
+
 function buildSubstanceAdministration(
   input: DrugPrescriptionInput,
   effectiveDate: string,
@@ -583,18 +673,29 @@ function buildSubstanceAdministration(
   const { drug, dosage } = input;
 
   const effectiveTime: XmlObject[] = [];
-  if (dosage.startDate || dosage.endDate) {
+  if (dosage.startDate || dosage.endDate || dosage.treatmentDuration) {
     const ivl: XmlObject = { "@xsi:type": "IVL_TS" };
     if (dosage.startDate) ivl.low = { "@value": dosage.startDate };
     if (dosage.endDate) ivl.high = { "@value": dosage.endDate };
+    // Czas trwania kuracji (recepta365) - width na IVL_TS.
+    if (dosage.treatmentDuration) {
+      ivl.width = {
+        "@value": dosage.treatmentDuration.value,
+        "@unit": dosage.treatmentDuration.unit ?? "d",
+      };
+    }
     effectiveTime.push(ivl);
   }
   if (dosage.periodUnit && dosage.periodValue) {
-    effectiveTime.push({
+    const pivl: XmlObject = {
       "@operator": "A",
       "@xsi:type": "PIVL_TS",
       period: { "@unit": dosage.periodUnit, "@value": dosage.periodValue },
-    });
+    };
+    // recepta365: P1 liczy narrację dawkowania ze struktury (administrationValue),
+    // która "raz dziennie"/"N razy dziennie" rozpoznaje po institutionSpecified.
+    if (dosage.treatmentDuration) pivl["@institutionSpecified"] = "true";
+    effectiveTime.push(pivl);
   }
 
   const sbadm: XmlObject = {
@@ -633,22 +734,7 @@ function buildSubstanceAdministration(
         name: drug.name,
         "pharm:asContent": {
           "@classCode": "CONT",
-          "pharm:containerPackagedMedicine": {
-            "@classCode": "CONT",
-            "@determinerCode": "INSTANCE",
-            "pharm:code": {
-              "@code": drug.packageEan,
-              "@codeSystem": PRESCRIPTION_OID.GS1,
-              "@codeSystemName": "GS1",
-            },
-            "pharm:name": drug.packageName,
-            "pharm:formCode": {
-              "@code": drug.formCode,
-              "@codeSystem": PRESCRIPTION_OID.FORM_CODE,
-              "@displayName": drug.formName,
-            },
-            "pharm:capacityQuantity": { "@unit": drug.capacityUnit, "@value": drug.capacityValue },
-          },
+          "pharm:containerPackagedMedicine": buildContainerPackagedMedicine(drug),
         },
         "pharm:ingredient": drug.ingredients.map((ing) => {
           const denominator: XmlObject = { "@value": ing.denominatorValue, "@xsi:type": "PQ" };
@@ -700,7 +786,15 @@ function buildSupplyRelationship(input: DrugPrescriptionInput, effectiveDate: st
     "@classCode": "SPLY",
     "@moodCode": "RQO",
     templateId: SUPPLY_TEMPLATE.map((root) => ({ "@root": root })),
-    effectiveTime: { "@value": effectiveDate },
+    // recepta365: okno realizacji IVL_TS (low = wystawienie, high = dataRealizacjiDo);
+    // zwykła recepta: pojedynczy znacznik czasu.
+    effectiveTime: input.realizationEndDate
+      ? {
+          "@xsi:type": "IVL_TS",
+          low: { "@value": effectiveDate },
+          high: { "@value": input.realizationEndDate },
+        }
+      : { "@value": effectiveDate },
     independentInd: { "@value": "false" },
     quantity: { "@value": payment.packageCount },
     product: {
@@ -885,6 +979,27 @@ function formatPolishDate(yyyymmdd: string): string {
   return `${day} ${POLISH_MONTHS_GENITIVE[month] ?? ""} ${year} r.`;
 }
 
+/** „N dni/tygodni/miesięcy/godzin" - replika translateEffectiveTime (czas trwania kuracji). */
+function durationNarrative(value: number, unit: string): string {
+  const few = (v: number): boolean =>
+    !((v % 100 >= 12 && v % 100 <= 14) || v % 10 >= 5 || v % 10 <= 1);
+  const word = (one: string, fewForm: string, many: string): string =>
+    value === 1 ? one : few(value) ? fewForm : many;
+  const unitWord =
+    unit === "d"
+      ? value === 1
+        ? "dzień"
+        : "dni"
+      : unit === "wk"
+        ? word("tydzień", "tygodnie", "tygodni")
+        : unit === "mo"
+          ? word("miesiąc", "miesiące", "miesięcy")
+          : unit === "h"
+            ? word("godzina", "godziny", "godzin")
+            : unit;
+  return `${value} ${unitWord}`;
+}
+
 /** YYYYMMDD → liczba porównywalna (jak w transformacie). */
 function dateToNumber(yyyymmdd: string): number {
   return (
@@ -927,6 +1042,32 @@ function computeStrengthNarrative(
   return ingredients.map(ingredientStrength).join(" + ");
 }
 
+/** „value unit" lub „value szt." (replika quantityUnitOrSzt). */
+function qtyOrSzt(value: string, unit?: string): string {
+  return unit && unit.length >= 1 ? `${value} ${unit}` : `${value} szt.`;
+}
+
+/**
+ * Wylicza `p1_stosowanie_wartosc_1` dla recepty365 jak P1 (administrationValue):
+ * częstotliwość rozpoznawana przy institutionSpecified='true' + dawka, zakończone przecinkiem.
+ */
+function computeAdministrationValue(dosage: DrugPrescriptionInput["dosage"]): string {
+  const pv = dosage.periodValue;
+  const pu = dosage.periodUnit;
+  let freq = "";
+  if ((pv === "24" && pu === "h") || (pv === "1" && pu === "d")) {
+    freq = "raz dziennie";
+  } else if (pu === "h" && pv) {
+    freq = `${24 / Number(pv)} razy dziennie po`;
+  } else if (pv && pu) {
+    freq = `co ${durationNarrative(Number(pv), pu)}`;
+  }
+  const dose = dosage.doseQuantity ? qtyOrSzt(dosage.doseQuantity, dosage.doseUnit) : "";
+  if (!dose) return freq;
+  if (!freq) return dose;
+  return `${freq} ${dose},`;
+}
+
 /** Wylicza `p1_stosowanie_wartosc_1` z dawkowania (replika transformaty). */
 function computeDosageNarrative(
   dosage: DrugPrescriptionInput["dosage"],
@@ -952,7 +1093,10 @@ function computeDosageNarrative(
   if (dosage.endDate && dosage.endDate.length >= 6) {
     s += `, zakończyć do ${formatPolishDate(dosage.endDate)}`;
   }
+  // recepta365: powtórzenia idą do osobnego p1_stosowanie_powtorzenia_cyklu, nie do D.S.
   const repeat = Number(dosage.repeatNumber ?? "0");
-  if (repeat >= 1) s += `, powtórzyć cykl ${repeat}${repeat === 1 ? " raz" : " razy"}`;
+  if (repeat >= 1 && !dosage.treatmentDuration) {
+    s += `, powtórzyć cykl ${repeat}${repeat === 1 ? " raz" : " razy"}`;
+  }
   return s;
 }

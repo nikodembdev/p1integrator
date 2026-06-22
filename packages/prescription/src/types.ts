@@ -123,6 +123,24 @@ export interface PrescriptionDrug {
   formName: string;
   capacityUnit: string;
   capacityValue: string;
+  /**
+   * Opakowanie zbiorcze (pharm:asSuperContent) - WYMAGANE dla recepty rocznej
+   * (recepta365, gdy podano `dosage.treatmentDuration`). Opisuje opakowanie nadrzędne
+   * (np. pudełko zawierające N opakowań jednostkowych).
+   */
+  outerPackage?: {
+    name?: string;
+    /** Postać opakowania zewnętrznego (EDQM, np. „30009000" = Pudełko). */
+    formCode: string;
+    formName?: string;
+    /**
+     * Jednostka pojemności opakowania zewnętrznego (np. „butelka", „słoik").
+     * Pomijana dla pojedynczego pudełka mieszczącego jeden pojemnik (capacityValue „1").
+     */
+    capacityUnit?: string;
+    /** Liczba pojemników jednostkowych w opakowaniu zewnętrznym (zwykle „1"). */
+    capacityValue: string;
+  };
   /** Moc/skład - tekst do narrative (np. „5 g / 50 ml + 20 mg"). */
   strengthText?: string;
   ingredients: PrescriptionIngredient[];
@@ -142,6 +160,11 @@ export interface PrescriptionDosage {
   /** Częstotliwość (effectiveTime PIVL_TS, operator A). */
   periodUnit?: string;
   periodValue?: string;
+  /**
+   * Czas trwania kuracji (effectiveTime IVL_TS `width`) - dla recepty rocznej (recepta365).
+   * Np. `{ value: "365", unit: "d" }`. Jednostka domyślnie „d".
+   */
+  treatmentDuration?: { value: string; unit?: string };
   repeatNumber?: string;
   doseQuantity?: string;
   /** Jednostka dawki (np. „tabl."); brak → „szt." w narracji. */
@@ -193,6 +216,12 @@ export interface DrugPrescriptionInput {
   substitution?: boolean;
   /** Informacja dla osoby wydającej lek (narrative). */
   dispenserInfo?: string;
+  /**
+   * Data końca okna realizacji (YYYYMMDD lub pełny TS) - recepta roczna (recepta365).
+   * Ustawia supply `effectiveTime` IVL_TS: low = data wystawienia, high = ta data
+   * (do 365 dni od wystawienia). Wymaga też `dosage.treatmentDuration`.
+   */
+  realizationEndDate?: string;
 }
 
 export interface DrugPrescriptionResult {

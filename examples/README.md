@@ -33,24 +33,25 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 
 ## Lista przykładów
 
-| Plik                                                                           | Co pokazuje                                                           |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| [`01-skierowanie-ogolne.ts`](./01-skierowanie-ogolne.ts)                       | skierowanie do poradni/szpitala (rozpoznania + procedury)             |
-| [`02-skierowanie-uzdrowiskowe.ts`](./02-skierowanie-uzdrowiskowe.ts)           | skierowanie na leczenie uzdrowiskowe (wywiad, badanie, wyniki, TERYT) |
-| [`03-recepta.ts`](./03-recepta.ts)                                             | recepta na jeden lek - pełny, rozpisany przykład (referencja)         |
-| [`04-recepta-uprawnienia-dodatkowe.ts`](./04-recepta-uprawnienia-dodatkowe.ts) | recepta z uprawnieniem dodatkowym pacjenta (sekcja .3.69)             |
-| [`05-recepta-nie-zamieniac.ts`](./05-recepta-nie-zamieniac.ts)                 | „NZ" + info dla wydającego + lek wieloskładnikowy                     |
-| [`06-recepta-pro-auctore.ts`](./06-recepta-pro-auctore.ts)                     | recepta pro auctore / pro familiae (RRECE)\*                          |
-| [`07-pakiet-wielu-recept.ts`](./07-pakiet-wielu-recept.ts)                     | wiele recept w jednym pakiecie (`submitPrescriptionPackage`)          |
-| [`08-anulowanie-recepty.ts`](./08-anulowanie-recepty.ts)                       | wystawienie, a następnie anulowanie recepty                           |
-| [`09-zdarzenie-porada.ts`](./09-zdarzenie-porada.ts)                           | zdarzenie medyczne: porada (FHIR + OAuth2 + autentyczność)            |
-| [`10-pobieranie-recept.ts`](./10-pobieranie-recept.ts)                         | wyszukanie recept pacjenta po PESEL + odczyt treści CDA               |
-| [`11-edm-rejestracja-repozytorium.ts`](./11-edm-rejestracja-repozytorium.ts)   | EDM: rejestracja własnego repozytorium XDS.b (SZAR)                   |
-| [`12-edm-publikacja-indeksu.ts`](./12-edm-publikacja-indeksu.ts)               | EDM: zdarzenie ZM → token SAML → zapis indeksu (ITI-42)               |
-| [`13-edm-serwer-repozytorium.ts`](./13-edm-serwer-repozytorium.ts)             | EDM: własne repozytorium na porcie `DocumentStore` (offline)          |
-| [`14-edm-wyszukanie-i-zgody.ts`](./14-edm-wyszukanie-i-zgody.ts)               | EDM: wyszukanie (ITI-18) + zgody (SOZ) + pobranie (ITI-43)            |
+| Plik                                                                           | Co pokazuje                                                              |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| [`01-skierowanie-ogolne.ts`](./01-skierowanie-ogolne.ts)                       | skierowanie do poradni/szpitala (rozpoznania + procedury)                |
+| [`02-skierowanie-uzdrowiskowe.ts`](./02-skierowanie-uzdrowiskowe.ts)           | skierowanie na leczenie uzdrowiskowe (wywiad, badanie, wyniki, TERYT)    |
+| [`03-recepta.ts`](./03-recepta.ts)                                             | recepta na jeden lek - pełny, rozpisany przykład (referencja)            |
+| [`04-recepta-uprawnienia-dodatkowe.ts`](./04-recepta-uprawnienia-dodatkowe.ts) | recepta z uprawnieniem dodatkowym pacjenta (sekcja .3.69)                |
+| [`05-recepta-nie-zamieniac.ts`](./05-recepta-nie-zamieniac.ts)                 | „NZ" + info dla wydającego + lek wieloskładnikowy                        |
+| [`06-recepta-pro-auctore.ts`](./06-recepta-pro-auctore.ts)                     | recepta pro auctore / pro familiae (RRECE)\*                             |
+| [`07-pakiet-wielu-recept.ts`](./07-pakiet-wielu-recept.ts)                     | wiele recept w jednym pakiecie (`submitPrescriptionPackage`)             |
+| [`08-anulowanie-recepty.ts`](./08-anulowanie-recepty.ts)                       | wystawienie, a następnie anulowanie recepty                              |
+| [`09-zdarzenie-porada.ts`](./09-zdarzenie-porada.ts)                           | zdarzenie medyczne: porada (FHIR + OAuth2 + autentyczność)               |
+| [`10-pobieranie-recept.ts`](./10-pobieranie-recept.ts)                         | wyszukanie recept pacjenta po PESEL + odczyt treści CDA                  |
+| [`11-edm-rejestracja-repozytorium.ts`](./11-edm-rejestracja-repozytorium.ts)   | EDM: rejestracja własnego repozytorium XDS.b (SZAR)                      |
+| [`12-edm-publikacja-indeksu.ts`](./12-edm-publikacja-indeksu.ts)               | EDM: zdarzenie ZM → token SAML → zapis indeksu (ITI-42)                  |
+| [`13-edm-serwer-repozytorium.ts`](./13-edm-serwer-repozytorium.ts)             | EDM: własne repozytorium na porcie `DocumentStore` (offline)             |
+| [`14-edm-wyszukanie-i-zgody.ts`](./14-edm-wyszukanie-i-zgody.ts)               | EDM: wyszukanie (ITI-18) + zgody (SOZ) + pobranie (ITI-43)               |
+| [`15-recepta365.ts`](./15-recepta365.ts)                                       | recepta roczna (czas trwania kuracji + okno realizacji + opak. zbiorcze) |
 
-Recepty `03`-`05`, `07`-`08`, `10`, zdarzenie `09` oraz EDM `12` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
+Recepty `03`-`05`, `07`-`08`, `10`, `15`, zdarzenie `09` oraz EDM `12` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
 numerów recept (`...2.10.*`) przydzielonej do konta.
 
 > **EDM (`11`-`14`)** to IHE XDS.b (SOAP/ebRIM, token SAML). Model „własne repozytorium":
@@ -68,9 +69,9 @@ numerów recept (`...2.10.*`) przydzielonej do konta.
 ### Wymagają rozszerzenia biblioteki (osobny temat)
 
 Część wariantów z przykładowych SOAP-ów P1 potrzebuje funkcji buildera, których jeszcze
-nie ma: **dawkowanie zmienne / czas trwania kuracji** (recepty 365-dniowe, sekwencje,
-alternatywy, krotność dobowa), **recepta recepturowa**, **wyrób medyczny**,
-**import docelowy** oraz **leki narkotyczne (Rpw)**.
+nie ma: **dawkowanie zmienne** (sekwencje, alternatywy, wiele okresów dawkowania, krotność
+dobowa), **recepta recepturowa**, **wyrób medyczny** oraz **import docelowy**. Obsłużone:
+recepta roczna z dawkowaniem stałym (`15`, czas trwania kuracji) i leki narkotyczne (Rpw, `03`-bazowo).
 
 ## Powiązana dokumentacja
 
