@@ -254,5 +254,9 @@ describe("buildDrugPrescriptionCda", () => {
     expect(xml).toContain(">Data realizacji do</content>");
     expect(xml).toContain(">12 op. 10 tabl.</content>"); // wielkość: zbiorcze + jednostkowe
     expect(xml).toContain(">raz dziennie 1 szt.,</content>"); // D.S. liczone jak administrationValue
+    // kolejność węzłów jak w transformacie P1 (REG.WER.13416): kuracja przed D.S.,
+    // odpłatność przed datą realizacji do.
+    expect(xml.indexOf("p1_kuracja_opis")).toBeLessThan(xml.indexOf("p1_stosowanie_opis_1"));
+    expect(xml.indexOf("p1_odplatnosc_opis")).toBeLessThan(xml.indexOf("p1_dataRealizacjiDo_opis"));
   });
 });

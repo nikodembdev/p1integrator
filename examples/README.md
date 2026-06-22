@@ -51,7 +51,7 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | [`14-edm-wyszukanie-i-zgody.ts`](./14-edm-wyszukanie-i-zgody.ts)               | EDM: wyszukanie (ITI-18) + zgody (SOZ) + pobranie (ITI-43)               |
 | [`15-recepta365.ts`](./15-recepta365.ts)                                       | recepta roczna (czas trwania kuracji + okno realizacji + opak. zbiorcze) |
 
-Recepty `03`-`05`, `07`-`08`, `10`, zdarzenie `09` oraz EDM `12` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
+Recepty `03`-`05`, `07`-`08`, `10`, `15`, zdarzenie `09` oraz EDM `12` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
 numerów recept (`...2.10.*`) przydzielonej do konta.
 
 > **EDM (`11`-`14`)** to IHE XDS.b (SOAP/ebRIM, token SAML). Model „własne repozytorium":
@@ -69,9 +69,9 @@ numerów recept (`...2.10.*`) przydzielonej do konta.
 ### Wymagają rozszerzenia biblioteki (osobny temat)
 
 Część wariantów z przykładowych SOAP-ów P1 potrzebuje funkcji buildera, których jeszcze
-nie ma: **dawkowanie zmienne / czas trwania kuracji** (recepty 365-dniowe, sekwencje,
-alternatywy, krotność dobowa), **recepta recepturowa**, **wyrób medyczny**,
-**import docelowy** oraz **leki narkotyczne (Rpw)**.
+nie ma: **dawkowanie zmienne** (sekwencje, alternatywy, wiele okresów dawkowania, krotność
+dobowa), **recepta recepturowa**, **wyrób medyczny** oraz **import docelowy**. Obsłużone:
+recepta roczna z dawkowaniem stałym (`15`, czas trwania kuracji) i leki narkotyczne (Rpw, `03`-bazowo).
 
 ## Powiązana dokumentacja
 

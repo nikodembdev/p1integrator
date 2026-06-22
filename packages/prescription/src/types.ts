@@ -130,10 +130,15 @@ export interface PrescriptionDrug {
    */
   outerPackage?: {
     name?: string;
-    /** Postać opakowania zbiorczego (EDQM, np. „30009000" = Pudełko). */
+    /** Postać opakowania zewnętrznego (EDQM, np. „30009000" = Pudełko). */
     formCode: string;
     formName?: string;
-    capacityUnit: string;
+    /**
+     * Jednostka pojemności opakowania zewnętrznego (np. „butelka", „słoik").
+     * Pomijana dla pojedynczego pudełka mieszczącego jeden pojemnik (capacityValue „1").
+     */
+    capacityUnit?: string;
+    /** Liczba pojemników jednostkowych w opakowaniu zewnętrznym (zwykle „1"). */
     capacityValue: string;
   };
   /** Moc/skład - tekst do narrative (np. „5 g / 50 ml + 20 mg"). */

@@ -356,6 +356,7 @@ function buildPrescriptionSection(
   ];
   if (!substitutionAllowed) sbadmContent.push(content("p1_nieZamieniac", "NZ", "xPLbig"));
 
+  const repeat = Number(dosage.repeatNumber ?? "0");
   const paragraphs: XmlObject[] = [
     { "@ID": "SBADM_1", content: sbadmContent },
     {
@@ -365,18 +366,10 @@ function buildPrescriptionSection(
         content("p1_wielkoscOpakowania", packageSize),
       ],
     },
-    {
-      "@ID": "DS_1",
-      content: [
-        content("p1_stosowanie_opis_1", "D.S."),
-        ...(dosageText ? [content("p1_stosowanie_wartosc_1", dosageText, "Bold")] : []),
-        content("p1_edytuj_stosowanie_wartosc_1", undefined, "Bold"),
-      ],
-    },
   ];
-  // recepta365: czas trwania kuracji (Okres dawkowania) + powtórzenia cyklu.
+  // recepta365: czas trwania kuracji (Okres dawkowania) - PRZED blokiem D.S.
+  // (XSL: width renderowane przed stosowaniem, REG.WER.13416).
   if (dosage.treatmentDuration) {
-    const repeat = Number(dosage.repeatNumber ?? "0");
     const total = Number(dosage.treatmentDuration.value) * (1 + repeat);
     paragraphs.push({
       content: [
@@ -387,19 +380,37 @@ function buildPrescriptionSection(
         ),
       ],
     });
-    if (repeat > 0) {
-      paragraphs.push({
-        content: [
-          content(
-            "p1_stosowanie_powtorzenia_cyklu_1",
-            `Powyższy cykl należy wykonać ${repeat + 1} razy`,
-            "Bold",
-          ),
-        ],
-      });
-    }
   }
-  // recepta365: data realizacji do (z okna realizacji supply).
+  paragraphs.push({
+    "@ID": "DS_1",
+    content: [
+      content("p1_stosowanie_opis_1", "D.S."),
+      ...(dosageText ? [content("p1_stosowanie_wartosc_1", dosageText, "Bold")] : []),
+      content("p1_edytuj_stosowanie_wartosc_1", undefined, "Bold"),
+    ],
+  });
+  // recepta365: powtórzenia cyklu - część stosowania (po wartości D.S.).
+  if (dosage.treatmentDuration && repeat > 0) {
+    paragraphs.push({
+      content: [
+        content(
+          "p1_stosowanie_powtorzenia_cyklu_1",
+          `Powyższy cykl należy wykonać ${repeat + 1} razy`,
+          "Bold",
+        ),
+      ],
+    });
+  }
+  // Odpłatność - PRZED datą realizacji do (XSL: odpłatność przed supply/effectiveTime).
+  paragraphs.push({
+    "@ID": "ACT_1",
+    content: [
+      content("p1_odplatnosc_opis", "Odpłatność"),
+      // XSL renderuje KOD poziomu (nie displayName) - „powszechnie rozumiany code".
+      content("p1_odplatnosc_wartosc", payment.level, "Bold"),
+    ],
+  });
+  // recepta365: data realizacji do (z okna realizacji supply) - PO odpłatności.
   if (input.realizationEndDate) {
     paragraphs.push({
       content: [
@@ -412,14 +423,6 @@ function buildPrescriptionSection(
       ],
     });
   }
-  paragraphs.push({
-    "@ID": "ACT_1",
-    content: [
-      content("p1_odplatnosc_opis", "Odpłatność"),
-      // XSL renderuje KOD poziomu (nie displayName) - „powszechnie rozumiany code".
-      content("p1_odplatnosc_wartosc", payment.level, "Bold"),
-    ],
-  });
   // Akapit całkowitej dawki substancji czynnej (Rpw).
   if (drug.totalActiveSubstance) {
     const t = drug.totalActiveSubstance;
@@ -653,7 +656,9 @@ function buildContainerPackagedMedicine(drug: DrugPrescriptionInput["drug"]): Xm
           "@codeSystem": PRESCRIPTION_OID.FORM_CODE,
           "@displayName": outer.formName ?? outer.formCode,
         },
-        "pharm:capacityQuantity": { "@unit": outer.capacityUnit, "@value": outer.capacityValue },
+        "pharm:capacityQuantity": outer.capacityUnit
+          ? { "@unit": outer.capacityUnit, "@value": outer.capacityValue }
+          : { "@value": outer.capacityValue },
       },
     };
   }
