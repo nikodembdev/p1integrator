@@ -85,6 +85,26 @@ export const endpoints = {
   // Zdarzenia medyczne: REST/FHIR + OAuth2 (inny host i stack niż SOAP wyżej).
   zmToken: e.P1_ZM_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
   zmFhir: e.P1_ZM_FHIR_URL ?? "https://isus.ezdrowie.gov.pl/fhir",
+  // EDM (IHE XDS.b): token SAML + operacje rejestru/repozytorium.
+  edmToken:
+    e.P1_EDM_TOKEN_ENDPOINT ??
+    "https://isus.ezdrowie.gov.pl/services/ObslugaGenerowanieTokenuSamlWS",
+  edmIti42: e.P1_EDM_ITI42_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaEdmIti42WS",
+  edmIti18: e.P1_EDM_ITI18_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaEdmIti18WS",
+  edmIti57: e.P1_EDM_ITI57_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaEdmIti57WS",
+  edmSzar:
+    e.P1_EDM_SZAR_ENDPOINT ??
+    "https://isus.ezdrowie.gov.pl/services/ObslugaRejestrowanieDanychDostepowychWS",
+  edmSoz:
+    e.P1_EDM_SOZ_ENDPOINT ??
+    "https://isus.ezdrowie.gov.pl/services/ObslugaWeryfikacjiDostepuDoDanychWS",
+} as const;
+
+/** OID-y EDM używane w przykładach. */
+export const EDM_OID = {
+  pesel: "2.16.840.1.113883.3.4424.1.1.616",
+  /** Węzeł identyfikatora zdarzenia medycznego (MedicalEventId) dla podmiotu. */
+  medicalEvent: (podmiotExt: string) => `2.16.840.1.113883.3.4424.2.7.${podmiotExt}.15.1`,
 } as const;
 
 const certDir =
@@ -165,6 +185,50 @@ export function zmTransport(): ZmDeps | undefined {
     httpClient: createNodeHttpClient({ tls: { key: tls.privateKeyPem, cert: tls.certificatePem } }),
     tokenEndpoint: endpoints.zmToken,
     fhirBaseUrl: endpoints.zmFhir,
+  };
+}
+
+/** Zależności EDM: cert WSS (token SAML + podpis WS-Security) + klient mTLS. */
+export interface EdmDeps {
+  /** Certyfikat WSS (do tokenu SAML i podpisu operacji EDM). */
+  readonly wsSecurityCertificate: WsSecurityCertificate;
+  /** Klient HTTP z mTLS. */
+  readonly httpClient: HttpClient;
+  /** Klucz/cert TLS (PEM) - do audytu ATNA (ITI-20, syslog over TLS). */
+  readonly tlsKeyPem: string;
+  readonly tlsCertPem: string;
+}
+
+/**
+ * Kontekst EDM: jak zwykły, ale miejsce udzielania świadczeń (komórka .2.3.3) ma
+ * extension w formacie `{podmiot}-{mus}` (wymóg tokenu SAML EDM).
+ */
+export const edmContext: CallContext = {
+  subject: { root: account.providerRoot, extension: account.podmiotExt },
+  user: { root: account.npwzRoot, extension: account.npwz },
+  workplace: { root: account.musRoot, extension: `${account.podmiotExt}-${account.musExt}` },
+  businessRole: "DOCTOR",
+};
+
+/** Pacjent jako identyfikator CX domeny XDS (PESEL). */
+export const edmPatientCx = `${patient.pesel}^^^&${EDM_OID.pesel}&ISO`;
+
+/**
+ * Składa zależności EDM z certyfikatów w `.local/certs`. Zwraca `undefined`,
+ * gdy brak certów/hasła (operacje EDM wymagają sieci).
+ */
+export function edmTransport(): EdmDeps | undefined {
+  const tlsP12 = resolve(certDir, "Podmiot_leczniczy_713-tls.p12");
+  const wssP12 = resolve(certDir, "Podmiot_leczniczy_713-wss.p12");
+  if (!certPassword || !existsSync(tlsP12) || !existsSync(wssP12)) {
+    return undefined;
+  }
+  const tls = parseP12(readFileSync(tlsP12), certPassword);
+  return {
+    wsSecurityCertificate: parseP12(readFileSync(wssP12), certPassword),
+    httpClient: createNodeHttpClient({ tls: { key: tls.privateKeyPem, cert: tls.certificatePem } }),
+    tlsKeyPem: tls.privateKeyPem,
+    tlsCertPem: tls.certificatePem,
   };
 }
 
