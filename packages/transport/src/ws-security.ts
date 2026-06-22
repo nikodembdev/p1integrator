@@ -29,6 +29,11 @@ export interface WsSecurityOptions {
    * Domyślnie e-skierowanie (v20180509); musi być spójny z kopertą (e-recepta: v20170510).
    */
   readonly contextNamespace?: string;
+  /**
+   * Czy podpisać `kontekstWywolania` (domyślnie true). EDM/AUT przekazuje dane nie
+   * w kontekście, lecz w treści żądania - wtedy ustaw false (podpisywany jest Body + Timestamp).
+   */
+  readonly includeContextReference?: boolean;
 }
 
 const SECURITY_PLACEHOLDER = /<wsse:Security[\s\S]*?<\/wsse:Security>/;
@@ -72,7 +77,9 @@ export function signWsSecurity(envelopeXml: string, options: WsSecurityOptions):
   const contextNamespace = options.contextNamespace ?? CONTEXT_NAMESPACE;
   const signedElements = [
     "//*[local-name(.)='Body']",
-    `//*[local-name(.)='kontekstWywolania' and namespace-uri(.)='${contextNamespace}']`,
+    ...(options.includeContextReference === false
+      ? []
+      : [`//*[local-name(.)='kontekstWywolania' and namespace-uri(.)='${contextNamespace}']`]),
     `//*[local-name(.)='Timestamp' and namespace-uri(.)='${WSU_NS}']`,
   ];
   for (const xpath of signedElements) {

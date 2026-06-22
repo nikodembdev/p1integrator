@@ -45,9 +45,19 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | [`08-anulowanie-recepty.ts`](./08-anulowanie-recepty.ts)                       | wystawienie, a następnie anulowanie recepty                           |
 | [`09-zdarzenie-porada.ts`](./09-zdarzenie-porada.ts)                           | zdarzenie medyczne: porada (FHIR + OAuth2 + autentyczność)            |
 | [`10-pobieranie-recept.ts`](./10-pobieranie-recept.ts)                         | wyszukanie recept pacjenta po PESEL + odczyt treści CDA               |
+| [`11-edm-rejestracja-repozytorium.ts`](./11-edm-rejestracja-repozytorium.ts)   | EDM: rejestracja własnego repozytorium XDS.b (SZAR)                   |
+| [`12-edm-publikacja-indeksu.ts`](./12-edm-publikacja-indeksu.ts)               | EDM: zdarzenie ZM → token SAML → zapis indeksu (ITI-42)               |
+| [`13-edm-serwer-repozytorium.ts`](./13-edm-serwer-repozytorium.ts)             | EDM: własne repozytorium na porcie `DocumentStore` (offline)          |
+| [`14-edm-wyszukanie-i-zgody.ts`](./14-edm-wyszukanie-i-zgody.ts)               | EDM: wyszukanie (ITI-18) + zgody (SOZ) + pobranie (ITI-43)            |
 
-Recepty `03`-`05`, `07`-`08`, `10` oraz zdarzenie `09` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
+Recepty `03`-`05`, `07`-`08`, `10`, zdarzenie `09` oraz EDM `12` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
 numerów recept (`...2.10.*`) przydzielonej do konta.
+
+> **EDM (`11`-`14`)** to IHE XDS.b (SOAP/ebRIM, token SAML). Model „własne repozytorium":
+> treść trzyma podmiot (port `DocumentStore`, przykład `13` działa offline), P1 prowadzi
+> rejestr indeksów spiętych ze zdarzeniem ZM (`MedicalEventId`). `12` wymaga `@p1/medical-events`
+> (zdarzenie ZM); `14` ITI-18 bywa wolne na INT (timeout rejestru dla pacjenta z dużą liczbą
+> danych). Szczegóły: [docs/edm.md](../docs/edm.md).
 
 > **Zdarzenia medyczne (`09`)** używają innego stacku niż reszta: REST/FHIR R4 + OAuth2
 > (bez SOAP/CDA), host `isus.ezdrowie.gov.pl/{token,fhir}`. Wspierany jest tylko typ
@@ -67,4 +77,5 @@ alternatywy, krotność dobowa), **recepta recepturowa**, **wyrób medyczny**,
 - [docs/eskierowania.md](../docs/eskierowania.md)
 - [docs/erecepta.md](../docs/erecepta.md)
 - [docs/zdarzenia.md](../docs/zdarzenia.md)
+- [docs/edm.md](../docs/edm.md)
 - [docs/podpisywarka.md](../docs/podpisywarka.md)
