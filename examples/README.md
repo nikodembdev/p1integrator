@@ -52,8 +52,10 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | [`15-recepta365.ts`](./15-recepta365.ts)                                       | recepta roczna (czas trwania kuracji + okno realizacji + opak. zbiorcze) |
 | [`16-ipom.ts`](./16-ipom.ts)                                                   | IPOM - Indywidualny Plan Opieki Medycznej (POM): plan opieki, zapis      |
 | [`17-ipom-anulowanie.ts`](./17-ipom-anulowanie.ts)                             | IPOM: wystawienie planu, a następnie jego anulowanie (RPLC)              |
+| [`18-ipom-harmonogram.ts`](./18-ipom-harmonogram.ts)                           | IPOM: plan + powiązany harmonogram realizacji (HIPOM, status SRZ)        |
+| [`19-ipom-odczyt.ts`](./19-ipom-odczyt.ts)                                     | IPOM: odczyt planu po identyfikatorze + wyszukanie planów pacjenta       |
 
-Recepty `03`-`05`, `07`-`08`, `10`, `15`, zdarzenie `09`, EDM `12` oraz IPOM `16`-`17` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
+Recepty `03`-`05`, `07`-`08`, `10`, `15`, zdarzenie `09`, EDM `12` oraz IPOM `16`-`19` potwierdzone e2e (Sukces; wyszukiwanie IPOM zwraca błąd marshallingu po stronie INT - odczyt po id działa). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
 numerów recept (`...2.10.*`) przydzielonej do konta.
 
 > **EDM (`11`-`14`)** to IHE XDS.b (SOAP/ebRIM, token SAML). Model „własne repozytorium":

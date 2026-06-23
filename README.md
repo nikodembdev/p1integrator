@@ -11,7 +11,7 @@ dziedzinowe API.
 - ✅ **e-skierowanie** - 7 typów dokumentów + anulowanie, każdy zwalidowany Schematronem P1 i XSD; **potwierdzone end-to-end na środowisku integracyjnym** (P1 zwraca `Sukces` + `kodSkierowania`). Zob. [docs/eskierowania.md](docs/eskierowania.md).
 - ✅ **podpisywarka XAdES in-process** - podpis dokumentu bez zewnętrznego serwisu. Zob. [docs/podpisywarka.md](docs/podpisywarka.md).
 - ✅ **e-recepta** - wystawianie (pakiet recept) + anulowanie, odpłatności i uprawnienia dodatkowe; zwalidowane Schematronem P1 i XSD; **potwierdzone end-to-end na integracji** (`Sukces`). Zob. [docs/erecepta.md](docs/erecepta.md).
-- ✅ **IPOM** (Indywidualny Plan Opieki Medycznej / POM) - budowa planu opieki (CDA PL IG 1.3.2.1) + zapis (`zapisPlanuOpiekiMedycznej`, binding SOAP 1.2); zwalidowany Schematronem P1; **potwierdzony end-to-end na integracji** (`Sukces`).
+- ✅ **IPOM** (Indywidualny Plan Opieki Medycznej / POM) - plan opieki (CDA PL IG 1.3.2.1) + harmonogram realizacji (HIPOM) + anulowanie + odczyt/wyszukanie; binding SOAP 1.2; zwalidowany Schematronem P1; **potwierdzony end-to-end na integracji** (`Sukces`).
 
 ## Co potrafi (w skrócie)
 
@@ -44,7 +44,7 @@ packages/
 ├── transport/     # HttpClient mTLS + koperty SOAP + WS-Security + parser odpowiedzi
 ├── referral/      # e-skierowanie: typy dokumentów + orkiestracja wysyłki
 ├── prescription/  # e-recepta: recepta na lek + anulowanie, transport pakietu recept
-└── ipom/          # IPOM: plan opieki medycznej (CDA 1.3.2.1) + zapis (SOAP 1.2)
+└── ipom/          # IPOM: plan + harmonogram + anulowanie + odczyt/wyszukanie (SOAP 1.2)
 ```
 
 Wzorzec **porty + adaptery**: czyste buildery i orkiestracja zależą od portów

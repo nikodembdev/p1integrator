@@ -1,17 +1,6 @@
 import { create } from "xmlbuilder2";
+import { CDA_OID, formatCdaDateTime, generateDocumentId, type XmlObject } from "@p1/cda";
 import {
-  type CdaAuthor,
-  type CdaAuthorOrganization,
-  type CdaLegalAuthenticator,
-  CDA_OID,
-  type CdaPatient,
-  type CdaPatientAddress,
-  formatCdaDateTime,
-  generateDocumentId,
-  type XmlObject,
-} from "@p1/cda";
-import {
-  ATRYBUTY_IPOM_OID,
   CONTROL_VISIT_OID,
   CONTROL_VISIT_VALUES,
   GS1_OID,
@@ -30,6 +19,7 @@ import {
   STRATIFICATION_VALUES,
   TEST_SCHEDULE_OID,
 } from "./constants.js";
+import { buildIpomHeader, ipomAttributeCode, loincCode } from "./header.js";
 import type {
   IpomControlVisit,
   IpomDiagnosis,
@@ -69,7 +59,21 @@ export function buildIpomCda(input: IpomInput): IpomResult {
     "xsi:type": "extPL:ClinicalDocument",
   });
 
-  clinicalDocument.ele(buildHeader(input, documentId, documentSetId, documentDate, versionNumber));
+  clinicalDocument.ele(
+    buildIpomHeader(input, {
+      docTemplate: IPOM_DOC_TEMPLATE,
+      igVersion: IPOM_IG_VERSION,
+      idSegment: IPOM_ID_SEGMENT,
+      setIdSegment: IPOM_SETID_SEGMENT,
+      translationCode: "00.94",
+      translationDisplay: "Indywidualny Plan Opieki Medycznej",
+      title: "Indywidualny Plan Opieki Medycznej",
+      documentId,
+      documentSetId,
+      documentDate,
+      versionNumber,
+    }),
+  );
 
   const component = clinicalDocument.ele("component", {
     typeCode: "COMP",
@@ -85,215 +89,6 @@ export function buildIpomCda(input: IpomInput): IpomResult {
   }
 
   return { xml: root.end({ prettyPrint: true }), documentId, documentDate };
-}
-
-// --- Nagłówek ---------------------------------------------------------------
-
-function buildHeader(
-  input: IpomInput,
-  documentId: string,
-  documentSetId: string,
-  documentDate: string,
-  versionNumber: number,
-): XmlObject {
-  const { localRoot } = input;
-  return {
-    typeId: { "@extension": "POCD_HD000040", "@root": CDA_OID.HL7_TYPE_ID },
-    templateId: { "@root": IPOM_DOC_TEMPLATE, "@extension": IPOM_IG_VERSION },
-    id: {
-      "@extension": documentId,
-      "@root": `${localRoot}.${IPOM_ID_SEGMENT}`,
-      "@displayable": "false",
-    },
-    code: {
-      "@code": "18776-5",
-      "@codeSystem": CDA_OID.LOINC,
-      "@codeSystemName": "LOINC",
-      "@displayName": "Plan of care note",
-      translation: {
-        "@code": "00.94",
-        "@codeSystem": CDA_OID.DOC_CLASS_P1,
-        "@codeSystemName": "KLAS_DOK_P1",
-        "@displayName": "Indywidualny Plan Opieki Medycznej",
-      },
-    },
-    title: "Indywidualny Plan Opieki Medycznej",
-    effectiveTime: { "@value": documentDate },
-    confidentialityCode: { "@code": "N", "@codeSystem": CDA_OID.HL7_CONFIDENTIALITY },
-    languageCode: { "@code": "pl-PL" },
-    setId: { "@extension": documentSetId, "@root": `${localRoot}.${IPOM_SETID_SEGMENT}` },
-    versionNumber: { "@value": String(versionNumber) },
-    recordTarget: buildRecordTarget(input.patient, localRoot, input.providerOrganizationId),
-    author: buildAuthor(input.author, documentDate),
-    custodian: buildCustodian(),
-    legalAuthenticator: buildLegalAuthenticator(input.legalAuthenticator, documentDate),
-  };
-}
-
-function buildRecordTarget(
-  patient: CdaPatient,
-  localRoot: string,
-  providerOrganizationId: string,
-): XmlObject {
-  const person: XmlObject = {
-    name: { given: [...patient.givenNames], family: patient.familyName },
-  };
-  if (patient.gender) {
-    person.administrativeGenderCode = {
-      "@code": patient.gender,
-      "@codeSystem": CDA_OID.HL7_GENDER,
-    };
-  }
-  person.birthTime = { "@value": patient.birthDate };
-
-  return {
-    templateId: { "@root": IPOM_TEMPLATE.RECORD_TARGET },
-    patientRole: {
-      id: [
-        {
-          "@extension": patient.internalId ?? "12345",
-          "@root": `${localRoot}.17.1`,
-          "@displayable": "false",
-        },
-        { "@extension": patient.pesel, "@root": CDA_OID.PESEL, "@displayable": "true" },
-      ],
-      addr: buildPatientAddress(patient.address),
-      patient: person,
-      providerOrganization: {
-        "@classCode": "ORG",
-        templateId: { "@root": IPOM_TEMPLATE.PROVIDER_ORGANIZATION },
-        id: {
-          "@extension": providerOrganizationId,
-          "@root": CDA_OID.PROVIDER,
-          "@displayable": "false",
-        },
-      },
-    },
-  };
-}
-
-function buildPatientAddress(address: CdaPatientAddress): XmlObject {
-  const addr: XmlObject = {};
-  if (address.use) addr["@use"] = address.use;
-  addr.country = address.country ?? "Polska";
-  addr.city = address.city;
-  addr.postalCode = address.postalCode;
-  addr.streetName = address.street ?? { "@nullFlavor": "NA" };
-  addr.houseNumber = address.houseNumber;
-  if (address.unitId) addr.unitID = address.unitId;
-  const teryt: string[] = [];
-  if (address.terytSimc) teryt.push(`TERYT SIMC: ${address.terytSimc}`);
-  if (address.terytTerc) teryt.push(`TERYT TERC: ${address.terytTerc}`);
-  if (teryt.length > 0) addr.censusTract = teryt;
-  return addr;
-}
-
-function buildAuthor(author: CdaAuthor, documentDate: string): XmlObject {
-  return {
-    templateId: { "@root": IPOM_TEMPLATE.AUTHOR },
-    functionCode: {
-      "@code": author.functionCode,
-      "@codeSystem": CDA_OID.FUNCTION_CODES,
-      "@displayName": author.functionDisplay,
-    },
-    time: { "@value": documentDate },
-    assignedAuthor: {
-      "@xsi:type": "extPL:AssignedAuthor",
-      id: { "@extension": author.authorExt, "@root": author.authorRoot, "@displayable": "false" },
-      assignedPerson: {
-        templateId: { "@root": IPOM_TEMPLATE.PERSON },
-        name: {
-          prefix: author.prefix ?? "lek.",
-          given: [...author.givenNames],
-          family: author.familyName,
-        },
-      },
-      representedOrganization: buildRepresentedOrganization(author.organization),
-      "extPL:boundedBy": buildNfzContract(author.organization),
-    },
-  };
-}
-
-function buildRepresentedOrganization(org: CdaAuthorOrganization): XmlObject {
-  return {
-    templateId: { "@root": IPOM_TEMPLATE.REPRESENTED_ORGANIZATION },
-    id: {
-      "@extension": `${org.providerExt}-01`,
-      "@root": CDA_OID.ORG_UNIT,
-      "@displayable": "true",
-    },
-    name: org.name,
-    telecom: { "@use": "PUB", "@value": `tel:${org.phone}` },
-    addr: {
-      postalCode: org.address.postalCode,
-      city: org.address.city,
-      streetName: org.address.street,
-      houseNumber: org.address.houseNumber,
-    },
-    asOrganizationPartOf: {
-      wholeOrganization: {
-        id: { "@extension": org.regon14, "@root": CDA_OID.REGON_14, "@displayable": "true" },
-        name: org.name,
-        asOrganizationPartOf: {
-          wholeOrganization: {
-            id: [
-              { "@extension": org.providerExt, "@root": org.providerRoot, "@displayable": "true" },
-              { "@extension": org.regon9, "@root": CDA_OID.REGON_9, "@displayable": "true" },
-            ],
-            name: org.name,
-          },
-        },
-      },
-    },
-  };
-}
-
-function buildNfzContract(org: CdaAuthorOrganization): XmlObject {
-  return {
-    "@typeCode": "PART",
-    "extPL:templateId": { "@root": IPOM_TEMPLATE.NFZ_CONTRACT },
-    "extPL:reimbursementRelatedContract": {
-      "@moodCode": "EVN",
-      "@classCode": "CNTRCT",
-      "extPL:id": { "@extension": org.nfzContractNumber, "@root": CDA_OID.NFZ_CONTRACT },
-      "extPL:bounding": {
-        "@typeCode": "PART",
-        "extPL:reimburser": {
-          "@classCode": "UNDWRT",
-          "extPL:id": {
-            "@extension": org.nfzBranchCode,
-            "@root": CDA_OID.NFZ_BRANCH,
-            "@displayable": "true",
-          },
-        },
-      },
-    },
-  };
-}
-
-function buildCustodian(): XmlObject {
-  return {
-    templateId: { "@root": IPOM_TEMPLATE.CUSTODIAN },
-    assignedCustodian: {
-      "@classCode": "ASSIGNED",
-      representedCustodianOrganization: {
-        "@classCode": "ORG",
-        "@determinerCode": "INSTANCE",
-        id: { "@assigningAuthorityName": "CSIOZ", "@displayable": "false", "@root": CDA_OID.CSIOZ },
-      },
-    },
-  };
-}
-
-function buildLegalAuthenticator(la: CdaLegalAuthenticator, documentDate: string): XmlObject {
-  return {
-    templateId: { "@root": IPOM_TEMPLATE.LEGAL_AUTHENTICATOR },
-    time: { "@value": documentDate },
-    signatureCode: { "@code": "S" },
-    assignedEntity: {
-      id: { "@extension": la.authorExt, "@root": la.authorRoot, "@displayable": "true" },
-    },
-  };
 }
 
 // --- Sekcje kliniczne -------------------------------------------------------
@@ -318,7 +113,7 @@ function buildSections(input: IpomInput): XmlObject[] {
 }
 
 /** Sekcja „Status zdrowotny pacjenta" (.3.174) - data oceny (DWOSP) + stratyfikacja (SOPS). */
-function buildHealthStatusSection(status: IpomHealthStatus): XmlObject {
+export function buildHealthStatusSection(status: IpomHealthStatus): XmlObject {
   const stratLabel = status.stratificationLabel ?? STRATIFICATION_VALUES[status.stratification];
   const paragraphs: XmlObject[] = [
     {
@@ -399,7 +194,7 @@ function buildHealthStatusSection(status: IpomHealthStatus): XmlObject {
 }
 
 /** Sekcja „Rozpoznania" (.3.175) - rozpoznania ICD-10. */
-function buildDiagnosesSection(diagnoses: readonly IpomDiagnosis[]): XmlObject {
+export function buildDiagnosesSection(diagnoses: readonly IpomDiagnosis[]): XmlObject {
   const paragraphs = diagnoses.map((d, i) => ({
     "@ID": `OBS_ROZP_${i + 1}`,
     content: [
@@ -438,7 +233,7 @@ function buildDiagnosesSection(diagnoses: readonly IpomDiagnosis[]): XmlObject {
 }
 
 /** Sekcja „Farmakoterapia" (.3.176) - leki z dawkowaniem i okresem przyjmowania. */
-function buildPharmacotherapySection(medications: readonly IpomMedication[]): XmlObject {
+export function buildPharmacotherapySection(medications: readonly IpomMedication[]): XmlObject {
   const rows = medications.map((m, i) => ({
     "@ID": `SBADM_${i + 1}`,
     td: [
@@ -661,7 +456,7 @@ function diagnosticTestEntry(test: IpomDiagnosticTest, referenceId: string): Xml
 }
 
 /** entryRelationship ZOWB (rodzaj terminu + ewentualnie PIVL_TS/PQ/effectiveTime). */
-function buildTestScheduleRelationship(test: IpomDiagnosticTest): XmlObject {
+export function buildTestScheduleRelationship(test: IpomDiagnosticTest): XmlObject {
   const { schedule } = test;
   const observation: XmlObject = {
     "@classCode": "OBS",
@@ -691,7 +486,7 @@ function buildTestScheduleRelationship(test: IpomDiagnosticTest): XmlObject {
   return { "@typeCode": "COMP", observation };
 }
 
-function scheduleKindValue(kind: IpomDiagnosticTest["schedule"]["kind"]): XmlObject {
+export function scheduleKindValue(kind: IpomDiagnosticTest["schedule"]["kind"]): XmlObject {
   return {
     "@xsi:type": "CD",
     "@code": kind,
@@ -812,25 +607,5 @@ function buildSpecialistVisitsSection(visits: readonly IpomSpecialistVisit[]): X
       },
       entry: entries,
     },
-  };
-}
-
-/** Element `<code>` LOINC. */
-function loincCode(code: string, display: string): XmlObject {
-  return {
-    "@code": code,
-    "@codeSystem": CDA_OID.LOINC,
-    "@codeSystemName": "LOINC",
-    "@displayName": display,
-  };
-}
-
-/** Element `<code>` w systemie AtrybutyIPOM (DWOSP/SOPS/ZBLAB/ZOWB/...). */
-function ipomAttributeCode(attr: { code: string; display: string }): XmlObject {
-  return {
-    "@code": attr.code,
-    "@codeSystem": ATRYBUTY_IPOM_OID,
-    "@codeSystemName": "AtrybutyIPOM",
-    "@displayName": attr.display,
   };
 }

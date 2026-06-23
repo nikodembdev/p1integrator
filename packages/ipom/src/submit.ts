@@ -19,7 +19,9 @@ import {
 } from "@p1/transport";
 import { buildIpomCancellationCda, type IpomCancellationInput } from "./anulowanie.js";
 import { buildIpomCda } from "./document.js";
-import type { IpomInput } from "./types.js";
+import { buildIpomScheduleCda } from "./harmonogram.js";
+import type { IpomInput, IpomScheduleInput } from "./types.js";
+import { collectRecords, findText } from "./xml-walk.js";
 
 /** Namespace usługi ObslugaPlanowOpiekiMedycznejWS (IPOM/POM, wersja v20220516). */
 export const IPOM_WS_NS = "http://csioz.gov.pl/p1/ipom/ws/v20220516";
@@ -27,6 +29,8 @@ export const IPOM_MT_NS = "http://csioz.gov.pl/p1/ipom/mt/v20220516";
 
 const SOAP_ACTION_SAVE_PLAN = "urn:zapisPlanuOpiekiMedycznej";
 const SOAP_ACTION_CANCEL_PLAN = "urn:zapisAnulowaniaPlanuOpiekiMedycznej";
+const SOAP_ACTION_SAVE_SCHEDULE = "urn:zapisHarmonogramuPlanuOpiekiMedycznej";
+const SOAP_ACTION_CANCEL_SCHEDULE = "urn:zapisAnulowaniaHarmonogramuPlanuOpiekiMedycznej";
 
 /**
  * Zależności transportu dla zapisu planu opieki medycznej (operacja
@@ -121,6 +125,55 @@ export async function submitIpomCancellation(
   return submitIpomCancellationDocument(xml, transport);
 }
 
+/** Wysyła dokument CDA harmonogramu operacją `zapisHarmonogramuPlanuOpiekiMedycznej`. */
+export function submitIpomScheduleDocument(
+  scheduleCdaXml: string,
+  transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  return sendIpomDocument(
+    scheduleCdaXml,
+    "ZapisHarmonogramuPlanuOpiekiMedycznejRequest",
+    SOAP_ACTION_SAVE_SCHEDULE,
+    transport,
+    "IPOM schedule submission request failed",
+  );
+}
+
+/** Buduje CDA harmonogramu z `input` i wysyła go operacją `zapisHarmonogramuPlanuOpiekiMedycznej`. */
+export async function submitIpomSchedule(
+  input: IpomScheduleInput,
+  transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  const { xml } = buildIpomScheduleCda(input);
+  return submitIpomScheduleDocument(xml, transport);
+}
+
+/** Wysyła dokument anulujący harmonogram operacją `zapisAnulowaniaHarmonogramuPlanuOpiekiMedycznej`. */
+export function submitIpomScheduleCancellationDocument(
+  cancellationCdaXml: string,
+  transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  return sendIpomDocument(
+    cancellationCdaXml,
+    "ZapisAnulowaniaHarmonogramuPlanuOpiekiMedycznejRequest",
+    SOAP_ACTION_CANCEL_SCHEDULE,
+    transport,
+    "IPOM schedule cancellation request failed",
+  );
+}
+
+/**
+ * Buduje dokument anulujący harmonogram (`documentKind: "schedule"`, root `.27`) z
+ * `input` i wysyła go operacją `zapisAnulowaniaHarmonogramuPlanuOpiekiMedycznej`.
+ */
+export async function submitIpomScheduleCancellation(
+  input: IpomCancellationInput,
+  transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  const { xml } = buildIpomCancellationCda({ ...input, documentKind: "schedule" });
+  return submitIpomScheduleCancellationDocument(xml, transport);
+}
+
 /**
  * Wspólna wysyłka dokumentu IPOM (zapis/anulowanie): podpis XAdES + base64 →
  * `<ws:{requestRoot}><trescDokumentu>...</trescDokumentu></ws:{requestRoot}>` →
@@ -193,61 +246,4 @@ function extractRuleResults(body: unknown): IpomRuleResult[] {
       ...(location !== undefined ? { location } : {}),
     };
   });
-}
-
-/** Zbiera wszystkie węzły o danym kluczu (płaska lista), niezależnie od zagnieżdżenia. */
-function collectRecords(node: unknown, key: string): unknown[] {
-  const out: unknown[] = [];
-  const visit = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      for (const item of value) visit(item);
-      return;
-    }
-    if (value !== null && typeof value === "object") {
-      const record = value as Record<string, unknown>;
-      for (const [k, v] of Object.entries(record)) {
-        if (k === key) {
-          if (Array.isArray(v)) out.push(...(v as unknown[]));
-          else out.push(v);
-        } else {
-          visit(v);
-        }
-      }
-    }
-  };
-  visit(node);
-  return out;
-}
-
-function findText(node: unknown, key: string): string | undefined {
-  if (Array.isArray(node)) {
-    for (const item of node) {
-      const found = findText(item, key);
-      if (found !== undefined) return found;
-    }
-    return undefined;
-  }
-  if (node !== null && typeof node === "object") {
-    const record = node as Record<string, unknown>;
-    if (key in record) return coerce(record[key]);
-    for (const value of Object.values(record)) {
-      const found = findText(value, key);
-      if (found !== undefined) return found;
-    }
-  }
-  return undefined;
-}
-
-function coerce(value: unknown): string | undefined {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (value !== null && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    if ("#text" in record) return coerce(record["#text"]);
-    for (const inner of Object.values(record)) {
-      const found = coerce(inner);
-      if (found !== undefined) return found;
-    }
-  }
-  return undefined;
 }

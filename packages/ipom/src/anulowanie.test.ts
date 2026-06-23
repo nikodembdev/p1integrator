@@ -91,4 +91,11 @@ describe("buildIpomCancellationCda", () => {
     const { cancellationNumber } = buildIpomCancellationCda(variant);
     expect(cancellationNumber).toMatch(/^\d{10,}$/);
   });
+
+  it("dla harmonogramu (documentKind=schedule) odnosi się do root .27", () => {
+    const { xml } = buildIpomCancellationCda({ ...input, documentKind: "schedule" });
+    expect(xml).toContain('root="2.16.840.1.113883.3.4424.2.7.999.27.1"');
+    expect(xml).toContain('root="2.16.840.1.113883.3.4424.2.7.999.27.2"');
+    expect(xml).not.toContain('root="2.16.840.1.113883.3.4424.2.7.999.26.1"');
+  });
 });

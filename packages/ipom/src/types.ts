@@ -170,3 +170,84 @@ export interface IpomResult {
   readonly documentId: string;
   readonly documentDate: string;
 }
+
+// --- Harmonogram (HIPOM) ----------------------------------------------------
+
+/**
+ * Status realizacji zlecenia (SRZ, StatusRealizacji):
+ * `NZPL` - Nie zaplanowano, `ZPL` - Zaplanowano, `ZRL` - Zrealizowano, `ANL` - Anulowano.
+ */
+export type RealizationStatus = "NZPL" | "ZPL" | "ZRL" | "ANL";
+
+/** Pojedynczy wpis realizacji zlecenia w harmonogramie (SRZ + data zdarzenia). */
+export interface ScheduleRealization {
+  readonly status: RealizationStatus;
+  /** Data zdarzenia realizacji (effectiveTime, YYYYMMDD). Pomijana dla `NZPL`. */
+  readonly date?: string;
+}
+
+/** Sekcja edukacyjna harmonogramu - liczby porad + realizacje (SRZ). */
+export interface ScheduleEducation extends IpomEducation {
+  /** Realizacje porad dietetycznych (LPDIET). */
+  readonly dietaryRealizations?: readonly ScheduleRealization[];
+  /** Realizacje porad lekarskich/pielęgniarskich (LPPIEL). */
+  readonly nursingRealizations?: readonly ScheduleRealization[];
+}
+
+/** Badanie w harmonogramie - zlecenie + realizacje (SRZ). */
+export interface ScheduleDiagnosticTest extends IpomDiagnosticTest {
+  readonly realizations?: readonly ScheduleRealization[];
+}
+
+/** Wizyta kontrolna w harmonogramie - termin + realizacje (SRZ). */
+export interface ScheduleControlVisit extends IpomControlVisit {
+  readonly realizations?: readonly ScheduleRealization[];
+}
+
+/** Wizyta specjalistyczna w harmonogramie - zlecenie + realizacje (SRZ). */
+export interface ScheduleSpecialistVisit extends IpomSpecialistVisit {
+  readonly realizations?: readonly ScheduleRealization[];
+}
+
+/** Referencja do dokumentu planu (IPOM), którego dotyczy harmonogram (sekcja „Załączniki"). */
+export interface PlanReference {
+  /** Identyfikator planu (`id` @extension; root `<localRoot>.26.1`). */
+  readonly documentId: string;
+  /** Identyfikator zbioru wersji planu (`setId` @extension; root `<localRoot>.26.2`). */
+  readonly documentSetId: string;
+  /** Numer wersji planu (domyślnie 1). */
+  readonly versionNumber?: number;
+}
+
+/** Wejście buildera dokumentu harmonogramu IPOM (HIPOM). */
+export interface IpomScheduleInput {
+  readonly localRoot: string;
+  readonly patient: CdaPatient;
+  readonly author: CdaAuthor;
+  readonly legalAuthenticator: CdaLegalAuthenticator;
+  readonly providerOrganizationId: string;
+  /** Dokument planu (IPOM), którego dotyczy harmonogram. */
+  readonly plan: PlanReference;
+
+  /** Sekcja „Status zdrowotny pacjenta" (wymagana). */
+  readonly healthStatus: IpomHealthStatus;
+  /** Sekcja „Rozpoznania" (wymagana, min 1). */
+  readonly diagnoses: readonly IpomDiagnosis[];
+  /** Sekcja „Porada edukacyjna..." z realizacją (wymagana). */
+  readonly education: ScheduleEducation;
+  /** Sekcja „Wizyty kontrolne" z realizacją (wymagana, min 1). */
+  readonly controlVisits: readonly ScheduleControlVisit[];
+
+  /** Sekcja „Farmakoterapia" (opcjonalna). */
+  readonly medications?: readonly IpomMedication[];
+  /** Sekcja „Zaplanowane badania diagnostyczne" z realizacją (opcjonalna). */
+  readonly diagnosticTests?: readonly ScheduleDiagnosticTest[];
+  /** Sekcja „Wizyty specjalistyczne" z realizacją (opcjonalna). */
+  readonly specialistVisits?: readonly ScheduleSpecialistVisit[];
+
+  readonly documentId?: string;
+  readonly documentSetId?: string;
+  readonly versionNumber?: number;
+  readonly now?: Date;
+  readonly documentDate?: string;
+}

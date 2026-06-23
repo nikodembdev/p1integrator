@@ -7,5 +7,7 @@
 export * from "./types.js";
 export * from "./constants.js";
 export * from "./document.js";
+export * from "./harmonogram.js";
 export * from "./anulowanie.js";
 export * from "./submit.js";
+export * from "./pobieranie.js";

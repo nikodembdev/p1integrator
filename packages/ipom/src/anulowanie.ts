@@ -9,7 +9,15 @@ import {
   generateDocumentId,
   type XmlObject,
 } from "@p1/cda";
-import { IPOM_ID_SEGMENT, IPOM_SETID_SEGMENT } from "./constants.js";
+import {
+  IPOM_ID_SEGMENT,
+  IPOM_SCHEDULE_ID_SEGMENT,
+  IPOM_SCHEDULE_SETID_SEGMENT,
+  IPOM_SETID_SEGMENT,
+} from "./constants.js";
+
+/** Rodzaj anulowanego dokumentu: plan (`.26`) albo harmonogram (`.27`). */
+export type IpomDocumentKind = "plan" | "schedule";
 
 /** Szablony generycznego dokumentu anulującego (IHE Nullification .1.14, CDA PL 1.3.2). */
 const CANCELLATION_TEMPLATE = {
@@ -64,6 +72,8 @@ export interface IpomCancellationInput {
   readonly legalAuthenticator: CdaLegalAuthenticator;
   /** Oddział NFZ (participant `.2.19`). */
   readonly nfzBranch: string;
+  /** Rodzaj anulowanego dokumentu (domyślnie „plan"): plan `.26` / harmonogram `.27`. */
+  readonly documentKind?: IpomDocumentKind;
 }
 
 export interface IpomCancellationResult {
@@ -83,8 +93,9 @@ export function buildIpomCancellationCda(input: IpomCancellationInput): IpomCanc
   const cancellationNumber = input.cancellationNumber ?? generateDocumentId();
   const parentVersion = input.cancelled.versionNumber ?? 1;
   const { localRoot } = input;
-  const setIdRoot = `${localRoot}.${IPOM_SETID_SEGMENT}`;
-  const parentIdRoot = `${localRoot}.${IPOM_ID_SEGMENT}`;
+  const isSchedule = input.documentKind === "schedule";
+  const setIdRoot = `${localRoot}.${isSchedule ? IPOM_SCHEDULE_SETID_SEGMENT : IPOM_SETID_SEGMENT}`;
+  const parentIdRoot = `${localRoot}.${isSchedule ? IPOM_SCHEDULE_ID_SEGMENT : IPOM_ID_SEGMENT}`;
 
   const root = create({ version: "1.0", encoding: "UTF-8" });
   root.ins("xml-stylesheet", 'href="CDA_PL_IG_1.3.2.xsl" type="text/xsl"');

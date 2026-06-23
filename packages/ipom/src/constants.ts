@@ -16,6 +16,40 @@ export const IPOM_IG_VERSION = "1.3.2.1";
 export const IPOM_ID_SEGMENT = "26.1";
 export const IPOM_SETID_SEGMENT = "26.2";
 
+/** Szablon dokumentu harmonogramu planu opieki medycznej i jego wersja IG. */
+export const IPOM_SCHEDULE_DOC_TEMPLATE = "2.16.840.1.113883.3.4424.13.10.1.42";
+export const IPOM_SCHEDULE_IG_VERSION = "1.3.2";
+
+/** Segment lokalnego root-a dla `id`/`setId` harmonogramu (`<localRoot>.27.1` / `.27.2`). */
+export const IPOM_SCHEDULE_ID_SEGMENT = "27.1";
+export const IPOM_SCHEDULE_SETID_SEGMENT = "27.2";
+
+/** Szablony sekcji harmonogramu (warianty z realizacją SRZ) + wrapper `structuredBody`. */
+export const IPOM_SCHEDULE = {
+  STRUCTURED_BODY: "2.16.840.1.113883.3.4424.13.10.2.108",
+  EDUCATION: "2.16.840.1.113883.3.4424.13.10.3.182",
+  DIAGNOSTIC_TESTS: "2.16.840.1.113883.3.4424.13.10.3.183",
+  CONTROL_VISITS: "2.16.840.1.113883.3.4424.13.10.3.184",
+  SPECIALIST_VISITS: "2.16.840.1.113883.3.4424.13.10.3.185",
+  /** Sekcja „Załączniki" - referencja do dokumentu planu (IPOM). */
+  ATTACHMENTS: "2.16.840.1.113883.3.4424.13.10.3.39",
+  /** Organizer/reference/externalDocument sekcji „Załączniki". */
+  ATTACHMENT_ORGANIZER: "2.16.840.1.113883.3.4424.13.10.4.31",
+  ATTACHMENT_REFERENCE: "2.16.840.1.113883.3.4424.13.10.4.32",
+  ATTACHMENT_EXTERNAL_DOC: "2.16.840.1.113883.3.4424.13.10.4.33",
+} as const;
+
+/** System kodowania statusu realizacji zlecenia (SRZ). */
+export const REALIZATION_OID = "2.16.840.1.113883.3.4424.13.5.13.5";
+
+/** Słownik statusu realizacji zlecenia (SRZ, StatusRealizacji). */
+export const REALIZATION_VALUES = {
+  NZPL: "Nie zaplanowano",
+  ZPL: "Zaplanowano",
+  ZRL: "Zrealizowano",
+  ANL: "Anulowano",
+} as const;
+
 /** Szablony części nagłówka IPOM (różne od generycznych `CDA_TEMPLATE`). */
 export const IPOM_TEMPLATE = {
   RECORD_TARGET: "2.16.840.1.113883.3.4424.13.10.2.3",
@@ -89,6 +123,8 @@ export const IPOM_CODE = {
   SPECIALIST_VISITS_SECTION: { code: "WIZSPEC", display: "Wymagane wizyty specjalistyczne" },
   /** Zlecenie konsultacji (wpis wizyty/konsultacji specjalistycznej). */
   CONSULTATION: { code: "ZKON", display: "Zlecenie konsultacji" },
+  /** Status realizacji zlecenia (harmonogram). */
+  REALIZATION: { code: "SRZ", display: "Status Realizacji Zlecenia" },
 } as const;
 
 /** Kody LOINC używane w sekcjach/wpisach IPOM. */
