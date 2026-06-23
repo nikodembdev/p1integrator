@@ -17,6 +17,7 @@ import {
   signWsSecurity,
   type WsSecurityCertificate,
 } from "@p1/transport";
+import { buildIpomCancellationCda, type IpomCancellationInput } from "./anulowanie.js";
 import { buildIpomCda } from "./document.js";
 import type { IpomInput } from "./types.js";
 
@@ -25,6 +26,7 @@ export const IPOM_WS_NS = "http://csioz.gov.pl/p1/ipom/ws/v20220516";
 export const IPOM_MT_NS = "http://csioz.gov.pl/p1/ipom/mt/v20220516";
 
 const SOAP_ACTION_SAVE_PLAN = "urn:zapisPlanuOpiekiMedycznej";
+const SOAP_ACTION_CANCEL_PLAN = "urn:zapisAnulowaniaPlanuOpiekiMedycznej";
 
 /**
  * Zależności transportu dla zapisu planu opieki medycznej (operacja
@@ -68,20 +70,74 @@ export interface IpomSubmissionResult {
 
 /**
  * Wysyła dokument CDA planu opieki medycznej operacją `zapisPlanuOpiekiMedycznej`:
- * podpis XAdES → base64 do `<trescDokumentu>` → koperta SOAP + WS-Security
+ * podpis XAdES → base64 do `<trescDokumentu>` → koperta SOAP 1.2 + WS-Security
  * (kontekst standardowy) → mTLS → parsowanie WynikMT i wyników weryfikacji reguł.
  */
-export async function submitIpomDocument(
+export function submitIpomDocument(
   cdaXml: string,
   transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  return sendIpomDocument(
+    cdaXml,
+    "ZapisPlanuOpiekiMedycznejRequest",
+    SOAP_ACTION_SAVE_PLAN,
+    transport,
+    "IPOM document submission request failed",
+  );
+}
+
+/** Buduje CDA planu z `input` i wysyła go operacją `zapisPlanuOpiekiMedycznej`. */
+export async function submitIpom(
+  input: IpomInput,
+  transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  const { xml } = buildIpomCda(input);
+  return submitIpomDocument(xml, transport);
+}
+
+/**
+ * Wysyła dokument CDA anulujący plan operacją `zapisAnulowaniaPlanuOpiekiMedycznej`
+ * (analogicznie do zapisu: podpis XAdES → base64 → koperta SOAP 1.2 → mTLS → WynikMT).
+ */
+export function submitIpomCancellationDocument(
+  cancellationCdaXml: string,
+  transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  return sendIpomDocument(
+    cancellationCdaXml,
+    "ZapisAnulowaniaPlanuOpiekiMedycznejRequest",
+    SOAP_ACTION_CANCEL_PLAN,
+    transport,
+    "IPOM cancellation request failed",
+  );
+}
+
+/** Buduje dokument anulujący z `input` i wysyła go operacją `zapisAnulowaniaPlanuOpiekiMedycznej`. */
+export async function submitIpomCancellation(
+  input: IpomCancellationInput,
+  transport: IpomTransport,
+): Promise<Result<IpomSubmissionResult, P1Error>> {
+  const { xml } = buildIpomCancellationCda(input);
+  return submitIpomCancellationDocument(xml, transport);
+}
+
+/**
+ * Wspólna wysyłka dokumentu IPOM (zapis/anulowanie): podpis XAdES + base64 →
+ * `<ws:{requestRoot}><trescDokumentu>...</trescDokumentu></ws:{requestRoot}>` →
+ * koperta SOAP 1.2 + WS-Security → mTLS → parsowanie WynikMT i reguł weryfikacji.
+ */
+async function sendIpomDocument(
+  cdaXml: string,
+  requestRoot: string,
+  soapAction: string,
+  transport: IpomTransport,
+  transportErrorMessage: string,
 ): Promise<Result<IpomSubmissionResult, P1Error>> {
   const signedCda = await transport.documentSigner.signXades(cdaXml);
   const base64 = Buffer.from(signedCda, "utf8").toString("base64");
 
   const body =
-    `<ws:ZapisPlanuOpiekiMedycznejRequest>` +
-    `<trescDokumentu>${base64}</trescDokumentu>` +
-    `</ws:ZapisPlanuOpiekiMedycznejRequest>`;
+    `<ws:${requestRoot}>` + `<trescDokumentu>${base64}</trescDokumentu>` + `</ws:${requestRoot}>`;
 
   // IPOM ma binding soap12 - koperta w namespace SOAP 1.2; action idzie w Content-Type.
   const envelope = buildSoapEnvelope({
@@ -104,14 +160,12 @@ export async function submitIpomDocument(
     const response = await transport.httpClient.send({
       url: transport.endpoint,
       method: "POST",
-      headers: {
-        "Content-Type": `application/soap+xml; charset=utf-8; action="${SOAP_ACTION_SAVE_PLAN}"`,
-      },
+      headers: { "Content-Type": `application/soap+xml; charset=utf-8; action="${soapAction}"` },
       body: signed,
     });
     responseBody = response.body;
   } catch (cause) {
-    return err(new P1TransportError("IPOM document submission request failed", { cause }));
+    return err(new P1TransportError(transportErrorMessage, { cause }));
   }
 
   const parsed = parseSoapResponse(responseBody);
@@ -123,15 +177,6 @@ export async function submitIpomDocument(
     rules: extractRuleResults(parsed.value.body),
     ...(parsed.value.outcome !== undefined ? { outcome: parsed.value.outcome } : {}),
   });
-}
-
-/** Buduje CDA planu z `input` i wysyła go operacją `zapisPlanuOpiekiMedycznej`. */
-export async function submitIpom(
-  input: IpomInput,
-  transport: IpomTransport,
-): Promise<Result<IpomSubmissionResult, P1Error>> {
-  const { xml } = buildIpomCda(input);
-  return submitIpomDocument(xml, transport);
 }
 
 /** Wyciąga wyniki weryfikacji poszczególnych reguł (`wynikWeryfikacjiReguly`). */

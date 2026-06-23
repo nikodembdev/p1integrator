@@ -51,8 +51,9 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | [`14-edm-wyszukanie-i-zgody.ts`](./14-edm-wyszukanie-i-zgody.ts)               | EDM: wyszukanie (ITI-18) + zgody (SOZ) + pobranie (ITI-43)               |
 | [`15-recepta365.ts`](./15-recepta365.ts)                                       | recepta roczna (czas trwania kuracji + okno realizacji + opak. zbiorcze) |
 | [`16-ipom.ts`](./16-ipom.ts)                                                   | IPOM - Indywidualny Plan Opieki Medycznej (POM): plan opieki, zapis      |
+| [`17-ipom-anulowanie.ts`](./17-ipom-anulowanie.ts)                             | IPOM: wystawienie planu, a następnie jego anulowanie (RPLC)              |
 
-Recepty `03`-`05`, `07`-`08`, `10`, `15`, zdarzenie `09`, EDM `12` oraz IPOM `16` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
+Recepty `03`-`05`, `07`-`08`, `10`, `15`, zdarzenie `09`, EDM `12` oraz IPOM `16`-`17` potwierdzone e2e (Sukces). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
 numerów recept (`...2.10.*`) przydzielonej do konta.
 
 > **EDM (`11`-`14`)** to IHE XDS.b (SOAP/ebRIM, token SAML). Model „własne repozytorium":
