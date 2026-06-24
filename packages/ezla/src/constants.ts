@@ -44,3 +44,12 @@ export const DOCUMENT_KIND = {
   /** Unieważnienie ZLA. */
   UZLA: "UZLA",
 } as const;
+
+/** Kontekst dostępu do danych (`KontekstDostepu`) - cel pobrania/operacji. */
+export const ACCESS_CONTEXT = {
+  ISSUE: "WystawienieZla",
+  SEARCH: "WyszukanieZla",
+  DETAILS_CANCEL: "SzczegolyAnulowanie",
+  DETAILS_NEW: "SzczegolyNowe",
+  DETAILS_PAYER: "SzczegolyPlatnik",
+} as const;

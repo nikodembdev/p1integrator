@@ -1,5 +1,5 @@
 import type { Clock, HttpClient } from "@p1/core";
-import type { AUTH_METHOD, DOCUMENT_KIND, ISSUE_MODE } from "./constants.js";
+import type { ACCESS_CONTEXT, AUTH_METHOD, DOCUMENT_KIND, ISSUE_MODE } from "./constants.js";
 
 /** Metoda uwierzytelnienia (`certyfikat` / `ePuap`). */
 export type AuthMethod = (typeof AUTH_METHOD)[keyof typeof AUTH_METHOD];
@@ -7,6 +7,53 @@ export type AuthMethod = (typeof AUTH_METHOD)[keyof typeof AUTH_METHOD];
 export type IssueMode = (typeof ISSUE_MODE)[keyof typeof ISSUE_MODE];
 /** Rodzaj dokumentu (`ZLA`/`KOPIA_ZLA`/`AZLA`/`UZLA`). */
 export type DocumentKind = (typeof DOCUMENT_KIND)[keyof typeof DOCUMENT_KIND];
+/** Kontekst dostępu (`KontekstDostepu`). */
+export type AccessContext = (typeof ACCESS_CONTEXT)[keyof typeof ACCESS_CONTEXT];
+
+/** Identyfikacja ubezpieczonego (`docTypeRef_IdentyfikacjaUbezpieczonego`) - PESEL lub paszport. */
+export interface InsuredId {
+  readonly pesel?: string;
+  readonly passport?: string;
+}
+
+/** Identyfikacja płatnika (`docTypeRef_IdentyfikacjaPlatnika`) - PESEL/paszport/NIP. */
+export interface PayerId {
+  readonly pesel?: string;
+  readonly passport?: string;
+  readonly nip?: string;
+}
+
+/** Dane płatnika z odpowiedzi ZUS (`docTypeRef_Platnik`) - wynik `pobierzDanePlatnika`. */
+export interface PayerInfo {
+  /** Czy płatnik istnieje (`PlatnikIstnieje`). */
+  readonly exists?: boolean;
+  readonly name?: string;
+  readonly firstName?: string;
+  readonly lastName?: string;
+  /** Czy płatnik ma profil PUE (`MaProfilPue`). */
+  readonly hasPueProfile?: boolean;
+}
+
+/** Płatnik ubezpieczonego (`docTypeRef_Platnik_Ubezpieczonego`) - z listy płatników. */
+export interface InsuredPayer extends PayerInfo {
+  readonly nip?: string;
+  readonly pesel?: string;
+  readonly passport?: string;
+}
+
+/** Stronicowanie wyników (`docTypeRef_Stronicowanie`). */
+export interface Pagination {
+  /** Numer pierwszego rekordu (`RekordyOd`). */
+  readonly from: number;
+  /** Liczba rekordów (`LiczbaRekordow`). */
+  readonly count: number;
+}
+
+/** Przyczyna anulowania ze słownika (`pobierzSlownikPrzyczynAnulowania`). */
+export interface CancellationReason {
+  readonly code?: string;
+  readonly description?: string;
+}
 
 /** Wynik operacji ZUS (`docTypeRef_Rezultat`): kod + opis błędu (puste = sukces). */
 export interface ZusResult {
