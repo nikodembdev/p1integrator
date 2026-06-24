@@ -82,9 +82,15 @@ export const context: CallContext = {
 export const endpoints = {
   referral: e.P1_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaSkierowaniaWS",
   prescription: e.P1_RECEPTA_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaReceptyWS",
+  ipom:
+    e.P1_IPOM_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/services/ObslugaPlanowOpiekiMedycznejWS",
   // Zdarzenia medyczne: REST/FHIR + OAuth2 (inny host i stack niż SOAP wyżej).
   zmToken: e.P1_ZM_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
   zmFhir: e.P1_ZM_FHIR_URL ?? "https://isus.ezdrowie.gov.pl/fhir",
+  // Patient Summary (Karta Pacjenta): REST + OAuth2 (ten sam token co ZM, scope patient-summary).
+  // Środowisko integracyjne P1 = isus; dokumentacja SGP wskazuje też tsus/t2sus (inny host, nieosiągalny stąd).
+  patientSummary: e.P1_PS_BASE_URL ?? "https://isus.ezdrowie.gov.pl",
+  patientSummaryToken: e.P1_PS_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
   // EDM (IHE XDS.b): token SAML + operacje rejestru/repozytorium.
   edmToken:
     e.P1_EDM_TOKEN_ENDPOINT ??
@@ -153,6 +159,12 @@ export function referralTransport(): (TransportDeps & { endpoint: string }) | un
 export function prescriptionTransport(): (TransportDeps & { endpoint: string }) | undefined {
   const t = tryBuildTransport();
   return t ? { ...t, endpoint: endpoints.prescription } : undefined;
+}
+
+/** Transport dla usługi planów opieki medycznej / IPOM (lub `undefined`, gdy brak certów). */
+export function ipomTransport(): (TransportDeps & { endpoint: string }) | undefined {
+  const t = tryBuildTransport();
+  return t ? { ...t, endpoint: endpoints.ipom } : undefined;
 }
 
 /** Zależności zdarzeń medycznych (FHIR/OAuth2): cert WSS do JWT/podpisu + klient mTLS. */
