@@ -18,6 +18,12 @@ export interface SoapEnvelopeOptions {
   readonly contextNamespace?: string;
   /** Prefiks URN nazw atrybutów kontekstu (domyślnie e-skierowanie). */
   readonly contextUrnPrefix?: string;
+  /**
+   * Namespace koperty SOAP (prefiks `soapenv:`). Domyślnie SOAP 1.1 (`SOAPENV_NS`);
+   * usługi z bindingiem soap12 (np. IPOM/POM) wymagają `SOAP12_NS`. Podpis
+   * WS-Security jest niezależny od wersji SOAP (referencje po `wsu:Id`/`local-name`).
+   */
+  readonly soapNamespace?: string;
 }
 
 /**
@@ -29,10 +35,11 @@ export function buildSoapEnvelope(options: SoapEnvelopeOptions): string {
     .map(([prefix, uri]) => ` xmlns:${prefix}="${uri}"`)
     .join("");
   const contextNamespace = options.contextNamespace ?? CONTEXT_NAMESPACE;
+  const soapNamespace = options.soapNamespace ?? SOAPENV_NS;
 
   return (
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<soapenv:Envelope xmlns:soapenv="${SOAPENV_NS}" xmlns:kon="${contextNamespace}"` +
+    `<soapenv:Envelope xmlns:soapenv="${soapNamespace}" xmlns:kon="${contextNamespace}"` +
     ` xmlns:wsse="${WSSE_NS}" xmlns:wsu="${WSU_NS}"${extraNamespaces}>` +
     `<soapenv:Header>` +
     `<wsse:Security soapenv:mustUnderstand="1"></wsse:Security>` +

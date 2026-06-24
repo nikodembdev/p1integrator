@@ -1,6 +1,8 @@
 /** Stałe namespace'ów i algorytmów WS-Security / XML-DSig używane przez P1. */
 
 export const SOAPENV_NS = "http://schemas.xmlsoap.org/soap/envelope/";
+/** Namespace koperty SOAP 1.2 (binding soap12, np. usługa IPOM/POM). */
+export const SOAP12_NS = "http://www.w3.org/2003/05/soap-envelope";
 export const WSSE_NS =
   "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
 export const WSU_NS =

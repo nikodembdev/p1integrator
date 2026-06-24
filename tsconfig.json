@@ -11,6 +11,7 @@
       "@p1/medical-events": ["./packages/medical-events/src/index.ts"],
       "@p1/edm": ["./packages/edm/src/index.ts"],
       "@p1/referral": ["./packages/referral/src/index.ts"],
+      "@p1/ipom": ["./packages/ipom/src/index.ts"],
       "@p1/patient-summary": ["./packages/patient-summary/src/index.ts"]
     }
   },

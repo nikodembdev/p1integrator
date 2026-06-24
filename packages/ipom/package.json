@@ -1,0 +1,43 @@
+{
+  "name": "@p1/ipom",
+  "version": "0.0.0",
+  "description": "Moduł IPOM (Indywidualny Plan Opieki Medycznej / POM)",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@p1/core": "workspace:*",
+    "@p1/cda": "workspace:*",
+    "@p1/signing": "workspace:*",
+    "@p1/transport": "workspace:*",
+    "xmlbuilder2": "^3.1.1",
+    "zod": "^3.24.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
