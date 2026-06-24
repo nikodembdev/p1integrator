@@ -92,6 +92,18 @@ importers:
         specifier: workspace:*
         version: link:../transport
 
+  packages/ezla:
+    dependencies:
+      '@p1/core':
+        specifier: workspace:*
+        version: link:../core
+      fast-xml-parser:
+        specifier: ^4.5.1
+        version: 4.5.6
+      xmlbuilder2:
+        specifier: ^3.1.1
+        version: 3.1.1
+
   packages/ipom:
     dependencies:
       '@p1/cda':
