@@ -14,3 +14,4 @@ export * from "./session.js";
 export * from "./zla-document.js";
 export * from "./documents.js";
 export * from "./read.js";
+export * from "./signer.js";

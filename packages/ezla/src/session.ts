@@ -36,10 +36,16 @@ export async function loginWithSignature(
   const response = await sendZusRequest("zalogujPodpisem", body, transport);
   if (!response.ok) return response;
 
+  // ZUS przy odrzuceniu zwraca puste <IdSesji/> + Rezultat z kodem/opisem błędu.
   const idSesji = findText(response.value.body, "IdSesji");
-  if (idSesji === undefined) {
-    const reason = response.value.result.errorMessage ?? "brak IdSesji w odpowiedzi";
-    return err(new P1AuthenticationError(`Logowanie do ZUS e-ZLA nieudane: ${reason}`));
+  if (idSesji === undefined || idSesji === "") {
+    const { errorCode, errorMessage } = response.value.result;
+    const reason = errorMessage ?? "brak IdSesji w odpowiedzi";
+    return err(
+      new P1AuthenticationError(
+        `Logowanie do ZUS e-ZLA nieudane${errorCode ? ` [${errorCode}]` : ""}: ${reason}`,
+      ),
+    );
   }
   return ok({ idSesji });
 }
