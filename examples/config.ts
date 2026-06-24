@@ -85,6 +85,10 @@ export const endpoints = {
   // Zdarzenia medyczne: REST/FHIR + OAuth2 (inny host i stack niż SOAP wyżej).
   zmToken: e.P1_ZM_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
   zmFhir: e.P1_ZM_FHIR_URL ?? "https://isus.ezdrowie.gov.pl/fhir",
+  // Patient Summary (Karta Pacjenta): REST + OAuth2 (ten sam token co ZM, scope patient-summary).
+  // Środowisko integracyjne P1 = isus; dokumentacja SGP wskazuje też tsus/t2sus (inny host, nieosiągalny stąd).
+  patientSummary: e.P1_PS_BASE_URL ?? "https://isus.ezdrowie.gov.pl",
+  patientSummaryToken: e.P1_PS_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
   // EDM (IHE XDS.b): token SAML + operacje rejestru/repozytorium.
   edmToken:
     e.P1_EDM_TOKEN_ENDPOINT ??

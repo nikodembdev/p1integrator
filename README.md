@@ -11,6 +11,7 @@ dziedzinowe API.
 - ✅ **e-skierowanie** - 7 typów dokumentów + anulowanie, każdy zwalidowany Schematronem P1 i XSD; **potwierdzone end-to-end na środowisku integracyjnym** (P1 zwraca `Sukces` + `kodSkierowania`). Zob. [docs/eskierowania.md](docs/eskierowania.md).
 - ✅ **podpisywarka XAdES in-process** - podpis dokumentu bez zewnętrznego serwisu. Zob. [docs/podpisywarka.md](docs/podpisywarka.md).
 - ✅ **e-recepta** - wystawianie (pakiet recept) + anulowanie, odpłatności i uprawnienia dodatkowe; zwalidowane Schematronem P1 i XSD; **potwierdzone end-to-end na integracji** (`Sukces`). Zob. [docs/erecepta.md](docs/erecepta.md).
+- ✅ **Patient Summary** (Karta Pacjenta) - pobranie podsumowania pacjenta (PDF / HL7 CDA) przez REST + OAuth2; **potwierdzone end-to-end na integracji** (zwrócony dokument „Karta pacjenta").
 
 ## Co potrafi (w skrócie)
 
@@ -41,8 +42,9 @@ packages/
 ├── cda/           # typowany builder CDA PL IG 1.3.2 (generyczny buildClinicalDocument)
 ├── signing/       # podpisywarka XAdES-BES in-process (adapter portu DocumentSigner)
 ├── transport/     # HttpClient mTLS + koperty SOAP + WS-Security + parser odpowiedzi
-├── referral/      # e-skierowanie: typy dokumentów + orkiestracja wysyłki
-└── prescription/  # e-recepta: recepta na lek + anulowanie, transport pakietu recept
+├── referral/        # e-skierowanie: typy dokumentów + orkiestracja wysyłki
+├── prescription/    # e-recepta: recepta na lek + anulowanie, transport pakietu recept
+└── patient-summary/ # Patient Summary (Karta Pacjenta): pobranie podsumowania (REST + OAuth2)
 ```
 
 Wzorzec **porty + adaptery**: czyste buildery i orkiestracja zależą od portów

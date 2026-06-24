@@ -14,6 +14,7 @@ export default {
         "referral",
         "medical-events",
         "edm",
+        "patient-summary",
         "repo",
         "ci",
         "deps",
