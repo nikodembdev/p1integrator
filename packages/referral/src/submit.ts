@@ -2,20 +2,13 @@ import {
   type CallContext,
   type Clock,
   type DocumentSigner,
-  err,
   type HttpClient,
   ok,
   type OperationOutcome,
   type P1Error,
-  P1TransportError,
   type Result,
 } from "@p1/core";
-import {
-  buildSoapEnvelope,
-  parseSoapResponse,
-  signWsSecurity,
-  type WsSecurityCertificate,
-} from "@p1/transport";
+import { sendSignedSoap, type WsSecurityCertificate } from "@p1/transport";
 
 const WS_NS = "http://csioz.gov.pl/p1/eskierowanie/ws/v20180509";
 const MT_NS = "http://csioz.gov.pl/p1/eskierowanie/mt/v20180509";
@@ -65,34 +58,12 @@ export async function submitReferralDocument(
     `<mt:tresc>${base64}</mt:tresc>` +
     `</dokumentSkierowania></ws:ZapisDokumentuSkierowaniaRequest>`;
 
-  const envelope = buildSoapEnvelope({
-    context: transport.context,
+  const parsed = await sendSignedSoap(transport, {
     body,
+    soapAction: SOAP_ACTION,
     namespaces: { ws: WS_NS, mt: MT_NS },
+    transportErrorMessage: "Referral submission request failed",
   });
-
-  const now = transport.clock?.now();
-  const signed = signWsSecurity(
-    envelope,
-    now !== undefined
-      ? { certificate: transport.wsSecurityCertificate, now }
-      : { certificate: transport.wsSecurityCertificate },
-  );
-
-  let responseBody: string;
-  try {
-    const response = await transport.httpClient.send({
-      url: transport.endpoint,
-      method: "POST",
-      headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: SOAP_ACTION },
-      body: signed,
-    });
-    responseBody = response.body;
-  } catch (cause) {
-    return err(new P1TransportError("Referral submission request failed", { cause }));
-  }
-
-  const parsed = parseSoapResponse(responseBody);
   if (!parsed.ok) return parsed;
 
   const referralCode = findText(parsed.value.body, "kodSkierowania");

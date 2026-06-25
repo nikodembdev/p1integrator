@@ -2,21 +2,13 @@ import {
   type CallContext,
   type Clock,
   type DocumentSigner,
-  err,
   type HttpClient,
   ok,
   type OperationOutcome,
   type P1Error,
-  P1TransportError,
   type Result,
 } from "@p1/core";
-import {
-  buildSoapEnvelope,
-  parseSoapResponse,
-  SOAP12_NS,
-  signWsSecurity,
-  type WsSecurityCertificate,
-} from "@p1/transport";
+import { sendSignedSoap, type WsSecurityCertificate } from "@p1/transport";
 import { buildIpomCancellationCda, type IpomCancellationInput } from "./anulowanie.js";
 import { buildIpomCda } from "./document.js";
 import { buildIpomScheduleCda } from "./harmonogram.js";
@@ -193,35 +185,13 @@ async function sendIpomDocument(
     `<ws:${requestRoot}>` + `<trescDokumentu>${base64}</trescDokumentu>` + `</ws:${requestRoot}>`;
 
   // IPOM ma binding soap12 - koperta w namespace SOAP 1.2; action idzie w Content-Type.
-  const envelope = buildSoapEnvelope({
-    context: transport.context,
+  const parsed = await sendSignedSoap(transport, {
     body,
+    soapAction,
     namespaces: { ws: IPOM_WS_NS },
-    soapNamespace: SOAP12_NS,
+    soapVersion: "1.2",
+    transportErrorMessage,
   });
-
-  const now = transport.clock?.now();
-  const signed = signWsSecurity(
-    envelope,
-    now !== undefined
-      ? { certificate: transport.wsSecurityCertificate, now }
-      : { certificate: transport.wsSecurityCertificate },
-  );
-
-  let responseBody: string;
-  try {
-    const response = await transport.httpClient.send({
-      url: transport.endpoint,
-      method: "POST",
-      headers: { "Content-Type": `application/soap+xml; charset=utf-8; action="${soapAction}"` },
-      body: signed,
-    });
-    responseBody = response.body;
-  } catch (cause) {
-    return err(new P1TransportError(transportErrorMessage, { cause }));
-  }
-
-  const parsed = parseSoapResponse(responseBody);
   if (!parsed.ok) return parsed;
 
   const verification = findText(parsed.value.body, "wynikWeryfikacji");

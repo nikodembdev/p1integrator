@@ -1,18 +1,6 @@
-import {
-  err,
-  ok,
-  type OperationOutcome,
-  type P1Error,
-  P1TransportError,
-  type Result,
-} from "@p1/core";
+import { ok, type OperationOutcome, type P1Error, type Result } from "@p1/core";
 import { CDA_OID } from "@p1/cda";
-import {
-  buildSoapEnvelope,
-  parseSoapResponse,
-  type ParsedSoapResponse,
-  signWsSecurity,
-} from "@p1/transport";
+import { type ParsedSoapResponse, sendSignedSoap } from "@p1/transport";
 import {
   PRESCRIPTION_CONTEXT_NAMESPACE,
   PRESCRIPTION_CONTEXT_URN_PREFIX,
@@ -646,42 +634,19 @@ export async function searchCancellationDocuments(
 // --- wewnętrzne: wysyłka + budowa elementów + mapowanie wyników ---
 
 /** Wspólna wysyłka koperty (kontekst e-recepty + WS-Security + mTLS) i parsowanie. */
-async function callService(
+function callService(
   body: string,
   soapAction: string,
   transport: PrescriptionQueryTransport,
 ): Promise<Result<ParsedSoapResponse, P1Error>> {
-  const envelope = buildSoapEnvelope({
-    context: transport.context,
+  return sendSignedSoap(transport, {
     body,
+    soapAction,
     namespaces: { ws: PRESCRIPTION_WS_NS, r: PRESCRIPTION_MT_NS, wsp: PRESCRIPTION_COMMON_NS },
     contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
     contextUrnPrefix: PRESCRIPTION_CONTEXT_URN_PREFIX,
+    transportErrorMessage: `Prescription query (${soapAction}) request failed`,
   });
-
-  const now = transport.clock?.now();
-  const signed = signWsSecurity(envelope, {
-    certificate: transport.wsSecurityCertificate,
-    contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
-    ...(now !== undefined ? { now } : {}),
-  });
-
-  let responseBody: string;
-  try {
-    const response = await transport.httpClient.send({
-      url: transport.endpoint,
-      method: "POST",
-      headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: soapAction },
-      body: signed,
-    });
-    responseBody = response.body;
-  } catch (cause) {
-    return err(
-      new P1TransportError(`Prescription query (${soapAction}) request failed`, { cause }),
-    );
-  }
-
-  return parseSoapResponse(responseBody);
 }
 
 /** Element daty (ISO dateTime) lub pusty, gdy brak. */

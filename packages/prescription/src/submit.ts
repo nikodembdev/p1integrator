@@ -2,20 +2,13 @@ import {
   type CallContext,
   type Clock,
   type DocumentSigner,
-  err,
   type HttpClient,
   ok,
   type OperationOutcome,
   type P1Error,
-  P1TransportError,
   type Result,
 } from "@p1/core";
-import {
-  buildSoapEnvelope,
-  parseSoapResponse,
-  signWsSecurity,
-  type WsSecurityCertificate,
-} from "@p1/transport";
+import { sendSignedSoap, type WsSecurityCertificate } from "@p1/transport";
 import {
   buildPrescriptionCancellationCda,
   type PrescriptionCancellationInput,
@@ -107,35 +100,14 @@ export async function submitPrescriptionPackage(
     `<r:recepty>${receptyXml.join("")}</r:recepty>` +
     `</pakietRecept></ws:ZapisPakietuReceptRequest>`;
 
-  const envelope = buildSoapEnvelope({
-    context: transport.context,
+  const parsed = await sendSignedSoap(transport, {
     body,
+    soapAction: SOAP_ACTION,
     namespaces: { ws: PRESCRIPTION_WS_NS, r: PRESCRIPTION_MT_NS },
     contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
     contextUrnPrefix: PRESCRIPTION_CONTEXT_URN_PREFIX,
+    transportErrorMessage: "Prescription package submission request failed",
   });
-
-  const now = transport.clock?.now();
-  const signed = signWsSecurity(envelope, {
-    certificate: transport.wsSecurityCertificate,
-    contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
-    ...(now !== undefined ? { now } : {}),
-  });
-
-  let responseBody: string;
-  try {
-    const response = await transport.httpClient.send({
-      url: transport.endpoint,
-      method: "POST",
-      headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: SOAP_ACTION },
-      body: signed,
-    });
-    responseBody = response.body;
-  } catch (cause) {
-    return err(new P1TransportError("Prescription package submission request failed", { cause }));
-  }
-
-  const parsed = parseSoapResponse(responseBody);
   if (!parsed.ok) return parsed;
 
   const packageCode = findText(parsed.value.body, "kodPakietuRecept");
@@ -182,35 +154,14 @@ export async function submitPrescriptionCancellation(
     `<dokumentAnulowaniaRecepty><r:tresc>${base64}</r:tresc></dokumentAnulowaniaRecepty>` +
     `</ws:ZapisDokumentuAnulowaniaReceptyRequest>`;
 
-  const envelope = buildSoapEnvelope({
-    context: transport.context,
+  const parsed = await sendSignedSoap(transport, {
     body,
+    soapAction: SOAP_ACTION_CANCEL,
     namespaces: { ws: PRESCRIPTION_WS_NS, r: PRESCRIPTION_MT_NS },
     contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
     contextUrnPrefix: PRESCRIPTION_CONTEXT_URN_PREFIX,
+    transportErrorMessage: "Prescription cancellation request failed",
   });
-
-  const now = transport.clock?.now();
-  const signedEnvelope = signWsSecurity(envelope, {
-    certificate: transport.wsSecurityCertificate,
-    contextNamespace: PRESCRIPTION_CONTEXT_NAMESPACE,
-    ...(now !== undefined ? { now } : {}),
-  });
-
-  let responseBody: string;
-  try {
-    const response = await transport.httpClient.send({
-      url: transport.endpoint,
-      method: "POST",
-      headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: SOAP_ACTION_CANCEL },
-      body: signedEnvelope,
-    });
-    responseBody = response.body;
-  } catch (cause) {
-    return err(new P1TransportError("Prescription cancellation request failed", { cause }));
-  }
-
-  const parsed = parseSoapResponse(responseBody);
   if (!parsed.ok) return parsed;
   return ok(parsed.value.outcome !== undefined ? { outcome: parsed.value.outcome } : {});
 }
