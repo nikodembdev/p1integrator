@@ -1,12 +1,5 @@
-import {
-  err,
-  ok,
-  type OperationOutcome,
-  type P1Error,
-  P1TransportError,
-  type Result,
-} from "@p1/core";
-import { buildSoapEnvelope, parseSoapResponse, SOAP12_NS, signWsSecurity } from "@p1/transport";
+import { ok, type OperationOutcome, type P1Error, type Result } from "@p1/core";
+import { type ParsedSoapResponse, sendSignedSoap } from "@p1/transport";
 import { IPOM_WS_NS, type IpomTransport } from "./submit.js";
 import { collectRecords, fieldText, findText } from "./xml-walk.js";
 
@@ -262,50 +255,18 @@ async function readVersion(
   return ok(parseReadResult(result.value.body, result.value.outcome));
 }
 
-interface QueryResponse {
-  readonly body: unknown;
-  readonly outcome?: OperationOutcome;
-}
-
-async function sendQuery(
+function sendQuery(
   requestRoot: string,
   bodyInner: string,
   soapAction: string,
   transport: IpomTransport,
-): Promise<Result<QueryResponse, P1Error>> {
-  const envelope = buildSoapEnvelope({
-    context: transport.context,
+): Promise<Result<ParsedSoapResponse, P1Error>> {
+  return sendSignedSoap(transport, {
     body: `<ws:${requestRoot}>${bodyInner}</ws:${requestRoot}>`,
+    soapAction,
     namespaces: { ws: IPOM_WS_NS, wsp: WSPOLNE_NS },
-    soapNamespace: SOAP12_NS,
-  });
-
-  const now = transport.clock?.now();
-  const signed = signWsSecurity(
-    envelope,
-    now !== undefined
-      ? { certificate: transport.wsSecurityCertificate, now }
-      : { certificate: transport.wsSecurityCertificate },
-  );
-
-  let responseBody: string;
-  try {
-    const response = await transport.httpClient.send({
-      url: transport.endpoint,
-      method: "POST",
-      headers: { "Content-Type": `application/soap+xml; charset=utf-8; action="${soapAction}"` },
-      body: signed,
-    });
-    responseBody = response.body;
-  } catch (cause) {
-    return err(new P1TransportError("IPOM query request failed", { cause }));
-  }
-
-  const parsed = parseSoapResponse(responseBody);
-  if (!parsed.ok) return parsed;
-  return ok({
-    body: parsed.value.body,
-    ...(parsed.value.outcome !== undefined ? { outcome: parsed.value.outcome } : {}),
+    soapVersion: "1.2",
+    transportErrorMessage: "IPOM query request failed",
   });
 }
 
