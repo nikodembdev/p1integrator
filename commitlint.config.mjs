@@ -16,6 +16,7 @@ export default {
         "medical-events",
         "edm",
         "patient-summary",
+        "ezla",
         "repo",
         "ci",
         "deps",
