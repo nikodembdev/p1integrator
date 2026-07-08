@@ -80,7 +80,7 @@ cp .env.example .local/p1.env
 # wgraj certyfikaty do .local/certs/<nazwa_podmiotu>/
 ```
 
-Plik `.local/` jest w `.gitignore` — hasła i certyfikaty nigdy nie trafiają do repo.
+Plik `.local/` jest w `.gitignore` - hasła i certyfikaty nigdy nie trafiają do repo.
 
 Zmienne w `.env.example` są skomentowane; kluczowe:
 
@@ -131,8 +131,8 @@ akceptuje przez `pfx`. Biblioteka obsługuje to transparentnie przez `parseP12`
 ## Jak powstawał projekt
 
 Projekt jest pisany z Claude Code jako głównym narzędziem programistycznym. Nie jest to
-jednak wyrzucanie promptów i kopiowanie wyników — każdy moduł ma pokrycie testami
+jednak wyrzucanie promptów i kopiowanie wyników, każdy moduł ma pokrycie testami
 jednostkowymi, każdy typ dokumentu przechodzi przez Schematron P1 i XSD, a każdy
 moduł jest oznaczany jako stabilny dopiero po potwierdzeniu end-to-end na środowisku
-integracyjnym P1. Claude jest tutaj narzędziem do pisania kodu, tak jak IDE czy kompilator
-— odpowiedzialność za poprawność i weryfikację leży po stronie autora.
+integracyjnym P1. Claude jest tutaj narzędziem do pisania kodu, tak jak IDE czy kompilator,
+odpowiedzialność za poprawność i weryfikację leży po stronie autora.
