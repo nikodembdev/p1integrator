@@ -9,7 +9,9 @@ import { createXadesDocumentSigner } from "@p1/signing";
 import { createNodeHttpClient, parseP12, type WsSecurityCertificate } from "@p1/transport";
 import type { DocumentSigner, HttpClient } from "@p1/core";
 
-const ENV_FILE = resolve(import.meta.dirname, "../.local/p1.env");
+const ENV_FILE = process.env.P1_ENV_FILE
+  ? resolve(process.cwd(), process.env.P1_ENV_FILE)
+  : resolve(import.meta.dirname, "../.local/p1.env");
 if (existsSync(ENV_FILE) && typeof process.loadEnvFile === "function") {
   process.loadEnvFile(ENV_FILE);
 }
@@ -117,6 +119,13 @@ const certDir =
   e.P1_CERT_DIR ?? resolve(import.meta.dirname, "../.local/certs/Podmiot_leczniczy_713");
 const certPassword = e.CERT_PASSWORD ?? e.P1_CERT_PASSWORD ?? "";
 
+// Ścieżki do konkretnych plików certów — nadpisują logikę certDir+nazwy.
+// Przydatne gdy certyf. nie pasują do konwencji nazw (np. środowisko PROD).
+const tlsP12Path = e.P1_TLS_P12 ?? resolve(certDir, "Podmiot_leczniczy_713-tls.p12");
+const wssP12Path = e.P1_WSS_P12 ?? resolve(certDir, "Podmiot_leczniczy_713-wss.p12");
+const signP12Path = e.P1_SIGN_P12 ?? resolve(certDir, "Adam713 Leczniczy.p12");
+const signP12Password = e.P1_SIGN_PASSWORD ?? certPassword;
+
 /** Zależności transportu (bez endpointu) - wspólne dla skierowań i recept. */
 export interface TransportDeps {
   readonly context: CallContext;
@@ -130,22 +139,24 @@ export interface TransportDeps {
  * certyfikatów/hasła - wtedy przykład pokaże tylko zbudowany dokument (offline).
  */
 export function tryBuildTransport(): (TransportDeps & { endpoint: string }) | undefined {
-  const tlsP12 = resolve(certDir, "Podmiot_leczniczy_713-tls.p12");
-  const signP12 = resolve(certDir, "Adam713 Leczniczy.p12");
-  const wssP12 = resolve(certDir, "Podmiot_leczniczy_713-wss.p12");
-  if (!certPassword || !existsSync(tlsP12) || !existsSync(signP12) || !existsSync(wssP12)) {
+  if (
+    !certPassword ||
+    !existsSync(tlsP12Path) ||
+    !existsSync(signP12Path) ||
+    !existsSync(wssP12Path)
+  ) {
     return undefined;
   }
 
-  const tls = parseP12(readFileSync(tlsP12), certPassword);
+  const tls = parseP12(readFileSync(tlsP12Path), certPassword);
   return {
     context,
     documentSigner: createXadesDocumentSigner({
-      certificate: { p12: readFileSync(signP12), password: certPassword },
+      certificate: { p12: readFileSync(signP12Path), password: signP12Password },
     }),
     httpClient: createNodeHttpClient({ tls: { key: tls.privateKeyPem, cert: tls.certificatePem } }),
-    wsSecurityCertificate: parseP12(readFileSync(wssP12), certPassword),
-    endpoint: "", // ustawiany per usługa niżej
+    wsSecurityCertificate: parseP12(readFileSync(wssP12Path), certPassword),
+    endpoint: "",
   };
 }
 
@@ -184,13 +195,11 @@ export interface ZmDeps {
  * Zwraca `undefined`, gdy brak certów/hasła (zdarzenie wymaga sieci - bez certów pomijamy).
  */
 export function zmTransport(): ZmDeps | undefined {
-  const tlsP12 = resolve(certDir, "Podmiot_leczniczy_713-tls.p12");
-  const wssP12 = resolve(certDir, "Podmiot_leczniczy_713-wss.p12");
-  if (!certPassword || !existsSync(tlsP12) || !existsSync(wssP12)) {
+  if (!certPassword || !existsSync(tlsP12Path) || !existsSync(wssP12Path)) {
     return undefined;
   }
-  const tls = parseP12(readFileSync(tlsP12), certPassword);
-  const wss = parseP12(readFileSync(wssP12), certPassword);
+  const tls = parseP12(readFileSync(tlsP12Path), certPassword);
+  const wss = parseP12(readFileSync(wssP12Path), certPassword);
   return {
     privateKeyPem: wss.privateKeyPem,
     certificatePem: wss.certificatePem,
@@ -230,14 +239,12 @@ export const edmPatientCx = `${patient.pesel}^^^&${EDM_OID.pesel}&ISO`;
  * gdy brak certów/hasła (operacje EDM wymagają sieci).
  */
 export function edmTransport(): EdmDeps | undefined {
-  const tlsP12 = resolve(certDir, "Podmiot_leczniczy_713-tls.p12");
-  const wssP12 = resolve(certDir, "Podmiot_leczniczy_713-wss.p12");
-  if (!certPassword || !existsSync(tlsP12) || !existsSync(wssP12)) {
+  if (!certPassword || !existsSync(tlsP12Path) || !existsSync(wssP12Path)) {
     return undefined;
   }
-  const tls = parseP12(readFileSync(tlsP12), certPassword);
+  const tls = parseP12(readFileSync(tlsP12Path), certPassword);
   return {
-    wsSecurityCertificate: parseP12(readFileSync(wssP12), certPassword),
+    wsSecurityCertificate: parseP12(readFileSync(wssP12Path), certPassword),
     httpClient: createNodeHttpClient({ tls: { key: tls.privateKeyPem, cert: tls.certificatePem } }),
     tlsKeyPem: tls.privateKeyPem,
     tlsCertPem: tls.certificatePem,
