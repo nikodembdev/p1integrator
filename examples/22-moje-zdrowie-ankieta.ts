@@ -12,13 +12,13 @@ import {
   buildSgoaTokenRequest,
   buildSurveyResponse,
   createSgoaClient,
+  fillSurveyDefinition,
   findEligibleQuestionnaires,
   getSurveyPrintout,
   getSurveyStructuredSummary,
   searchSurveyResponses,
   submitSurveyResponse,
   type SurveyDefinition,
-  type SurveyDefinitionItem,
   type SurveyResponseItemInput,
 } from "@p1/moje-zdrowie";
 import { account, endpoints, patient, zmTransport } from "./config.js";
@@ -30,42 +30,22 @@ const pesel = e.P1_SGOA_PATIENT ?? patient.pesel;
 const givenNames = e.P1_SGOA_PATIENT_GIVEN ? [e.P1_SGOA_PATIENT_GIVEN] : patient.givenNames;
 const familyName = e.P1_SGOA_PATIENT_FAMILY ?? patient.familyName;
 
-/** Deterministyczne wypełnienie definicji (demo): liczby w granicach, pierwszy wariant choice. */
-function fillDefinition(definition: SurveyDefinition): SurveyResponseItemInput[] {
+/**
+ * Odpowiedzi demo: automat `fillSurveyDefinition` (enableWhen, granice liczb)
+ * + jawne wartości antropometryczne - BMI to pole wyliczane, serwer weryfikuje
+ * zgodność z wyrażeniem z definicji (REG.16969).
+ */
+function fillDemoAnswers(definition: SurveyDefinition): SurveyResponseItemInput[] {
   const WZROST = 175;
-  const MASA = 80;
-  const fill = (item: SurveyDefinitionItem): SurveyResponseItemInput | undefined => {
-    if (item.enableWhen !== undefined) return undefined; // pytania warunkowe pomijamy
-    const base = { linkId: item.linkId, text: item.text ?? item.linkId };
-    if (item.type === "group") {
-      const children = (item.items ?? []).map(fill).filter((i) => i !== undefined);
-      return children.length > 0 ? { ...base, items: children } : undefined;
-    }
-    if (item.linkId === "wzrost") return { ...base, answers: [WZROST] };
-    if (item.linkId === "masa-ciala") return { ...base, answers: [MASA] };
-    if (item.linkId === "bmi") {
-      // Pole wyliczane - serwer sprawdza zgodność z wyrażeniem (REG.16969).
-      const bmi = Math.round((MASA / (WZROST / 100) ** 2) * 10) / 10;
-      return { ...base, answers: [{ decimal: bmi }] };
-    }
-    switch (item.type) {
-      case "boolean":
-        return { ...base, answers: [false] };
-      case "integer":
-        return { ...base, answers: [item.minValue ?? 1] };
-      case "decimal":
-        return { ...base, answers: [{ decimal: item.minValue ?? 1 }] };
-      case "choice": {
-        const first = item.answerOptions?.[0]?.value;
-        return first !== undefined ? { ...base, answers: [first] } : undefined;
-      }
-      case "string":
-        return { ...base, answers: ["brak"] };
-      default:
-        return undefined;
-    }
-  };
-  return definition.items.map(fill).filter((item) => item !== undefined);
+  const MASA = 80.5;
+  const BMI = Math.round((MASA / (WZROST / 100) ** 2) * 10) / 10;
+  return fillSurveyDefinition(definition, {
+    overrides: {
+      wzrost: [WZROST],
+      "masa-ciala": [{ decimal: MASA }],
+      bmi: [{ decimal: BMI }],
+    },
+  });
 }
 
 const zm = zmTransport();
@@ -164,7 +144,7 @@ if (surveyId !== undefined) {
     privacyPolicyAcceptanceDate: new Date().toISOString(),
     questionnaireUrl: definition.url,
     patient: { pesel, givenNames, familyName },
-    items: fillDefinition(definition),
+    items: fillDemoAnswers(definition),
   });
   if (!submitted.ok) {
     console.error(`Błąd zapisu ankiety [${submitted.error.kind}]:`, submitted.error.message);

@@ -152,6 +152,9 @@ function parseDefinitionItem(raw: unknown): SurveyDefinitionItem {
   const enableWhen = asArray(item["enableWhen"])
     .map(asObject)
     .filter((e): e is FhirObject => e !== undefined);
+  const enableBehaviorRaw = asString(item["enableBehavior"]);
+  const enableBehavior =
+    enableBehaviorRaw === "all" || enableBehaviorRaw === "any" ? enableBehaviorRaw : undefined;
   const answerOptions = asArray(item["answerOption"]).map(parseAnswerOption);
   const tooltip = asString(extensionValue(item, SGOA_EXT.TOOLTIP));
   const minValue = numericExtension(item, SGOA_EXT.MIN_VALUE);
@@ -170,6 +173,7 @@ function parseDefinitionItem(raw: unknown): SurveyDefinitionItem {
     ...(required !== undefined ? { required } : {}),
     ...(readOnly !== undefined ? { readOnly } : {}),
     ...(enableWhen.length > 0 ? { enableWhen } : {}),
+    ...(enableBehavior !== undefined ? { enableBehavior } : {}),
     ...(answerOptions.length > 0 ? { answerOptions } : {}),
     ...(tooltip !== undefined ? { tooltip } : {}),
     ...(minValue !== undefined ? { minValue } : {}),

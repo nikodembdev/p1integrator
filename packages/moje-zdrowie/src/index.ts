@@ -15,6 +15,7 @@ export * from "./types.js";
 export * from "./oauth.js";
 export * from "./client.js";
 export * from "./questionnaire.js";
+export * from "./form-filler.js";
 export * from "./survey-response.js";
 export * from "./printouts.js";
 export * from "./exam-plan.js";

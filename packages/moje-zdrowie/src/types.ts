@@ -98,6 +98,8 @@ export interface SurveyDefinitionItem {
   readonly readOnly?: boolean;
   /** Warunki widoczności (surowe FHIR `enableWhen` - do interpretacji przez UI). */
   readonly enableWhen?: readonly Record<string, unknown>[];
+  /** Jak łączyć wiele warunków `enableWhen`: wszystkie (`all`) czy dowolny (`any`). */
+  readonly enableBehavior?: "all" | "any";
   readonly answerOptions?: readonly SurveyAnswerOption[];
   /** Podpowiedź (tooltip) do pytania. */
   readonly tooltip?: string;

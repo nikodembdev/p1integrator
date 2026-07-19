@@ -18,6 +18,7 @@ import {
   acceptExamPlan,
   buildSgoaTokenRequest,
   createSgoaClient,
+  fillSurveyDefinition,
   findEligibleQuestionnaires,
   getExamPlan,
   getSurveyPrintout,
@@ -26,8 +27,6 @@ import {
   submitSurveyResponse,
   withdrawExamPlan,
   type SgoaClient,
-  type SurveyDefinition,
-  type SurveyDefinitionItem,
   type SurveyResponseItemInput,
 } from "@p1/moje-zdrowie";
 import { createNodeHttpClient, parseP12 } from "@p1/transport";
@@ -143,7 +142,7 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)("e2e SGO-A (Moje Zd
             givenNames: [patientGiven],
             familyName: patientFamily,
           },
-          items: fillDefinition(definition),
+          items: fillTestAnswers(definition),
         });
         expect(submitted.ok, !submitted.ok ? String(submitted.error) : "").toBe(true);
         if (!submitted.ok) return;
@@ -174,43 +173,21 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)("e2e SGO-A (Moje Zd
 });
 
 /**
- * Wypełnia definicję ankiety deterministycznymi odpowiedziami: liczby w granicach
- * min/max, pierwszy wariant choice, boolean=false, string stały. Pola wyliczane
- * liczy dla znanego przypadku BMI (masa/wzrost ustawiane niżej); itemy warunkowe
- * (enableWhen) pomijamy - odpowiadamy tylko na bezwarunkowe.
+ * Odpowiedzi testowe: automat `fillSurveyDefinition` (enableWhen, granice liczb)
+ * + jawne wartości antropometryczne, bo BMI to pole wyliczane - serwer weryfikuje
+ * zgodność z wyrażeniem z definicji (REG.16969).
  */
-function fillDefinition(definition: SurveyDefinition): SurveyResponseItemInput[] {
+function fillTestAnswers(
+  definition: Parameters<typeof fillSurveyDefinition>[0],
+): SurveyResponseItemInput[] {
   const WZROST = 175;
-  const MASA = 80;
-  const fill = (item: SurveyDefinitionItem): SurveyResponseItemInput | undefined => {
-    if (item.enableWhen !== undefined) return undefined;
-    const base = { linkId: item.linkId, text: item.text ?? item.linkId };
-    if (item.type === "group") {
-      const children = (item.items ?? []).map(fill).filter((i) => i !== undefined);
-      return children.length > 0 ? { ...base, items: children } : undefined;
-    }
-    if (item.linkId === "wzrost") return { ...base, answers: [WZROST] };
-    if (item.linkId === "masa-ciala") return { ...base, answers: [MASA] };
-    if (item.linkId === "bmi") {
-      const bmi = Math.round((MASA / (WZROST / 100) ** 2) * 10) / 10;
-      return { ...base, answers: [{ decimal: bmi }] };
-    }
-    switch (item.type) {
-      case "boolean":
-        return { ...base, answers: [false] };
-      case "integer":
-        return { ...base, answers: [item.minValue ?? 1] };
-      case "decimal":
-        return { ...base, answers: [{ decimal: item.minValue ?? 1 }] };
-      case "choice": {
-        const first = item.answerOptions?.[0]?.value;
-        return first !== undefined ? { ...base, answers: [first] } : undefined;
-      }
-      case "string":
-        return { ...base, answers: ["brak"] };
-      default:
-        return undefined;
-    }
-  };
-  return definition.items.map(fill).filter((item) => item !== undefined);
+  const MASA = 80.5;
+  const BMI = Math.round((MASA / (WZROST / 100) ** 2) * 10) / 10;
+  return fillSurveyDefinition(definition, {
+    overrides: {
+      wzrost: [WZROST],
+      "masa-ciala": [{ decimal: MASA }],
+      bmi: [{ decimal: BMI }],
+    },
+  });
 }
