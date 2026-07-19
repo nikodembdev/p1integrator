@@ -1,4 +1,4 @@
-export type HttpMethod = "GET" | "POST";
+export type HttpMethod = "GET" | "POST" | "PUT";
 
 export interface HttpRequest {
   readonly url: string;
