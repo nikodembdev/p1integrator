@@ -24,7 +24,11 @@ import {
 import { account, endpoints, patient, zmTransport } from "./config.js";
 
 const e = process.env;
+// Pacjent testowy SGO-A (z projektu testów CEZ) - przy zapisie imię/nazwisko
+// muszą zgadzać się z CWUb, więc są konfigurowalne razem z PESEL-em.
 const pesel = e.P1_SGOA_PATIENT ?? patient.pesel;
+const givenNames = e.P1_SGOA_PATIENT_GIVEN ? [e.P1_SGOA_PATIENT_GIVEN] : patient.givenNames;
+const familyName = e.P1_SGOA_PATIENT_FAMILY ?? patient.familyName;
 
 /** Deterministyczne wypełnienie definicji (demo): liczby w granicach, pierwszy wariant choice. */
 function fillDefinition(definition: SurveyDefinition): SurveyResponseItemInput[] {
@@ -70,7 +74,7 @@ if (!zm) {
   const preview = buildSurveyResponse({
     privacyPolicyAcceptanceDate: new Date().toISOString(),
     questionnaireUrl: "https://ezdrowie.gov.pl/fhir/Questionnaire/Moje-Zdrowie.2",
-    patient: { pesel, givenNames: patient.givenNames, familyName: patient.familyName },
+    patient: { pesel, givenNames, familyName },
     items: [
       {
         linkId: "dane-podstawowe",
@@ -159,7 +163,7 @@ if (surveyId !== undefined) {
   const submitted = await submitSurveyResponse(client, {
     privacyPolicyAcceptanceDate: new Date().toISOString(),
     questionnaireUrl: definition.url,
-    patient: { pesel, givenNames: patient.givenNames, familyName: patient.familyName },
+    patient: { pesel, givenNames, familyName },
     items: fillDefinition(definition),
   });
   if (!submitted.ok) {

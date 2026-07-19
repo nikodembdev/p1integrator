@@ -38,6 +38,11 @@ const RUN = process.env.P1_E2E === "1";
 const WRITE = process.env.P1_SGOA_E2E_WRITE === "1";
 const tokenEndpoint = process.env.P1_SGOA_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token";
 const fhirBaseUrl = process.env.P1_SGOA_FHIR_URL ?? "https://isus.ezdrowie.gov.pl/sgoa/fhir";
+// Pacjent testowy SGO-A (z projektu testów CEZ) - może być inny niż pacjent CWUb
+// używany w SOAP-owych e2e; przy zapisie imię/nazwisko muszą zgadzać się z CWUb.
+const patientPesel = process.env.P1_SGOA_PATIENT ?? a.patient.pesel;
+const patientGiven = process.env.P1_SGOA_PATIENT_GIVEN ?? a.patient.given;
+const patientFamily = process.env.P1_SGOA_PATIENT_FAMILY ?? a.patient.family;
 
 const wssPath = resolve(a.certDir, "Podmiot_leczniczy_713-wss.p12");
 const tlsPath = resolve(a.certDir, "Podmiot_leczniczy_713-tls.p12");
@@ -77,7 +82,7 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)("e2e SGO-A (Moje Zd
   });
 
   it("wyszukuje definicje dostępne dla pacjenta ($eligible)", async () => {
-    const eligible = await findEligibleQuestionnaires(client, { pesel: a.patient.pesel });
+    const eligible = await findEligibleQuestionnaires(client, { pesel: patientPesel });
     expect(eligible.ok, !eligible.ok ? String(eligible.error) : "").toBe(true);
     if (!eligible.ok) return;
     // Lista może być pusta (pacjent ma już ankietę / wiek poza zakresem) - to poprawny wynik.
@@ -88,7 +93,7 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)("e2e SGO-A (Moje Zd
   });
 
   it("wyszukuje ankiety pacjenta i czyta powiązane zasoby", async () => {
-    const found = await searchSurveyResponses(client, { patientPesel: a.patient.pesel });
+    const found = await searchSurveyResponses(client, { patientPesel: patientPesel });
     expect(found.ok, !found.ok ? String(found.error) : "").toBe(true);
     if (!found.ok) return;
 
@@ -117,13 +122,13 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)("e2e SGO-A (Moje Zd
   describe.skipIf(!WRITE)("ścieżka zapisu (P1_SGOA_E2E_WRITE=1)", () => {
     it("wypełnia ankietę, przyjmuje i wycofuje realizację zakresu badań", async () => {
       // Ankietę można wypełnić raz - jeśli już jest, pracujemy na istniejącej (bez zapisu).
-      const existing = await searchSurveyResponses(client, { patientPesel: a.patient.pesel });
+      const existing = await searchSurveyResponses(client, { patientPesel: patientPesel });
       expect(existing.ok).toBe(true);
       if (!existing.ok) return;
 
       let examPlanId = existing.value.items[0]?.examPlanId;
       if (existing.value.items.length === 0) {
-        const eligible = await findEligibleQuestionnaires(client, { pesel: a.patient.pesel });
+        const eligible = await findEligibleQuestionnaires(client, { pesel: patientPesel });
         expect(eligible.ok).toBe(true);
         if (!eligible.ok) return;
         const definition = eligible.value[0];
@@ -134,9 +139,9 @@ describe.skipIf(!RUN || !p1AccountComplete || !certsPresent)("e2e SGO-A (Moje Zd
           privacyPolicyAcceptanceDate: new Date().toISOString(),
           questionnaireUrl: definition.url,
           patient: {
-            pesel: a.patient.pesel,
-            givenNames: [a.patient.given],
-            familyName: a.patient.family,
+            pesel: patientPesel,
+            givenNames: [patientGiven],
+            familyName: patientFamily,
           },
           items: fillDefinition(definition),
         });
