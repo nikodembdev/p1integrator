@@ -18,6 +18,8 @@ export default defineConfig({
       "@p1/transport": src("transport"),
       "@p1/signing": src("signing"),
       "@p1/referral": src("referral"),
+      "@p1/medical-events": src("medical-events"),
+      "@p1/moje-zdrowie": src("moje-zdrowie"),
     },
   },
   test: {

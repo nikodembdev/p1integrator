@@ -132,6 +132,15 @@ importers:
         specifier: ^1.3.14
         version: 1.3.14
 
+  packages/moje-zdrowie:
+    dependencies:
+      '@p1/core':
+        specifier: workspace:*
+        version: link:../core
+      '@p1/medical-events':
+        specifier: workspace:*
+        version: link:../medical-events
+
   packages/patient-summary:
     dependencies:
       '@p1/core':
