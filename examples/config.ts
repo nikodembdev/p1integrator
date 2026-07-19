@@ -93,6 +93,9 @@ export const endpoints = {
   // Środowisko integracyjne P1 = isus; dokumentacja SGP wskazuje też tsus/t2sus (inny host, nieosiągalny stąd).
   patientSummary: e.P1_PS_BASE_URL ?? "https://isus.ezdrowie.gov.pl",
   patientSummaryToken: e.P1_PS_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
+  // Moje Zdrowie (SGO-A): REST/FHIR + OAuth2 (ten sam mechanizm tokenu, scope fhir-sgoa).
+  sgoaToken: e.P1_SGOA_TOKEN_ENDPOINT ?? "https://isus.ezdrowie.gov.pl/token",
+  sgoaFhir: e.P1_SGOA_FHIR_URL ?? "https://isus.ezdrowie.gov.pl/sgoa/fhir",
   // EDM (IHE XDS.b): token SAML + operacje rejestru/repozytorium.
   edmToken:
     e.P1_EDM_TOKEN_ENDPOINT ??

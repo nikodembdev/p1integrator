@@ -56,6 +56,8 @@ wzór kluczy w [`.env.example`](../.env.example). Potrzebne:
 | [`19-ipom-odczyt.ts`](./19-ipom-odczyt.ts)                                     | IPOM: odczyt planu po identyfikatorze + wyszukanie planów pacjenta           |
 | [`20-patient-summary.ts`](./20-patient-summary.ts)                             | Patient Summary (Karta Pacjenta): token OAuth2 + pobranie podsumowania (CDA) |
 | [`21-recepta-ulamek-opakowania.ts`](./21-recepta-ulamek-opakowania.ts)         | ułamkowa liczba opakowań (1 szt. z opak. po 10, np. 1 amp. Dexavenu)         |
+| [`22-moje-zdrowie-ankieta.ts`](./22-moje-zdrowie-ankieta.ts)                   | Moje Zdrowie (SGO-A): ankieta pacjenta - $eligible, zapis, wydruk PDF        |
+| [`23-moje-zdrowie-zakres-badan.ts`](./23-moje-zdrowie-zakres-badan.ts)         | Moje Zdrowie (SGO-A): zakres badań - odczyt i realizacja (statusy CarePlan)  |
 
 Recepty `03`-`05`, `07`-`08`, `10`, `15`, zdarzenie `09`, EDM `12`, IPOM `16`-`19` oraz Patient Summary `20` potwierdzone e2e (Sukces; wyszukiwanie IPOM zwraca błąd marshallingu po stronie INT - odczyt po id działa). \* `06` pro auctore buduje poprawny dokument, ale pełny e2e wymaga osobnej puli
 numerów recept (`...2.10.*`) przydzielonej do konta.
